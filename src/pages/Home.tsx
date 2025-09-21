@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +8,7 @@ import CourseCard from "@/components/CourseCard";
 import { Link } from "react-router-dom";
 
 const Home = () => {
+  const { t } = useTranslation();
   // Sample featured courses data
   const featuredCourses = [
     {
@@ -93,20 +95,19 @@ const Home = () => {
                   🎉 New courses every week
                 </Badge>
                 <h1 className="text-4xl lg:text-6xl font-bold text-white leading-tight">
-                  Learn Skills That
+                  {t('home.title')}
                   <span className="block text-gradient bg-gradient-to-r from-white to-accent bg-clip-text text-transparent">
-                    Matter Today
+                    {t('home.subtitle')}
                   </span>
                 </h1>
                 <p className="text-xl text-white/90 leading-relaxed max-w-2xl">
-                  Join millions of learners and transform your career with expert-led courses 
-                  in technology, business, and creative skills.
+                  {t('home.description')}
                 </p>
               </div>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Button size="lg" className="bg-white text-primary hover:bg-white/90 transition-smooth text-lg px-8">
-                  Start Learning Today
+                  {t('home.startLearning')}
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
                 <Button 

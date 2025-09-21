@@ -7,6 +7,7 @@ import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
+import HonorBoard from "./pages/HonorBoard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
             <Route path="/" element={<Home />} />
             <Route path="/courses" element={<Courses />} />
             <Route path="/course/:id" element={<CourseDetail />} />
+            <Route path="/honor-board" element={<HonorBoard />} />
             <Route path="/categories" element={<div className="p-8 text-center"><h1 className="text-2xl">Categories Page - Coming Soon</h1></div>} />
             <Route path="/about" element={<div className="p-8 text-center"><h1 className="text-2xl">About Page - Coming Soon</h1></div>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
