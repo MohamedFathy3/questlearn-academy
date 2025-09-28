@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => ({
     port: 7000, 
     proxy: {
       "/api": {
-        target: "https://profisinal.professionalacademyedu.com",
+        target: "https://back.professionalacademyedu.com",
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, "/api"), // أو اتركه فارغًا

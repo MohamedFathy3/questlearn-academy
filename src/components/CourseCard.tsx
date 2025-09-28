@@ -142,7 +142,7 @@ const CourseCard = ({
             onClick={handleEnrollClick}
           >
             <BookOpen className="w-4 h-4 mr-1" />
-            Enroll
+            حجز الآن
           </Button>
         </CardFooter>
       </Card>

@@ -212,7 +212,7 @@ const StudentsHonorBoard = () => {
       
       // محاولة جلب البيانات من API
       try {
-        const response = await apiFetch<ApiResponse>('/students/honor-board', {
+        const response = await apiFetch<ApiResponse>('/student/index', {
           method: 'POST',
           body: {
             filters: {},

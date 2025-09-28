@@ -46,67 +46,7 @@ interface ApiResponse {
   status: number;
 }
 
-// بيانات وهمية لل cache
-const cachedStudents: Student[] = [
-  {
-    id: 1,
-    name: "Ahmed Mohamed",
-    email: "ahmed.mohamed@example.com",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-    total_courses: 15,
-    completed_courses: 12,
-    enrolled_courses: 3,
-    total_hours: 45,
-    points: 1250,
-    grade: { name: "Grade 10" },
-    stage: { name: "Secondary Stage" },
-    country: { name: "Egypt" }
-  },
-  {
-    id: 2,
-    name: "Fatima Al-Zahra",
-    email: "fatima.alzahra@example.com",
-    image: "https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?w=150&h=150&fit=crop&crop=face",
-    total_courses: 12,
-    completed_courses: 10,
-    enrolled_courses: 2,
-    total_hours: 38,
-    points: 980,
-    grade: { name: "Grade 9" },
-    stage: { name: "Secondary Stage" },
-    country: { name: "Saudi Arabia" }
-  },
-  {
-    id: 3,
-    name: "Omar Hassan",
-    email: "omar.hassan@example.com",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-    total_courses: 8,
-    completed_courses: 6,
-    enrolled_courses: 2,
-    total_hours: 28,
-    points: 750,
-    grade: { name: "Grade 8" },
-    stage: { name: "Middle Stage" },
-    country: { name: "UAE" }
-  },
-  {
-    id: 4,
-    name: "Layla Ibrahim",
-    email: "layla.ibrahim@example.com",
-    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
-    total_courses: 10,
-    completed_courses: 8,
-    enrolled_courses: 2,
-    total_hours: 32,
-    points: 890,
-    grade: { name: "Grade 11" },
-    stage: { name: "Secondary Stage" },
-    country: { name: "Jordan" }
-  },
 
-
-];
 
 const StudentsHonorBoard = () => {
   const { t, i18n } = useTranslation();
