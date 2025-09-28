@@ -1,150 +1,379 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Search, Filter, Grid, List, ChevronDown } from "lucide-react";
+import { Search, Filter, Grid, List, ChevronDown, Loader2 } from "lucide-react";
 import CourseCard from "@/components/CourseCard";
+import { apiFetch } from '@/lib/api';
+import Cookies from "js-cookie";
+import { useTranslation } from 'react-i18next';
+
+interface Course {
+  id: number;
+  title: string;
+  description: string;
+  type: string;
+  original_price: string;
+  discount: string;
+  price: string;
+  what_you_will_learn: string;
+  image: string | null;
+  intro_video_url: string;
+  views_count: number;
+  course_type: string;
+  count_student: number | null;
+  currency: string | null;
+  subscribers_count: number;
+  active: boolean;
+  teacher: {
+    id: number;
+    name: string;
+    email: string;
+    image: string | null;
+    certificate_image: string | null;
+    experience_image: string | null;
+    students_count: number;
+    courses_count: number;
+    total_income: number;
+  };
+  stage: {
+    name: string;
+  };
+  subject: {
+    name: string;
+  };
+  country: {
+    name: string;
+  };
+  details: {
+    id: number;
+    title: string;
+    description: string;
+    content_type: string;
+    content_link: string | null;
+    session_date: string | null;
+    session_time: string | null;
+    file_path: string | null;
+    created_at: string;
+  }[];
+  created_at: string;
+}
+
+interface ApiResponse {
+  data: Course[];
+  links: {
+    first: string;
+    last: string;
+    prev: string | null;
+    next: string | null;
+  };
+  meta: {
+    current_page: number;
+    from: number;
+    last_page: number;
+    links: Array<{
+      url: string | null;
+      label: string;
+      active: boolean;
+    }>;
+    path: string;
+    per_page: number;
+    to: number;
+    total: number;
+  };
+  result: string;
+  message: string;
+  status: number;
+}
 
 const Courses = () => {
+  const { t, i18n } = useTranslation();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  const [filters, setFilters] = useState({
+    category: "",
+    level: "",
+    price: "",
+    teacher: "",
+    sort: "popular"
+  });
 
-  // Sample courses data
-  const courses = [
-    {
-      id: "1",
-      title: "Complete Web Development Bootcamp 2024",
-      instructor: "Angela Yu",
-      thumbnail: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=300&fit=crop",
-      price: 49.99,
-      originalPrice: 199.99,
-      rating: 4.8,
-      studentsCount: 85342,
-      duration: "65 hours",
-      level: "Beginner" as const,
-      category: "Web Development",
-      isBestseller: true,
-    },
-    {
-      id: "2",
-      title: "Machine Learning A-Z: AI & Python",
-      instructor: "Kirill Eremenko",
-      thumbnail: "https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=400&h=300&fit=crop",
-      price: 0,
-      rating: 4.9,
-      studentsCount: 67891,
-      duration: "44 hours",
-      level: "Intermediate" as const,
-      category: "Data Science",
-      isNew: true,
-    },
-    {
-      id: "3",
-      title: "Digital Marketing Masterclass",
-      instructor: "Phil Ebiner",
-      thumbnail: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop",
-      price: 34.99,
-      originalPrice: 149.99,
-      rating: 4.7,
-      studentsCount: 43567,
-      duration: "28 hours",
-      level: "Beginner" as const,
-      category: "Marketing",
-    },
-    {
-      id: "4",
-      title: "UI/UX Design Fundamentals",
-      instructor: "Daniel Walter Scott",
-      thumbnail: "https://images.unsplash.com/photo-1558655146-d09347e92766?w=400&h=300&fit=crop",
-      price: 39.99,
-      originalPrice: 179.99,
-      rating: 4.6,
-      studentsCount: 29834,
-      duration: "32 hours",
-      level: "Beginner" as const,
-      category: "Design",
-      isBestseller: true,
-    },
-    {
-      id: "5",
-      title: "React Native - The Practical Guide 2024",
-      instructor: "Maximilian Schwarzmüller",
-      thumbnail: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=300&fit=crop",
-      price: 54.99,
-      originalPrice: 189.99,
-      rating: 4.8,
-      studentsCount: 52341,
-      duration: "48 hours",
-      level: "Intermediate" as const,
-      category: "Mobile Development",
-    },
-    {
-      id: "6",
-      title: "Photography Masterclass: Complete Guide",
-      instructor: "Phil Ebiner",
-      thumbnail: "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=400&h=300&fit=crop",
-      price: 0,
+  // Fetch courses from API
+  const fetchCourses = async (page = 1, loadMore = false) => {
+    try {
+      if (loadMore) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+      setError(null);
+      
+      const token = Cookies.get("token");
+      if (!token) {
+        setError("Please login to view courses");
+        setLoading(false);
+        return;
+      }
+
+      const response = await apiFetch<ApiResponse>('/course/index', {
+        method: 'POST',
+        body: {
+          filters: {},
+          orderBy: "id",
+          orderByDirection: "asc",
+          perPage: 10,
+          paginate: true,
+          delete: false,
+          page: page
+        }
+      });
+
+      if (response.result === "Success" && response.data) {
+        if (loadMore) {
+          setCourses(prev => [...prev, ...response.data]);
+        } else {
+          setCourses(response.data);
+        }
+        
+        // Check if there are more pages
+        setHasMore(response.meta.current_page < response.meta.last_page);
+        setCurrentPage(response.meta.current_page);
+      } else {
+        setError(response.message || 'Failed to fetch courses');
+      }
+    } catch (err: any) {
+      console.error('Error fetching courses:', err);
+      setError(err.message || 'An error occurred while loading courses');
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  // Apply filters whenever filters or courses change
+  useEffect(() => {
+    applyFilters();
+  }, [filters, courses, searchTerm]);
+
+  const applyFilters = () => {
+    let filtered = [...courses];
+
+    // Search filter
+    if (searchTerm) {
+      filtered = filtered.filter(course =>
+        course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        course.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        course.teacher?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        course.subject?.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Category filter
+    if (filters.category) {
+      filtered = filtered.filter(course =>
+        course.subject?.name.toLowerCase() === filters.category.toLowerCase()
+      );
+    }
+
+    // Level filter
+    if (filters.level) {
+      filtered = filtered.filter(course => {
+        const title = course.title.toLowerCase();
+        if (filters.level === 'beginner') {
+          return title.includes('basic') || title.includes('intro') || title.includes('beginner');
+        } else if (filters.level === 'intermediate') {
+          return title.includes('intermediate');
+        } else if (filters.level === 'advanced') {
+          return title.includes('advanced') || title.includes('expert');
+        }
+        return true;
+      });
+    }
+
+    // Price filter
+    if (filters.price) {
+      filtered = filtered.filter(course => {
+        const price = parseFloat(course.price || "0");
+        if (filters.price === 'free') return price === 0;
+        if (filters.price === '$0-$50') return price > 0 && price <= 50;
+        if (filters.price === '$50-$100') return price > 50 && price <= 100;
+        if (filters.price === '$100+') return price > 100;
+        return true;
+      });
+    }
+
+    // Teacher filter
+    if (filters.teacher) {
+      filtered = filtered.filter(course =>
+        course.teacher?.name.toLowerCase().includes(filters.teacher.toLowerCase())
+      );
+    }
+
+    // Sort filter
+    if (filters.sort) {
+      filtered.sort((a, b) => {
+        switch (filters.sort) {
+          case 'newest':
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          case 'rating':
+            return (b.views_count || 0) - (a.views_count || 0);
+          case 'price-low':
+            return parseFloat(a.price || "0") - parseFloat(b.price || "0");
+          case 'price-high':
+            return parseFloat(b.price || "0") - parseFloat(a.price || "0");
+          case 'popular':
+          default:
+            return (b.count_student || 0) - (a.count_student || 0);
+        }
+      });
+    }
+
+    setFilteredCourses(filtered);
+  };
+
+  const loadMoreCourses = () => {
+    if (hasMore && !loadingMore) {
+      fetchCourses(currentPage + 1, true);
+    }
+  };
+
+  // Transform API data to match CourseCard props
+  const transformCourseData = (course: Course) => {
+    const originalPrice = parseFloat(course.original_price || "0");
+    const currentPrice = parseFloat(course.price || "0");
+    const hasDiscount = originalPrice > currentPrice && parseFloat(course.discount || "0") > 0;
+    
+    // Calculate estimated duration from details
+    const videoLessons = course.details?.filter(detail => detail.content_type === 'video') || [];
+    const getEstimatedDuration = () => {
+      const videoCount = videoLessons.length;
+      if (videoCount === 0) return t('courses.flexible', 'Flexible');
+      if (videoCount <= 3) return "1-2 " + t('courses.hours', 'hours');
+      if (videoCount <= 6) return "3-4 " + t('courses.hours', 'hours');
+      return "5+ " + t('courses.hours', 'hours');
+    };
+
+    // Determine course level from title
+    const getCourseLevel = () => {
+      const title = course.title ? course.title.toLowerCase() : "";
+      if (title.includes('basic') || title.includes('intro') || title.includes('beginner')) {
+        return t('courses.beginner', 'Beginner');
+      } else if (title.includes('advanced') || title.includes('expert')) {
+        return t('courses.expert', 'Expert');
+      } else if (title.includes('intermediate')) {
+        return t('courses.intermediate', 'Intermediate');
+      }
+      return t('courses.allLevels', 'All Levels');
+    };
+
+    return {
+      id: course.id.toString(),
+      title: course.title || t('courses.untitled', 'Untitled Course'),
+      instructor: course.teacher?.name || t('courses.unknownInstructor', 'Unknown Instructor'),
+      thumbnail: course.image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=300&fit=crop",
+      price: currentPrice,
+      originalPrice: hasDiscount ? originalPrice : undefined,
       rating: 4.5,
-      studentsCount: 38975,
-      duration: "22 hours",
-      level: "Beginner" as const,
-      category: "Photography",
-      isNew: true,
-    },
-    {
-      id: "7",
-      title: "Python for Data Science and Machine Learning",
-      instructor: "Jose Portilla",
-      thumbnail: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&h=300&fit=crop",
-      price: 44.99,
-      originalPrice: 174.99,
-      rating: 4.9,
-      studentsCount: 94567,
-      duration: "52 hours",
-      level: "Intermediate" as const,
-      category: "Programming",
-    },
-    {
-      id: "8",
-      title: "Graphic Design Masterclass",
-      instructor: "Lindsay Marsh",
-      thumbnail: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=300&fit=crop",
-      price: 29.99,
-      originalPrice: 119.99,
-      rating: 4.4,
-      studentsCount: 27834,
-      duration: "35 hours",
-      level: "Beginner" as const,
-      category: "Design",
-    },
+      studentsCount: course.count_student || course.subscribers_count || 0,
+      duration: getEstimatedDuration(),
+      level: getCourseLevel() as "Beginner" | "Intermediate" | "Advanced",
+      category: course.subject?.name || t('courses.general', 'General'),
+      isBestseller: course.views_count > 100,
+      isNew: Date.now() - new Date(course.created_at).getTime() < 7 * 24 * 60 * 60 * 1000,
+      currency: course.currency || "USD"
+    };
+  };
+
+  // Get unique categories from courses
+  const getUniqueCategories = () => {
+    const categories = courses.map(course => course.subject?.name).filter(Boolean);
+    return ['All Categories', ...Array.from(new Set(categories))];
+  };
+
+  // Get unique teachers from courses
+  const getUniqueTeachers = () => {
+    const teachers = courses.map(course => course.teacher?.name).filter(Boolean);
+    return ['All Teachers', ...Array.from(new Set(teachers))];
+  };
+
+  const categories = getUniqueCategories();
+  const teachers = getUniqueTeachers();
+  
+  const levels = [
+    t('courses.allLevels', 'All Levels'), 
+    t('courses.beginner', 'Beginner'), 
+    t('courses.intermediate', 'Intermediate'), 
+    t('courses.expert', 'Expert')
+  ];
+  
+  const priceRanges = [
+    t('courses.allPrices', 'All Prices'), 
+    t('courses.free', 'Free'), 
+    "$0-$50", 
+    "$50-$100", 
+    "$100+"
   ];
 
-  const categories = [
-    "All Categories",
-    "Web Development",
-    "Data Science",
-    "Marketing",
-    "Design",
-    "Mobile Development",
-    "Photography",
-    "Programming",
-  ];
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
 
-  const levels = ["All Levels", "Beginner", "Intermediate", "Advanced"];
-  const priceRanges = ["All Prices", "Free", "$0-$50", "$50-$100", "$100+"];
+  const clearFilters = () => {
+    setFilters({
+      category: "",
+      level: "",
+      price: "",
+      teacher: "",
+      sort: "popular"
+    });
+    setSearchTerm("");
+  };
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+ 
+  if (error) {
+    return (
+      <div className="min-h-screen py-8">
+        <div className="container mx-auto px-4">
+          <div className="text-center text-red-500">
+            <p>{t('common.error', 'Error')}: {error}</p>
+            <Button onClick={() => fetchCourses()} className="mt-4">
+              {t('common.tryAgain', 'Try Again')}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen py-8">
+    <div className="min-h-screen py-8" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl lg:text-4xl font-bold mb-4">
-            All <span className="text-gradient">Courses</span>
+            {t('courses.title', 'All')} <span className="text-tan">{t('courses.courses', 'Courses')}</span>
           </h1>
           <p className="text-xl text-muted-foreground">
-            Discover thousands of courses across various categories
+            {t('courses.discover', 'Discover thousands of courses across various categories')}
           </p>
         </div>
 
@@ -153,10 +382,12 @@ const Courses = () => {
           <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between mb-6">
             <div className="flex-1 max-w-md">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Search className={`absolute ${i18n.language === 'ar' ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
                 <Input 
-                  placeholder="Search courses..." 
-                  className="pl-10 bg-background"
+                  placeholder={t('common.search', 'Search courses...')}
+                  className={`${i18n.language === 'ar' ? 'pr-10' : 'pl-10'} bg-background`}
+                  value={searchTerm}
+                  onChange={handleSearch}
                 />
               </div>
             </div>
@@ -168,7 +399,7 @@ const Courses = () => {
                 className="lg:hidden"
               >
                 <Filter className="w-4 h-4 mr-2" />
-                Filters
+                {t('common.filter', 'Filters')}
                 <ChevronDown className={`w-4 h-4 ml-2 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
               </Button>
 
@@ -193,12 +424,15 @@ const Courses = () => {
 
           {/* Filters */}
           <div className={`${showFilters ? 'block' : 'hidden lg:block'}`}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Category</label>
-                <Select>
+                <label className="text-sm font-medium">{t('courses.category', 'Category')}</label>
+                <Select 
+                  value={filters.category} 
+                  onValueChange={(value) => handleFilterChange('category', value === 'all categories' ? '' : value)}
+                >
                   <SelectTrigger className="bg-background">
-                    <SelectValue placeholder="All Categories" />
+                    <SelectValue placeholder={t('courses.allCategories', 'All Categories')} />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((category) => (
@@ -211,10 +445,13 @@ const Courses = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Level</label>
-                <Select>
+                <label className="text-sm font-medium">{t('courses.level', 'Level')}</label>
+                <Select 
+                  value={filters.level} 
+                  onValueChange={(value) => handleFilterChange('level', value === 'all levels' ? '' : value)}
+                >
                   <SelectTrigger className="bg-background">
-                    <SelectValue placeholder="All Levels" />
+                    <SelectValue placeholder={t('courses.allLevels', 'All Levels')} />
                   </SelectTrigger>
                   <SelectContent>
                     {levels.map((level) => (
@@ -227,10 +464,13 @@ const Courses = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Price</label>
-                <Select>
+                <label className="text-sm font-medium">{t('courses.price', 'Price')}</label>
+                <Select 
+                  value={filters.price} 
+                  onValueChange={(value) => handleFilterChange('price', value === 'all prices' ? '' : value)}
+                >
                   <SelectTrigger className="bg-background">
-                    <SelectValue placeholder="All Prices" />
+                    <SelectValue placeholder={t('courses.allPrices', 'All Prices')} />
                   </SelectTrigger>
                   <SelectContent>
                     {priceRanges.map((range) => (
@@ -243,17 +483,39 @@ const Courses = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Sort by</label>
-                <Select>
+                <label className="text-sm font-medium">{t('courses.teacher', 'Teacher')}</label>
+                <Select 
+                  value={filters.teacher} 
+                  onValueChange={(value) => handleFilterChange('teacher', value === 'all teachers' ? '' : value)}
+                >
                   <SelectTrigger className="bg-background">
-                    <SelectValue placeholder="Most Popular" />
+                    <SelectValue placeholder={t('courses.allTeachers', 'All Teachers')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="popular">Most Popular</SelectItem>
-                    <SelectItem value="newest">Newest</SelectItem>
-                    <SelectItem value="rating">Highest Rated</SelectItem>
-                    <SelectItem value="price-low">Price: Low to High</SelectItem>
-                    <SelectItem value="price-high">Price: High to Low</SelectItem>
+                    {teachers.map((teacher) => (
+                      <SelectItem key={teacher} value={teacher.toLowerCase()}>
+                        {teacher}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('common.sort', 'Sort by')}</label>
+                <Select 
+                  value={filters.sort} 
+                  onValueChange={(value) => handleFilterChange('sort', value)}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder={t('courses.mostPopular', 'Most Popular')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="popular">{t('courses.mostPopular', 'Most Popular')}</SelectItem>
+                    <SelectItem value="newest">{t('courses.newest', 'Newest')}</SelectItem>
+                    <SelectItem value="rating">{t('courses.highestRated', 'Highest Rated')}</SelectItem>
+                    <SelectItem value="price-low">{t('courses.priceLowToHigh', 'Price: Low to High')}</SelectItem>
+                    <SelectItem value="price-high">{t('courses.priceHighToLow', 'Price: High to Low')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -263,45 +525,123 @@ const Courses = () => {
 
         {/* Applied Filters */}
         <div className="flex flex-wrap gap-2 mb-6">
-          <Badge variant="secondary" className="bg-primary/10 text-primary">
-            Web Development
-            <button className="ml-2 hover:text-destructive">×</button>
-          </Badge>
-          <Badge variant="secondary" className="bg-primary/10 text-primary">
-            Beginner
-            <button className="ml-2 hover:text-destructive">×</button>
-          </Badge>
-          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive">
-            Clear all filters
-          </Button>
+          {searchTerm && (
+            <Badge variant="secondary" className="bg-primary/10 text-primary">
+              {t('common.search', 'Search')}: {searchTerm}
+              <button 
+                className="ml-2 hover:text-destructive"
+                onClick={() => setSearchTerm("")}
+              >
+                ×
+              </button>
+            </Badge>
+          )}
+          {filters.category && (
+            <Badge variant="secondary" className="bg-primary/10 text-primary">
+              {t('courses.category', 'Category')}: {filters.category}
+              <button 
+                className="ml-2 hover:text-destructive"
+                onClick={() => handleFilterChange('category', '')}
+              >
+                ×
+              </button>
+            </Badge>
+          )}
+          {filters.level && (
+            <Badge variant="secondary" className="bg-primary/10 text-primary">
+              {t('courses.level', 'Level')}: {filters.level}
+              <button 
+                className="ml-2 hover:text-destructive"
+                onClick={() => handleFilterChange('level', '')}
+              >
+                ×
+              </button>
+            </Badge>
+          )}
+          {filters.price && (
+            <Badge variant="secondary" className="bg-primary/10 text-primary">
+              {t('courses.price', 'Price')}: {filters.price}
+              <button 
+                className="ml-2 hover:text-destructive"
+                onClick={() => handleFilterChange('price', '')}
+              >
+                ×
+              </button>
+            </Badge>
+          )}
+          {filters.teacher && (
+            <Badge variant="secondary" className="bg-primary/10 text-primary">
+              {t('courses.teacher', 'Teacher')}: {filters.teacher}
+              <button 
+                className="ml-2 hover:text-destructive"
+                onClick={() => handleFilterChange('teacher', '')}
+              >
+                ×
+              </button>
+            </Badge>
+          )}
+          {(searchTerm || filters.category || filters.level || filters.price || filters.teacher) && (
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive" onClick={clearFilters}>
+              {t('common.clearAll', 'Clear all filters')}
+            </Button>
+          )}
         </div>
 
         {/* Results Header */}
         <div className="flex items-center justify-between mb-6">
           <p className="text-muted-foreground">
-            Showing <span className="font-semibold text-foreground">{courses.length}</span> results
+            {t('courses.showingResults', 'Showing')} <span className="font-semibold text-foreground">{filteredCourses.length}</span> {t('courses.results', 'results')}
           </p>
         </div>
 
         <Separator className="mb-8" />
 
         {/* Courses Grid */}
-        <div className={`grid gap-6 ${
-          viewMode === "grid" 
-            ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
-            : "grid-cols-1"
-        }`}>
-          {courses.map((course) => (
-            <CourseCard key={course.id} {...course} />
-          ))}
-        </div>
+        {filteredCourses.length > 0 ? (
+          <>
+            <div className={`grid gap-6 ${
+              viewMode === "grid" 
+                ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
+                : "grid-cols-1"
+            }`}>
+              {filteredCourses.map((course) => (
+                <CourseCard key={course.id} {...transformCourseData(course)} />
+              ))}
+            </div>
 
-        {/* Load More */}
-        <div className="text-center mt-12">
-          <Button variant="outline" size="lg">
-            Load More Courses
-          </Button>
-        </div>
+            {/* Load More */}
+            {hasMore && (
+              <div className="text-center mt-12">
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  onClick={loadMoreCourses}
+                  disabled={loadingMore}
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      {t('common.loading', 'Loading...')}
+                    </>
+                  ) : (
+                    t('courses.loadMore', 'Load More Courses')
+                  )}
+                </Button>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-12">
+            <div className="text-muted-foreground mb-4">
+              <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <h3 className="text-lg font-semibold mb-2">{t('courses.noCoursesFound', 'No courses found')}</h3>
+              <p>{t('courses.adjustFilters', 'Try adjusting your filters or search terms')}</p>
+            </div>
+            <Button onClick={clearFilters}>
+              {t('common.clearFilters', 'Clear Filters')}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

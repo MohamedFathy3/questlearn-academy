@@ -7,66 +7,14 @@ import { ArrowRight, Play, Star, Users, Award, BookOpen, Code, Briefcase, Palett
 import heroImage from "@/assets/hero-learning.jpg";
 import CourseCard from "@/components/CourseCard";
 import { Link } from "react-router-dom";
-
+import Hero from '@/components/home/hero';
+import Course from '@/components/home/course';
+import HonorBoard from '@/components/home/honerBoard';
+import HonorBoardStatent from '@/components/home/honerBoardStaudent';
 const Home = () => {
   const { t } = useTranslation();
   // Sample featured courses data
-  const featuredCourses = [
-    {
-      id: "1",
-      title: "Complete Web Development Bootcamp 2024",
-      instructor: "Angela Yu",
-      thumbnail: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=300&fit=crop",
-      price: 49.99,
-      originalPrice: 199.99,
-      rating: 4.8,
-      studentsCount: 85342,
-      duration: "65 hours",
-      level: "Beginner" as const,
-      category: "Web Development",
-      isBestseller: true,
-    },
-    {
-      id: "2",
-      title: "Machine Learning A-Z: AI & Python",
-      instructor: "Kirill Eremenko",
-      thumbnail: "https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=400&h=300&fit=crop",
-      price: 0,
-      rating: 4.9,
-      studentsCount: 67891,
-      duration: "44 hours",
-      level: "Intermediate" as const,
-      category: "Data Science",
-      isNew: true,
-    },
-    {
-      id: "3",
-      title: "Digital Marketing Masterclass",
-      instructor: "Phil Ebiner",
-      thumbnail: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop",
-      price: 34.99,
-      originalPrice: 149.99,
-      rating: 4.7,
-      studentsCount: 43567,
-      duration: "28 hours",
-      level: "Beginner" as const,
-      category: "Marketing",
-    },
-    {
-      id: "4",
-      title: "UI/UX Design Fundamentals",
-      instructor: "Daniel Walter Scott",
-      thumbnail: "https://images.unsplash.com/photo-1558655146-d09347e92766?w=400&h=300&fit=crop",
-      price: 39.99,
-      originalPrice: 179.99,
-      rating: 4.6,
-      studentsCount: 29834,
-      duration: "32 hours",
-      level: "Beginner" as const,
-      category: "Design",
-      isBestseller: true,
-    },
-  ];
+
 
   const categories = [
     { name: "Web Development", icon: Code, courses: 1250, color: "text-blue-500" },
@@ -77,90 +25,12 @@ const Home = () => {
     { name: "Marketing", icon: Zap, courses: 580, color: "text-yellow-500" },
   ];
 
-  const stats = [
-    { icon: Users, value: "2M+", label: "Active Learners" },
-    { icon: BookOpen, value: "10K+", label: "Online Courses" },
-    { icon: Award, value: "500+", label: "Expert Instructors" },
-    { icon: Star, value: "4.8/5", label: "Average Rating" },
-  ];
+ 
 
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-hero">
-        <div className="container mx-auto px-4 py-20 lg:py-32">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8 text-center lg:text-left">
-              <div className="space-y-4">
-                <Badge className="bg-white/20 text-white border-white/30 backdrop-blur">
-                  🎉 New courses every week
-                </Badge>
-                <h1 className="text-4xl lg:text-6xl font-bold text-white leading-tight">
-                  {t('home.title')}
-                  <span className="block text-gradient bg-gradient-to-r from-white to-accent bg-clip-text text-transparent">
-                    {t('home.subtitle')}
-                  </span>
-                </h1>
-                <p className="text-xl text-white/90 leading-relaxed max-w-2xl">
-                  {t('home.description')}
-                </p>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Button size="lg" className="bg-white text-primary hover:bg-white/90 transition-smooth text-lg px-8">
-                  {t('home.startLearning')}
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="border-white/30 text-white hover:bg-white/10 transition-smooth text-lg px-8"
-                >
-                  <Play className="mr-2 w-5 h-5" />
-                  Watch Demo
-                </Button>
-              </div>
-
-              {/* Stats */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 pt-8">
-                {stats.map((stat, index) => (
-                  <div key={index} className="text-center lg:text-left text-white">
-                    <div className="flex items-center justify-center lg:justify-start mb-2">
-                      <stat.icon className="w-6 h-6 mr-2 text-accent" />
-                      <span className="text-2xl font-bold">{stat.value}</span>
-                    </div>
-                    <p className="text-white/80 text-sm">{stat.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="relative">
-              <div className="relative rounded-2xl overflow-hidden shadow-strong">
-                <img 
-                  src={heroImage} 
-                  alt="Students learning together" 
-                  className="w-full h-auto"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-              </div>
-              {/* Floating Elements */}
-              <div className="absolute -top-4 -right-4 bg-white rounded-xl p-4 shadow-medium">
-                <div className="flex items-center gap-2">
-                  <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                  <span className="font-semibold">4.8/5 Rating</span>
-                </div>
-              </div>
-              <div className="absolute -bottom-4 -left-4 bg-success text-white rounded-xl p-4 shadow-medium">
-                <div className="text-center">
-                  <div className="text-2xl font-bold">2M+</div>
-                  <div className="text-sm">Happy Students</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <Hero />
 
       {/* Categories Section */}
       <section className="py-16 bg-muted/30">
@@ -173,7 +43,8 @@ const Home = () => {
               Discover courses across diverse fields and start your learning journey today
             </p>
           </div>
-
+          <HonorBoard />
+          <HonorBoardStatent/>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
             {categories.map((category, index) => (
               <Card key={index} className="group cursor-pointer course-card-hover bg-background border-0 shadow-soft">
@@ -196,42 +67,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Featured Courses Section */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-12">
-            <div>
-              <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-                Featured <span className="text-gradient">Courses</span>
-              </h2>
-              <p className="text-xl text-muted-foreground">
-                Hand-picked courses by industry experts
-              </p>
-            </div>
-            <Link to="/courses">
-              <Button variant="outline" className="hidden sm:flex">
-                View All Courses
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredCourses.map((course) => (
-              <CourseCard key={course.id} {...course} />
-            ))}
-          </div>
-
-          <div className="text-center mt-8 sm:hidden">
-            <Link to="/courses">
-              <Button variant="outline">
-                View All Courses
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
+<Course/>   
 
       {/* CTA Section */}
       <section className="py-20 bg-gradient-primary relative overflow-hidden">
