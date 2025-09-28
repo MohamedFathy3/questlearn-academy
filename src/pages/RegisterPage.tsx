@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, User, Mail, Lock, ArrowLeft } from "lucide-react";
 import Cookies from "js-cookie";
+import { toast } from 'react-toastify';
 
 interface RegisterForm {
   name: string;
@@ -14,6 +15,20 @@ interface RegisterForm {
   password: string;
   password_confirmation: string;
   image: File | null;
+}
+
+interface ApiResponse {
+  result: string;
+  data: null | {
+    token?: string;
+    student?: any;
+  };
+  message: {
+    message: string;
+    student?: any;
+    token?: string;
+  };
+  status: number;
 }
 
 const Register = () => {
@@ -117,38 +132,61 @@ const Register = () => {
 
       console.log("📡 Response status:", response.status);
 
+      const data: ApiResponse = await response.json();
+      console.log("✅ Registration response:", data);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("❌ Registration error response:", errorData);
+        console.error("❌ Registration error response:", data);
         
         let errorMessage = t('register.registrationFailed', 'Registration failed');
         
-        if (errorData.errors) {
-          // معالجة الأخطاء من الـ API بشكل آمن
-          const errorMessages = Object.values(errorData.errors).flat();
-          errorMessage = Array.isArray(errorMessages) ? errorMessages[0] : String(errorMessages);
-        } else if (errorData.message) {
-          errorMessage = String(errorData.message);
+        if (typeof data.message === 'string') {
+          errorMessage = data.message;
+        } else if (data.message && typeof data.message === 'object') {
+          // إذا كان message كائن، نستخدم الرسالة الرئيسية
+          errorMessage = data.message.message || t('register.registrationFailed', 'Registration failed');
+        } else if (data.result && data.result !== "Success") {
+          errorMessage = String(data.result);
         }
         
         setError(errorMessage);
         return;
       }
 
-      const data = await response.json();
-      console.log("✅ Registration success:", data);
-
-      if (data.result === "Success" && data.data) {
+      if (data.result === "Success") {
         // حفظ التوكن إذا كان موجوداً في الرد
-        if (data.data.token) {
-          Cookies.set("token", data.data.token, { expires: 7 });
-          console.log("🔑 Token saved");
+        let tokenToSave = null;
+        
+        // البحث عن التوكن في الأماكن المختلفة
+        if (data.data?.token) {
+          tokenToSave = data.data.token;
+        } else if (data.message?.token) {
+          tokenToSave = data.message.token;
         }
         
-        // توجيه المستخدم لصفحة تسجيل الدخول
-        navigate("/login");
+        if (tokenToSave) {
+          Cookies.set("token", tokenToSave, { expires: 7 });
+          console.log("🔑 Token saved");
+        } else {
+          console.log("❌ No token found in response");
+        }
+        
+        // عرض رسالة النجاح
+        const successMessage = typeof data.message === 'string' 
+          ? data.message 
+          : data.message?.message || t('register.registrationSuccess', 'Registration successful!');
+        
+        toast.success(successMessage);
+        
+        // توجيه المستخدم لصفحة تسجيل الدخول بعد تأخير بسيط
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
       } else {
-        setError(data.message || t('register.registrationFailed', 'Registration failed'));
+        const errorMessage = typeof data.message === 'string' 
+          ? data.message 
+          : data.message?.message || t('register.registrationFailed', 'Registration failed');
+        setError(errorMessage);
       }
 
     } catch (err: any) {
@@ -189,7 +227,7 @@ const Register = () => {
               {/* Error Message */}
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                  {error}
+                  {typeof error === 'string' ? error : JSON.stringify(error)}
                 </div>
               )}
 
