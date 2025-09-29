@@ -10,8 +10,8 @@ const resources = {
         courses: 'Courses',
         categories: 'Categories',
         about: 'About',
-        honorBoard: 'Honor Board',
-        Board: 'Board Student',
+        honorBoard: 'top teatcher',
+        Board: 'top Student',
         profile: 'Profile'
       },
       profile: {

@@ -1,16 +1,64 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Play, Star, Users, Award, BookOpen, Code, Briefcase, Palette, Camera, Music, Zap, Sparkles, Rocket, Target, TrendingUp } from "lucide-react";
-import heroImage from "@/assets/hero-learning.jpg";
 import CourseCard from "@/components/CourseCard";
 import { Link } from "react-router-dom";
 import Hero from '@/components/home/hero';
 import Course from '@/components/home/course';
 import HonorBoard from '@/components/home/honerBoard';
 import HonorBoardStatent from '@/components/home/honerBoardStaudent';
+
+// Component for animated counter
+const AnimatedCounter = ({ end, duration = 2000, suffix = "" }) => {
+  const [count, setCount] = useState(0);
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+          startCounter();
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => {
+      if (ref.current) {
+        observer.unobserve(ref.current);
+      }
+    };
+  }, [hasAnimated]);
+
+  const startCounter = () => {
+    let start = 0;
+    const increment = end / (duration / 16); // 60fps
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        setCount(end);
+        clearInterval(timer);
+      } else {
+        setCount(Math.ceil(start));
+      }
+    }, 16);
+  };
+
+  return (
+    <span ref={ref}>
+      {count}{suffix}
+    </span>
+  );
+};
 
 const Home = () => {
   const { t } = useTranslation();
@@ -25,10 +73,10 @@ const Home = () => {
   ];
 
   const stats = [
-    { number: "50K+", label: t('home.stats.students'), icon: Users, color: "text-blue-500" },
-    { number: "500+", label: t('home.stats.courses'), icon: BookOpen, color: "text-green-500" },
-    { number: "100+", label: t('home.stats.instructors'), icon: Award, color: "text-purple-500" },
-    { number: "95%", label: t('home.stats.satisfaction'), icon: Star, color: "text-orange-500" },
+    { number: 50000, label: t('home.stats.students'), icon: Users, color: "text-blue-500", suffix: "+" },
+    { number: 500, label: t('home.stats.courses'), icon: BookOpen, color: "text-green-500", suffix: "+" },
+    { number: 100, label: t('home.stats.instructors'), icon: Award, color: "text-purple-500", suffix: "+" },
+    { number: 95, label: t('home.stats.satisfaction'), icon: Star, color: "text-orange-500", suffix: "%" },
   ];
 
   return (
@@ -59,7 +107,11 @@ const Home = () => {
                     <stat.icon className={`w-6 h-6 ${stat.color} group-hover:scale-110 transition-transform duration-300`} />
                   </div>
                   <h3 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent group-hover:animate-pulse">
-                    {stat.number}
+                    <AnimatedCounter 
+                      end={stat.number} 
+                      duration={2000} 
+                      suffix={stat.suffix}
+                    />
                   </h3>
                   <p className="text-sm text-muted-foreground mt-2 group-hover:text-foreground transition-colors duration-300">
                     {stat.label}
