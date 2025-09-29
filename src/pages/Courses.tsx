@@ -7,7 +7,6 @@ import { Separator } from "@/components/ui/separator";
 import { Search, Filter, Grid, List, ChevronDown, Loader2 } from "lucide-react";
 import CourseCard from "@/components/CourseCard";
 import { apiFetch } from '@/lib/api';
-import Cookies from "js-cookie";
 import { useTranslation } from 'react-i18next';
 
 interface Course {
@@ -109,7 +108,7 @@ const Courses = () => {
     sort: "popular"
   });
 
-  // Fetch courses from API
+  // Fetch courses from API without token
   const fetchCourses = async (page = 1, loadMore = false) => {
     try {
       if (loadMore) {
@@ -118,13 +117,62 @@ const Courses = () => {
         setLoading(true);
       }
       setError(null);
-      
-      const token = Cookies.get("token");
-      if (!token) {
-        setError("Please login to view courses");
-        setLoading(false);
-        return;
+
+      // استخدام fetch مباشرة بدون token
+      const response = await fetch('/api/course/index', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          filters: {},
+          orderBy: "id",
+          orderByDirection: "asc",
+          perPage: 10,
+          paginate: true,
+          delete: false,
+          page: page
+        })
+      });
+
+      const data: ApiResponse = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to fetch courses');
       }
+
+      if (data.result === "Success" && data.data) {
+        if (loadMore) {
+          setCourses(prev => [...prev, ...data.data]);
+        } else {
+          setCourses(data.data);
+        }
+        
+        // Check if there are more pages
+        setHasMore(data.meta.current_page < data.meta.last_page);
+        setCurrentPage(data.meta.current_page);
+      } else {
+        setError(data.message || 'Failed to fetch courses');
+      }
+    } catch (err: any) {
+      console.error('Error fetching courses:', err);
+      setError(err.message || 'An error occurred while loading courses');
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  // بديل باستخدام apiFetch إذا كان يدعم الطلبات بدون توكن
+  const fetchCoursesWithApiFetch = async (page = 1, loadMore = false) => {
+    try {
+      if (loadMore) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+      setError(null);
 
       const response = await apiFetch<ApiResponse>('/course/index', {
         method: 'POST',
@@ -136,7 +184,9 @@ const Courses = () => {
           paginate: true,
           delete: false,
           page: page
-        }
+        },
+        // إذا كان apiFetch يتطلب token افتراضياً، يمكن تجاوزه
+        skipAuth: true // أو أي option متاح لإلغاء إرسال التوكن
       });
 
       if (response.result === "Success" && response.data) {
@@ -146,7 +196,6 @@ const Courses = () => {
           setCourses(response.data);
         }
         
-        // Check if there are more pages
         setHasMore(response.meta.current_page < response.meta.last_page);
         setCurrentPage(response.meta.current_page);
       } else {
@@ -348,8 +397,20 @@ const Courses = () => {
     setSearchTerm(e.target.value);
   };
 
- 
-  if (error) {
+  if (loading && courses.length === 0) {
+    return (
+      <div className="min-h-screen py-8">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+            <p>{t('common.loading', 'Loading courses...')}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && courses.length === 0) {
     return (
       <div className="min-h-screen py-8">
         <div className="container mx-auto px-4">
