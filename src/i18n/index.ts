@@ -10,8 +10,8 @@ const resources = {
         courses: 'Courses',
         categories: 'Categories',
         about: 'About',
-        honorBoard: 'top teatcher',
-        Board: 'top Student',
+        honorBoard: 'Top Teachers',
+        Board: 'Top Students',
         profile: 'Profile'
       },
       profile: {
@@ -36,7 +36,7 @@ const resources = {
         teacher: 'Teacher'
       },
       home: {
-        title: 'Welcome to LearnHub',
+        title: 'Welcome to Professional Academy',
         subtitle: 'Your Gateway to Knowledge',
         description: 'Discover thousands of courses from expert instructors and advance your skills',
         startLearning: 'Start Learning Today',
@@ -55,7 +55,13 @@ const resources = {
           marketing: 'Marketing',
           courses: 'courses'
         },
-        joinNow: 'Join Now'
+        joinNow: 'Join Now',
+        stats: {
+          students: 'Students',
+          courses: 'Courses',
+          instructors: 'Instructors',
+          satisfaction: 'Satisfaction Rate'
+        }
       },
       courses: {
         title: 'All Courses',
@@ -68,7 +74,20 @@ const resources = {
         paid: 'Paid',
         beginner: 'Beginner',
         intermediate: 'Intermediate',
-        expert: 'Expert'
+        expert: 'Expert',
+        freshContent: 'Fresh Content',
+        newlyAdded: 'Newly Added Courses',
+        newlyAddedDesc: 'Discover our latest courses added to the platform. Fresh content, updated curriculum, and modern teaching approaches.',
+        viewAllCourses: 'View All Courses',
+        bookNow: 'Book Now',
+        readyToStart: 'Ready to start learning?',
+        joinStudents: 'Join thousands of students already learning with us',
+        exploreAllCourses: 'Explore All Courses',
+        new: 'New',
+        recorded: 'Recorded',
+        hours: 'hours',
+        basicMathematics: 'Basic Mathematics',
+        instructor: 'Instructor'
       },
       honorBoard: {
         title: 'Students Honor Board',
@@ -78,7 +97,11 @@ const resources = {
         coursesCompleted: 'Courses Completed',
         certificatesEarned: 'Certificates Earned',
         points: 'Points',
-        rank: 'Rank'
+        rank: 'Rank',
+        teachersTitle: 'Top Teachers',
+        teachersSubtitle: 'Meet our most successful instructors',
+        studentsTitle: 'Top Students',
+        studentsSubtitle: 'Meet our outstanding students'
       },
       footer: {
         description: 'Transform your career with expert-led courses in technology, business, and creative skills. Join millions of learners worldwide.',
@@ -147,6 +170,31 @@ const resources = {
         filter: 'Filter',
         sort: 'Sort by',
         viewAll: 'View All'
+      },
+      hero: {
+        title: 'Professional Academy',
+        subtitle: 'Your Gateway to Excellence in Education',
+        description: 'Join thousands of students on their journey to academic success with our comprehensive online learning platform.',
+        startLearning: 'Start Learning Now',
+        exploreCourses: 'Explore Courses',
+        interactiveLearning: 'Interactive Learning',
+        experienceFuture: 'Experience the future of education',
+        scrollDown: 'Scroll Down'
+      },
+      teachers: {
+        title: 'Top Teachers',
+        subtitle: 'Meet our most successful instructors',
+        courses: 'Courses',
+        students: 'Students',
+        rating: 'Rating'
+      },
+      students: {
+        title: 'Top Students',
+        subtitle: 'Meet our outstanding students',
+        grade: 'Grade',
+        country: 'Country',
+        completed: 'Completed',
+        totalCourses: 'Total Courses'
       }
     }
   },
@@ -157,9 +205,9 @@ const resources = {
         courses: 'الدورات',
         categories: 'الفئات',
         about: 'عن الموقع',
-        honorBoard: 'لوحة الشرف',
+        honorBoard: 'المعلمين المتميزين',
         profile: 'الملف الشخصي',
-        Board: 'لوحة الطلاب',
+        Board: 'لوحة شرف الطلاب',
       },
       profile: {
         title: 'ملفي الشخصي',
@@ -183,7 +231,7 @@ const resources = {
         teacher: 'معلم'
       },
       home: {
-        title: 'مرحباً بكم في ليرن هاب',
+        title: 'مرحباً بكم في الأكاديمية الاحترافية',
         subtitle: 'بوابتكم إلى المعرفة',
         description: 'اكتشف آلاف الدورات من مدربين خبراء وطور مهاراتك',
         startLearning: 'ابدأ التعلم اليوم',
@@ -191,7 +239,8 @@ const resources = {
         topCategories: {
           title: 'استكشف أشهر',
           highlight: 'الفئات',
-          description: 'اكتشف الدورات في مختلف المجالات وابدأ رحلة التعلم اليوم'
+          description: 'اكتشف الدورات في مختلف المجالات وابدأ رحلة التعلم اليوم',
+          badge: 'جديد'
         },
         categories: {
           webDevelopment: 'تطوير الويب',
@@ -202,7 +251,13 @@ const resources = {
           marketing: 'التسويق',
           courses: 'دورة'
         },
-        joinNow: 'انضم الآن'
+        joinNow: 'انضم الآن',
+        stats: {
+          students: 'طالب',
+          courses: 'كورس',
+          instructors: 'مدرس',
+          satisfaction: 'معدل الرضا'
+        }
       },
       courses: {
         title: 'جميع الدورات',
@@ -215,7 +270,20 @@ const resources = {
         paid: 'مدفوع',
         beginner: 'مبتدئ',
         intermediate: 'متوسط',
-        expert: 'متقدم'
+        expert: 'متقدم',
+        freshContent: 'محتوى جديد',
+        newlyAdded: 'الكورسات المضافة حديثاً',
+        newlyAddedDesc: 'اكتشف أحدث الكورسات المضافة إلى المنصة. محتوى جديد، منهج محدث، وطرق تدريس حديثة.',
+        viewAllCourses: 'عرض جميع الكورسات',
+        bookNow: 'حجز الآن',
+        readyToStart: 'مستعد لبدء التعلم؟',
+        joinStudents: 'انضم إلى آلاف الطلاب الذين يتعلمون معنا بالفعل',
+        exploreAllCourses: 'استكشف جميع الكورسات',
+        new: 'جديد',
+        recorded: 'مسجل',
+        hours: 'ساعات',
+        basicMathematics: 'الرياضيات الأساسية',
+        instructor: 'المدرس'
       },
       honorBoard: {
         title: 'لوحة شرف الطلاب',
@@ -225,7 +293,11 @@ const resources = {
         coursesCompleted: 'الدورات المكتملة',
         certificatesEarned: 'الشهادات المكتسبة',
         points: 'النقاط',
-        rank: 'الترتيب'
+        rank: 'الترتيب',
+        teachersTitle: 'المعلمين المتميزين',
+        teachersSubtitle: 'تعرف على معلمينا الأكثر تفوقاً وإبداعاً',
+        studentsTitle: 'لوحة شرف الطلاب',
+        studentsSubtitle: 'تعرف على الطلاب المتفوقين والمتميزين في مسيرتهم التعليمية'
       },
       footer: {
         description: 'حول مسارك المهني مع دورات يقودها خبراء في التكنولوجيا والأعمال والمهارات الإبداعية. انضم إلى ملايين المتعلمين حول العالم.',
@@ -294,6 +366,31 @@ const resources = {
         filter: 'فلترة',
         sort: 'ترتيب حسب',
         viewAll: 'عرض الكل'
+      },
+      hero: {
+        title: 'الأكاديمية الاحترافية',
+        subtitle: 'بوابتك نحو التميز في التعليم',
+        description: 'انضم إلى آلاف الطلاب في رحلتهم نحو النجاح الأكاديمي مع منصتنا التعليمية الشاملة عبر الإنترنت.',
+        startLearning: 'ابدأ التعلم الآن',
+        exploreCourses: 'استكشف الكورسات',
+        interactiveLearning: 'التعلم التفاعلي',
+        experienceFuture: 'جرب مستقبل التعليم',
+        scrollDown: 'قم بالتمرير للأسفل'
+      },
+      teachers: {
+        title: 'المعلمين المتميزين',
+        subtitle: 'تعرف على معلمينا الأكثر تفوقاً وإبداعاً',
+        courses: 'الكورسات',
+        students: 'الطلاب',
+        rating: 'التقييم'
+      },
+      students: {
+        title: 'لوحة شرف الطلاب',
+        subtitle: 'تعرف على الطلاب المتفوقين والمتميزين في مسيرتهم التعليمية',
+        grade: 'الصف',
+        country: 'البلد',
+        completed: 'المكتملة',
+        totalCourses: 'الكورسات'
       }
     }
   }
@@ -303,7 +400,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: 'en', // default language
+    lng: 'en',
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false

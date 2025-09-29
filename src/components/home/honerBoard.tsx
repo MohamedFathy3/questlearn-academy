@@ -1,22 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Star, Users, BookOpen, Crown, Medal, Award, Trophy } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Trophy, Award, Star, Medal, Crown, Users, BookOpen, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { Skeleton } from '@/components/ui/skeleton';
+import Cookies from 'js-cookie';
 
 interface Teacher {
   id: number;
   name: string;
+  email: string;
   image: string | null;
   courses_count: number;
   students_count: number;
+  total_income: number;
+  commission: string;
   total_rate: number;
+  total_rating: number;
+  stage: {
+    name: string;
+  };
   subject: {
     name: string;
   };
-  stage: {
+  country: {
     name: string;
   };
 }
@@ -24,70 +34,32 @@ interface Teacher {
 interface ApiResponse {
   result: string;
   data: Teacher[];
+  meta?: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number;
+    to: number;
+  };
   message: string;
   status: number;
 }
 
-// بيانات وهمية لل cache
-const cachedTeachers = [
-  {
-    id: 1,
-    name: "أحمد محمد",
-    image: null,
-    courses_count: 15,
-    students_count: 320,
-    total_rate: 4.9,
-    subject: { name: "الرياضيات" },
-    stage: { name: "الثانوية" }
-  },
-  {
-    id: 2,
-    name: "فاطمة أحمد",
-    image: null,
-    courses_count: 12,
-    students_count: 280,
-    total_rate: 4.8,
-    subject: { name: "الفيزياء" },
-    stage: { name: "الثانوية" }
-  },
-  {
-    id: 3,
-    name: "محمد علي",
-    image: null,
-    courses_count: 10,
-    students_count: 250,
-    total_rate: 4.7,
-    subject: { name: "الكيمياء" },
-    stage: { name: "الإعدادية" }
-  },
-  {
-    id: 4,
-    name: "سارة خالد",
-    image: null,
-    courses_count: 8,
-    students_count: 200,
-    total_rate: 4.6,
-    subject: { name: "اللغة العربية" },
-    stage: { name: "الابتدائية" }
-  }
-];
-
-interface TeachersHonorBoardProps {
-  title?: string;
-  subtitle?: string;
-}
-
-const TeachersHonorBoard: React.FC<TeachersHonorBoardProps> = ({ 
-  title = "المعلمين المتميزين", 
-  subtitle = "تعرف على معلمينا الأكثر تفوقاً وإبداعاً" 
-}) => {
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
+const HonorBoard = () => {
+  const { t, i18n } = useTranslation();
+  const isArabic = i18n.language === 'ar';
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalTeachers, setTotalTeachers] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchTopTeachers();
+    fetchHonorBoardData(currentPage);
     
     // أنيميشن الظهور عند التمرير
     const observer = new IntersectionObserver(
@@ -99,48 +71,76 @@ const TeachersHonorBoard: React.FC<TeachersHonorBoardProps> = ({
       { threshold: 0.1 }
     );
 
-    const section = document.getElementById('teachers-honor-board');
-    if (section) {
-      observer.observe(section);
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
     }
 
     return () => {
-      if (section) {
-        observer.unobserve(section);
+      if (sectionRef.current) {
+        observer.unobserve(sectionRef.current);
       }
     };
-  }, []);
+  }, [currentPage]);
 
-  const fetchTopTeachers = async () => {
+  const fetchHonorBoardData = async (page: number) => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await apiFetch<ApiResponse>('/teacher/index', {
-        method: 'POST',
-        body: {
-          filters: {},
-          orderBy: "total_rate",
-          orderByDirection: "desc",
-          perPage: 4,
-          paginate: true,
-          delete: false
-        }
-      });
+      // محاولة جلب البيانات من API بدون توكن
+      try {
+        const response = await apiFetch<ApiResponse>('/teacher/index', {
+          method: 'POST',
+          body: {
+            filters: {},
+            orderBy: "total_rate",
+            orderByDirection: "desc",
+            perPage: 8,
+            paginate: true,
+            page: page
+          }
+        });
 
-      if (response.result === "Success" && response.data && response.data.length > 0) {
-        setTeachers(response.data);
-      } else {
-        setTeachers(cachedTeachers);
+        if (response.result === "Success" && response.data && response.data.length > 0) {
+          // ترتيب البيانات حسب إجمالي الكورسات أولاً، ثم التقييمات
+          const sortedTeachers = response.data.sort((a, b) => {
+            if (b.courses_count !== a.courses_count) {
+              return b.courses_count - a.courses_count;
+            }
+            return (b.total_rate || 0) - (a.total_rate || 0);
+          });
+
+          setTeachers(sortedTeachers);
+          setTotalPages(response.meta?.last_page || 1);
+          setTotalTeachers(response.meta?.total || sortedTeachers.length);
+          return;
+        }
+      } catch (apiError) {
+        console.log('API not available, using cached data');
       }
+
+      // استخدام البيانات المخزنة في الكاش إذا لم تكن API متاحة
+      const startIndex = (page - 1) * 8;
+      const paginatedTeachers = cachedTeachers.slice(startIndex, startIndex + 8);
+      setTeachers(paginatedTeachers);
+      setTotalPages(Math.ceil(cachedTeachers.length / 8));
+      setTotalTeachers(cachedTeachers.length);
+
     } catch (err: any) {
-      console.error('Error fetching top teachers:', err);
-      setError(err.message || 'حدث خطأ أثناء تحميل بيانات المعلمين');
-      setTeachers(cachedTeachers);
+      console.error('Error fetching honor board:', err);
+      setError(err.message || 'حدث خطأ أثناء تحميل البيانات');
+      
+      // استخدام البيانات المخزنة في الكاش في حالة الخطأ
+      const startIndex = (currentPage - 1) * 8;
+      const paginatedTeachers = cachedTeachers.slice(startIndex, startIndex + 8);
+      setTeachers(paginatedTeachers);
+      setTotalPages(Math.ceil(cachedTeachers.length / 8));
+      setTotalTeachers(cachedTeachers.length);
     } finally {
       setLoading(false);
     }
   };
+
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -168,24 +168,41 @@ const TeachersHonorBoard: React.FC<TeachersHonorBoardProps> = ({
     }
   };
 
+  // الحصول على صورة افتراضية
+  const getDefaultAvatar = (teacher: Teacher) => {
+    const avatars = [
+      'https://images.unsplash.com/photo-1566753323558-f4e0952af115?w=150&h=150&fit=crop&crop=face',
+      'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
+      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face'
+    ];
+    return teacher.image || avatars[teacher.id % avatars.length];
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: sectionRef.current?.offsetTop || 0, behavior: 'smooth' });
+  };
+
   if (loading) {
     return (
-      <section id="teachers-honor-board" className="py-16 bg-gradient-to-b from-background to-muted/30">
+      <div ref={sectionRef} className="min-h-[500px] bg-gradient-to-b from-background to-muted/30 py-16">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <Skeleton className="h-10 w-64 mx-auto mb-4" />
+            <Skeleton className="h-12 w-64 mx-auto mb-4" />
             <Skeleton className="h-6 w-96 mx-auto" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, index) => (
-              <Card key={index} className="overflow-hidden text-center animate-pulse">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <Card key={i} className="overflow-hidden text-center animate-pulse">
                 <CardHeader className="pt-8">
-                  <Skeleton className="h-24 w-24 rounded-full mx-auto mb-4" />
+                  <Skeleton className="h-20 w-20 rounded-full mx-auto mb-4" />
                   <Skeleton className="h-6 w-32 mx-auto mb-2" />
                   <Skeleton className="h-4 w-24 mx-auto mb-4" />
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-3 gap-3">
                     <Skeleton className="h-12 rounded" />
                     <Skeleton className="h-12 rounded" />
                     <Skeleton className="h-12 rounded" />
@@ -195,129 +212,227 @@ const TeachersHonorBoard: React.FC<TeachersHonorBoardProps> = ({
             ))}
           </div>
         </div>
-      </section>
+      </div>
     );
   }
 
   return (
-    <section id="teachers-honor-board" className="py-16 bg-gradient-to-b from-background to-muted/30">
+    <div ref={sectionRef} className="min-h-[500px] bg-gradient-to-b from-background to-muted/30 py-16">
       <div className="container mx-auto px-4">
         {/* Header مع أنيميشن */}
         <div className={`text-center mb-12 transition-all duration-700 ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
         }`}>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            {title}
-          </h2>
+          <div className="inline-flex items-center gap-3 mb-4">
+            <Sparkles className="w-8 h-8 text-yellow-500 animate-pulse" />
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+              {t('teachers.title', 'المعلمين المتميزين')}
+            </h1>
+            <Sparkles className="w-8 h-8 text-yellow-500 animate-pulse" />
+          </div>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            {subtitle}
+            {t('teachers.subtitle', 'تعرف على معلمينا الأكثر تفوقاً وإبداعاً')}
           </p>
         </div>
 
-        {/* Teachers Grid مع أنيميشن متدرج */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {teachers.map((teacher, index) => (
-            <Card 
-              key={teacher.id} 
-              className={`group cursor-pointer hover:shadow-xl transition-all duration-500 border-0 shadow-lg relative overflow-hidden transform ${
-                isVisible 
-                  ? 'opacity-100 translate-y-0 scale-100' 
-                  : 'opacity-0 translate-y-10 scale-95'
-              }`}
-              style={{
-                animationDelay: `${index * 200}ms`,
-                animationFillMode: 'forwards'
-              }}
-            >
-              {/* تأثير خلفي متحرك */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-950/20 dark:to-purple-950/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              
-              {/* Rank Badge مع أنيميشن */}
-              <div className={`absolute top-4 right-4 ${getRankBgColor(index + 1)} text-white px-3 py-1 rounded-full flex items-center gap-2 text-sm font-bold z-10 transform transition-all duration-300 group-hover:scale-110 group-hover:rotate-6`}>
-                {getRankIcon(index + 1)}
-                #{index + 1}
-              </div>
-              
-              <CardHeader className="text-center pt-8 pb-4 relative z-10">
-                {/* Avatar مع أنيميشن */}
-                <div className="relative mx-auto mb-4">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full scale-110 opacity-0 group-hover:opacity-100 transition-all duration-500 blur-sm"></div>
-                  <Avatar className="w-20 h-20 border-4 border-white shadow-lg transform transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 relative z-10">
-                    <AvatarImage 
-                      src={teacher.image || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"} 
-                      alt={teacher.name} 
-                      className="transition-all duration-500 group-hover:brightness-110"
-                    />
-                    <AvatarFallback className="text-sm bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold transition-all duration-500 group-hover:scale-110">
-                      {teacher.name.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
-                
-                <CardTitle className="text-lg transition-all duration-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:scale-105">
-                  {teacher.name}
-                </CardTitle>
-                
-                <div className="flex flex-col gap-1 mt-2">
-                  <Badge 
-                    variant="secondary" 
-                    className="mx-auto text-xs transition-all duration-300 group-hover:bg-blue-100 group-hover:text-blue-700 dark:group-hover:bg-blue-900/30"
-                  >
-                    {teacher.subject?.name}
-                  </Badge>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="space-y-4 relative z-10">
-                {/* Teacher Stats مع أنيميشن */}
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div className="transform transition-all duration-300 group-hover:scale-110">
-                    <div className="text-xl font-bold text-primary flex flex-col items-center gap-1">
-                      <BookOpen className="w-4 h-4 transition-all duration-300 group-hover:scale-125 group-hover:text-blue-500" />
-                      {teacher.courses_count}
-                    </div>
-                    <div className="text-xs text-muted-foreground transition-all duration-300 group-hover:text-foreground group-hover:font-medium">
-                      الكورسات
-                    </div>
-                  </div>
-                  
-                  <div className="transform transition-all duration-300 group-hover:scale-110">
-                    <div className="text-xl font-bold text-accent flex flex-col items-center gap-1">
-                      <Users className="w-4 h-4 transition-all duration-300 group-hover:scale-125 group-hover:text-green-500" />
-                      {teacher.students_count}
-                    </div>
-                    <div className="text-xs text-muted-foreground transition-all duration-300 group-hover:text-foreground group-hover:font-medium">
-                      الطلاب
-                    </div>
-                  </div>
-                  
-                  <div className="transform transition-all duration-300 group-hover:scale-110">
-                    <div className="text-xl font-bold text-success flex flex-col items-center gap-1">
-                      <Star className="w-4 h-4 transition-all duration-300 group-hover:scale-125 group-hover:text-yellow-500" />
-                      {teacher.total_rate}
-                    </div>
-                    <div className="text-xs text-muted-foreground transition-all duration-300 group-hover:text-foreground group-hover:font-medium">
-                      التقييم
-                    </div>
-                  </div>
-                </div>
-
-                {/* Progress Bar أنيميشن */}
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-4 overflow-hidden">
-                  <div 
-                    className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-1000 ease-out"
-                    style={{ 
-                      width: isVisible ? `${(teacher.total_rate / 5) * 100}%` : '0%'
-                    }}
-                  ></div>
-                </div>
-              </CardContent>
-
-              {/* تأثير Hover */}
-              <div className="absolute inset-0 border-2 border-transparent group-hover:border-blue-300 dark:group-hover:border-blue-600 rounded-lg transition-all duration-500 pointer-events-none"></div>
-            </Card>
-          ))}
+        {/* Results Info */}
+        <div className={`flex justify-between items-center mb-8 transition-all duration-700 delay-300 ${
+          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+        }`}>
+          <p className="text-muted-foreground text-sm">
+            {t('common.showing', 'عرض')} {((currentPage - 1) * 8) + 1} {t('common.to', 'إلى')} {Math.min(currentPage * 8, totalTeachers)} {t('common.of', 'من')} {totalTeachers} {t('teachers.title', 'معلم')}
+          </p>
+          <div className="text-sm text-muted-foreground">
+            {t('common.sortedBy', 'مرتب حسب')}: <strong>{t('teachers.courses', 'الكورسات')}</strong> & <strong>{t('teachers.rating', 'التقييم')}</strong>
+          </div>
         </div>
+
+        {/* Teachers Grid مع أنيميشن */}
+        {teachers.length === 0 ? (
+          <div className="text-center text-muted-foreground py-12">
+            <Trophy className="w-16 h-16 mx-auto mb-4 opacity-50" />
+            <p>{t('teachers.noData', 'لا توجد بيانات للمعلمين حالياً')}</p>
+          </div>
+        ) : (
+          <>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {teachers.map((teacher, index) => {
+                const globalRank = ((currentPage - 1) * 8) + index + 1;
+                
+                return (
+                  <Card 
+                    key={teacher.id} 
+                    className={`group cursor-pointer hover:shadow-2xl transition-all duration-500 border-0 shadow-lg relative overflow-hidden transform ${
+                      isVisible 
+                        ? 'opacity-100 translate-y-0 scale-100' 
+                        : 'opacity-0 translate-y-10 scale-95'
+                    }`}
+                    style={{
+                      animationDelay: `${index * 150}ms`,
+                      animationFillMode: 'forwards'
+                    }}
+                  >
+                    {/* تأثير خلفي متحرك */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-950/20 dark:to-purple-950/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    
+                    {/* Rank Badge مع أنيميشن */}
+                    <div className={`absolute top-4 ${isArabic ? 'left-4' : 'right-4'} ${
+                      getRankBgColor(globalRank)
+                    } text-white px-3 py-1 rounded-full flex items-center gap-2 text-sm font-bold z-10 transform transition-all duration-300 group-hover:scale-110 group-hover:rotate-6`}>
+                      {getRankIcon(globalRank)}
+                      #{globalRank}
+                    </div>
+                    
+                    <CardHeader className="text-center pt-8 pb-4 relative z-10">
+                      {/* Avatar مع أنيميشن */}
+                      <div className="relative mx-auto mb-4">
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full scale-110 opacity-0 group-hover:opacity-100 transition-all duration-500 blur-sm"></div>
+                        <Avatar className="w-20 h-20 border-4 border-white shadow-lg transform transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 relative z-10">
+                          <AvatarImage 
+                            src={getDefaultAvatar(teacher)} 
+                            alt={teacher.name}
+                            className="transition-all duration-500 group-hover:brightness-110"
+                          />
+                          <AvatarFallback className="text-sm bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold transition-all duration-500 group-hover:scale-110">
+                            {teacher.name.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                      </div>
+                      
+                      <CardTitle className="text-lg transition-all duration-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:scale-105">
+                        {teacher.name}
+                      </CardTitle>
+                      
+                      <div className="flex flex-col gap-1 mt-2">
+                        <Badge 
+                          variant="secondary" 
+                          className="mx-auto text-xs transition-all duration-300 group-hover:bg-blue-100 group-hover:text-blue-700 dark:group-hover:bg-blue-900/30"
+                        >
+                          {teacher.subject?.name || t('common.general', 'عام')}
+                        </Badge>
+                        <Badge 
+                          variant="outline" 
+                          className="mx-auto text-xs transition-all duration-300 group-hover:border-blue-300"
+                        >
+                          {teacher.courses_count} {t('teachers.courses', 'كورس')}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    
+                    <CardContent className="space-y-4 relative z-10">
+                      {/* Teacher Stats مع أنيميشن */}
+                      <div className="grid grid-cols-3 gap-3 text-center">
+                        <div className="transform transition-all duration-300 group-hover:scale-110">
+                          <div className="text-xl font-bold text-primary flex flex-col items-center gap-1">
+                            <BookOpen className="w-4 h-4 transition-all duration-300 group-hover:scale-125 group-hover:text-blue-500" />
+                            {teacher.courses_count}
+                          </div>
+                          <div className="text-xs text-muted-foreground transition-all duration-300 group-hover:text-foreground group-hover:font-medium">
+                            {t('teachers.courses', 'الكورسات')}
+                          </div>
+                        </div>
+                        
+                        <div className="transform transition-all duration-300 group-hover:scale-110">
+                          <div className="text-xl font-bold text-green-600 flex flex-col items-center gap-1">
+                            <Users className="w-4 h-4 transition-all duration-300 group-hover:scale-125 group-hover:text-green-500" />
+                          </div>
+                          <div className="text-xs text-muted-foreground transition-all duration-300 group-hover:text-foreground group-hover:font-medium">
+                            {t('teachers.teacher', 'المعلم ')}
+                          </div>
+                        </div>
+                        
+                        <div className="transform transition-all duration-300 group-hover:scale-110">
+                          <div className="text-xl font-bold text-amber-600 flex flex-col items-center gap-1">
+                            <Star className="w-4 h-4 transition-all duration-300 group-hover:scale-125 group-hover:text-yellow-500" />
+                            {teacher.total_rate ? teacher.total_rate.toFixed(1) : '0.0'}
+                          </div>
+                          <div className="text-xs text-muted-foreground transition-all duration-300 group-hover:text-foreground group-hover:font-medium">
+                            {t('teachers.rating', 'التقييم')}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Total Rating */}
+                      {teacher.total_rating && (
+                        <div className="text-center pt-2 border-t border-gray-200 dark:border-gray-700">
+                          <div className="text-sm font-semibold text-muted-foreground transition-all duration-300 group-hover:text-foreground">
+                            {t('teachers.totalRatings', 'إجمالي التقييمات')}: {teacher.total_rating}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+
+                    {/* تأثير Hover */}
+                    <div className="absolute inset-0 border-2 border-transparent group-hover:border-blue-300 dark:group-hover:border-blue-600 rounded-lg transition-all duration-500 pointer-events-none"></div>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* Pagination مع أنيميشن */}
+            {totalPages > 1 && (
+              <div className={`flex justify-center items-center gap-2 mt-8 transition-all duration-700 ${
+                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+              }`}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="transition-all duration-300 hover:scale-105 disabled:opacity-50"
+                >
+                  <ChevronLeft className={`w-4 h-4 ${isArabic ? 'rotate-180' : ''}`} />
+                </Button>
+
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`transition-all duration-300 hover:scale-105 ${
+                        currentPage === pageNum ? 'bg-blue-600 text-white' : ''
+                      }`}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="transition-all duration-300 hover:scale-105 disabled:opacity-50"
+                >
+                  <ChevronRight className={`w-4 h-4 ${isArabic ? 'rotate-180' : ''}`} />
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <div className={`text-center text-yellow-600 bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-8 transition-all duration-500 ${
+            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+          }`}>
+            <p>{t('common.error', 'خطأ')}: {error}</p>
+          </div>
+        )}
 
         {/* Floating Particles Effect */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -328,15 +443,15 @@ const TeachersHonorBoard: React.FC<TeachersHonorBoardProps> = ({
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
-                animationDelay: `${i * 2}s`,
-                animationDuration: `${6 + i * 2}s`
+                animationDelay: `${i * 1.5}s`,
+                animationDuration: `${8 + i * 1}s`
               }}
             />
           ))}
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 
-export default TeachersHonorBoard;
+export default HonorBoard;

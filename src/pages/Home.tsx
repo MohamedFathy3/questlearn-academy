@@ -194,24 +194,7 @@ const Home = () => {
             ))}
           </div>
 
-          {/* CTA Button */}
-          <div className="text-center mt-12 animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
-            <Button 
-              size="lg" 
-              className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 
-                         text-white shadow-glow hover:shadow-glow-lg transition-all duration-500 hover:scale-105
-                         group relative overflow-hidden"
-            >
-              <span className="relative z-10 flex items-center gap-2">
-                <Rocket className="w-5 h-5 group-hover:animate-bounce" />
-                {t('home.topCategories.cta')}
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
-              </span>
-              
-              {/* Shimmer Effect */}
-              <div className="absolute inset-0 -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-            </Button>
-          </div>
+        
         </div>
       </section>
 

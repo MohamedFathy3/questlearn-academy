@@ -4,10 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Trophy, Award, Star, Medal, Crown, Users, BookOpen, CheckCircle, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import {
+  Trophy, Award, Star, Medal, Crown, Users, BookOpen, CheckCircle, ChevronLeft, ChevronRight, Sparkles
+} from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
-import Cookies from 'js-cookie';
 
 interface Student {
   id: number;
@@ -46,69 +47,6 @@ interface ApiResponse {
   status: number;
 }
 
-const cachedStudents = [
-  {
-    id: 1,
-    name: "أحمد محمد",
-    email: "ahmed@example.com",
-    image: null,
-    total_courses: 12,
-    completed_courses: 8,
-    enrolled_courses: 12,
-    total_hours: 45,
-    points: 1200,
-    total_rate: 4.9,
-    grade: { name: "الصف العاشر" },
-    stage: { name: "الثانوية" },
-    country: { name: "مصر" }
-  },
-  {
-    id: 2,
-    name: "فاطمة أحمد",
-    email: "fatima@example.com",
-    image: null,
-    total_courses: 10,
-    completed_courses: 7,
-    enrolled_courses: 10,
-    total_hours: 38,
-    points: 1100,
-    total_rate: 4.8,
-    grade: { name: "الصف التاسع" },
-    stage: { name: "الإعدادية" },
-    country: { name: "السعودية" }
-  },
-  {
-    id: 3,
-    name: "محمد علي",
-    email: "mohamed@example.com",
-    image: null,
-    total_courses: 8,
-    completed_courses: 6,
-    enrolled_courses: 8,
-    total_hours: 32,
-    points: 950,
-    total_rate: 4.7,
-    grade: { name: "الصف الحادي عشر" },
-    stage: { name: "الثانوية" },
-    country: { name: "الإمارات" }
-  },
-  {
-    id: 4,
-    name: "سارة خالد",
-    email: "sara@example.com",
-    image: null,
-    total_courses: 6,
-    completed_courses: 5,
-    enrolled_courses: 6,
-    total_hours: 28,
-    points: 850,
-    total_rate: 4.6,
-    grade: { name: "الصف الثامن" },
-    stage: { name: "الإعدادية" },
-    country: { name: "قطر" }
-  }
-];
-
 const StudentsHonorBoard = () => {
   const { t, i18n } = useTranslation();
   const isArabic = i18n.language === 'ar';
@@ -123,12 +61,13 @@ const StudentsHonorBoard = () => {
 
   useEffect(() => {
     fetchStudentsHonorBoardData(currentPage);
-    
+
     // أنيميشن الظهور عند التمرير
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsVisible(true);
+          observer.unobserve(entry.target); // لمرة واحدة فقط
         }
       },
       { threshold: 0.1 }
@@ -150,46 +89,34 @@ const StudentsHonorBoard = () => {
       setLoading(true);
       setError(null);
 
-      const token = Cookies.get("token");
-      
-      try {
-        const response = await apiFetch<ApiResponse>('/student/index', {
-          method: 'POST',
-          body: {
-            filters: {},
-            orderBy: "total_rate",
-            orderByDirection: "desc",
-            perPage: 4,
-            paginate: true,
-            page: page
-          }
-        });
-
-        if (response.result === "Success" && response.data && response.data.length > 0) {
-          setStudents(response.data);
-          setTotalPages(response.meta?.last_page || 1);
-          setTotalStudents(response.meta?.total || response.data.length);
-          return;
+      const response = await apiFetch<ApiResponse>('/student/index', {
+        method: 'POST',
+        body: {
+          filters: {},
+          orderBy: "total_rate",
+          orderByDirection: "desc",
+          perPage: 4,
+          paginate: true,
+          page: page
         }
-      } catch (apiError) {
-        console.log('API not ready, using cached data');
+      });
+
+      if (response.result === "Success" && response.data && response.data.length > 0) {
+        setStudents(response.data);
+        setTotalPages(response.meta?.last_page || 1);
+        setTotalStudents(response.meta?.total || response.data.length);
+      } else {
+        // لو البيانات مش جاهزة، ممكن تستخدم بيانات مخزنة أو فارغة
+        setStudents([]);
+        setTotalPages(1);
+        setTotalStudents(0);
       }
-
-      const startIndex = (page - 1) * 4;
-      const paginatedStudents = cachedStudents.slice(startIndex, startIndex + 4);
-      setStudents(paginatedStudents);
-      setTotalPages(Math.ceil(cachedStudents.length / 4));
-      setTotalStudents(cachedStudents.length);
-
     } catch (err: any) {
       console.error('Error fetching students honor board:', err);
       setError(err.message || 'حدث خطأ أثناء تحميل البيانات');
-      
-      const startIndex = (currentPage - 1) * 4;
-      const paginatedStudents = cachedStudents.slice(startIndex, startIndex + 4);
-      setStudents(paginatedStudents);
-      setTotalPages(Math.ceil(cachedStudents.length / 4));
-      setTotalStudents(cachedStudents.length);
+      setStudents([]);
+      setTotalPages(1);
+      setTotalStudents(0);
     } finally {
       setLoading(false);
     }
@@ -232,8 +159,10 @@ const StudentsHonorBoard = () => {
   };
 
   const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return;
     setCurrentPage(newPage);
-    window.scrollTo({ top: sectionRef.current?.offsetTop || 0, behavior: 'smooth' });
+    // نحاول نزل الصفحة إلى القسم
+    sectionRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   if (loading) {
@@ -271,9 +200,11 @@ const StudentsHonorBoard = () => {
     <div ref={sectionRef} className="min-h-[500px] bg-gradient-to-b from-background to-muted/30 py-16">
       <div className="container mx-auto px-4">
         {/* Header مع أنيميشن */}
-        <div className={`text-center mb-12 transition-all duration-700 ${
-          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-        }`}>
+        <div
+          className={`text-center mb-12 transition-all duration-700 ${
+            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+          }`}
+        >
           <div className="inline-flex items-center gap-3 mb-4">
             <Sparkles className="w-8 h-8 text-yellow-500 animate-pulse" />
             <h2 className="text-3xl md:text-4xl font-bold text-foreground">
@@ -282,202 +213,140 @@ const StudentsHonorBoard = () => {
             <Sparkles className="w-8 h-8 text-yellow-500 animate-pulse" />
           </div>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            {t('studentsHonorBoard.subtitle', 'تعرف على الطلاب المتفوقين والمتميزين في مسيرتهم التعليمية')}
+            {t(
+              'studentsHonorBoard.subtitle',
+              'تعرف على الطلاب المتفوقين والمتميزين في مسيرتهم التعليمية'
+            )}
           </p>
         </div>
 
-        {/* Top Students Section */}
+        {/* الطلاب */}
         {students.length === 0 ? (
           <div className="text-center text-muted-foreground py-12">
             <Trophy className="w-16 h-16 mx-auto mb-4 opacity-50" />
             <p>{t('studentsHonorBoard.noStudents', 'لا توجد بيانات للطلاب حالياً')}</p>
           </div>
         ) : (
-          <>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              {students.map((student, index) => {
-                const globalRank = ((currentPage - 1) * 4) + index + 1;
-                const progressPercentage = Math.round((student.completed_courses / student.total_courses) * 100);
-                
-                return (
-                  <Card 
-                    key={student.id} 
-                    className={`group cursor-pointer hover:shadow-2xl transition-all duration-500 border-0 shadow-lg relative overflow-hidden transform ${
-                      isVisible 
-                        ? 'opacity-100 translate-y-0 scale-100' 
-                        : 'opacity-0 translate-y-10 scale-95'
-                    }`}
-                    style={{
-                      animationDelay: `${index * 200}ms`,
-                      animationFillMode: 'forwards'
-                    }}
-                  >
-                    {/* تأثير خلفي متحرك */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-950/20 dark:to-purple-950/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    
-                    {/* Rank Badge مع أنيميشن */}
-                    <div className={`absolute top-4 ${isArabic ? 'left-4' : 'right-4'} ${
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {students.map((student, index) => {
+              const globalRank = (currentPage - 1) * 4 + index + 1;
+
+              return (
+                <Card
+                  key={student.id}
+                  className={`group cursor-pointer hover:shadow-2xl transition-all duration-500 border-0 shadow-lg relative overflow-hidden ${
+                    isVisible
+                      ? 'opacity-100 translate-y-0 scale-100'
+                      : 'opacity-0 translate-y-10 scale-95'
+                  }`}
+                  style={{
+                    transitionDelay: `${index * 150}ms`
+                  }}
+                >
+                  {/* خلفية التأثير عند الهوفّر */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-950/20 dark:to-purple-950/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+                  {/* رتبة الطالب */}
+                  <div
+                    className={`absolute top-4 ${isArabic ? 'left-4' : 'right-4'} ${
                       getRankBgColor(globalRank)
-                    } text-white px-3 py-1 rounded-full flex items-center gap-2 text-sm font-bold z-10 transform transition-all duration-300 group-hover:scale-110 group-hover:rotate-6`}>
-                      {getRankIcon(globalRank)}
-                      #{globalRank}
-                    </div>
-                    
-                    <CardHeader className="text-center pt-8 pb-4 relative z-10">
-                      {/* Avatar مع أنيميشن */}
-                      <div className="relative mx-auto mb-4">
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full scale-110 opacity-0 group-hover:opacity-100 transition-all duration-500 blur-sm"></div>
-                        <Avatar className="w-20 h-20 border-4 border-white shadow-lg transform transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 relative z-10">
-                          <AvatarImage 
-                            src={getDefaultAvatar(student)} 
-                            alt={student.name}
-                            className="transition-all duration-500 group-hover:brightness-110"
-                          />
-                          <AvatarFallback className="text-sm bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold transition-all duration-500 group-hover:scale-110">
-                            {student.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                      </div>
-                      
-                      <CardTitle className="text-lg transition-all duration-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:scale-105">
-                        {student.name}
-                      </CardTitle>
-                      
-                      <div className="flex flex-col gap-1 mt-2">
-                        <Badge 
-                          variant="secondary" 
-                          className="mx-auto text-xs transition-all duration-300 group-hover:bg-blue-100 group-hover:text-blue-700 dark:group-hover:bg-blue-900/30"
-                        >
-                          {student.grade?.name || 'الصف'}
-                        </Badge>
-                        <Badge 
-                          variant="outline" 
-                          className="mx-auto text-xs transition-all duration-300 group-hover:border-blue-300"
-                        >
-                          {student.country?.name || 'البلد'}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    
-                    <CardContent className="space-y-4 relative z-10">
-                      {/* Student Stats مع أنيميشن */}
-                      <div className="grid grid-cols-3 gap-3 text-center">
-                        <div className="transform transition-all duration-300 group-hover:scale-110">
-                          <div className="text-xl font-bold text-primary flex flex-col items-center gap-1">
-                            <BookOpen className="w-4 h-4 transition-all duration-300 group-hover:scale-125 group-hover:text-blue-500" />
-                            {student.total_courses}
-                          </div>
-                          <div className="text-xs text-muted-foreground transition-all duration-300 group-hover:text-foreground group-hover:font-medium">
-                            الكورسات
-                          </div>
-                        </div>
-                        
-                        <div className="transform transition-all duration-300 group-hover:scale-110">
-                          <div className="text-xl font-bold text-green-600 flex flex-col items-center gap-1">
-                            <CheckCircle className="w-4 h-4 transition-all duration-300 group-hover:scale-125 group-hover:text-green-500" />
-                            {student.completed_courses}
-                          </div>
-                          <div className="text-xs text-muted-foreground transition-all duration-300 group-hover:text-foreground group-hover:font-medium">
-                            المكتملة
-                          </div>
-                        </div>
-                        
-                        <div className="transform transition-all duration-300 group-hover:scale-110">
-                          <div className="text-xl font-bold text-amber-600 flex flex-col items-center gap-1">
-                            <Star className="w-4 h-4 transition-all duration-300 group-hover:scale-125 group-hover:text-yellow-500" />
-                            {student.total_rate}
-                          </div>
-                          <div className="text-xs text-muted-foreground transition-all duration-300 group-hover:text-foreground group-hover:font-medium">
-                            التقييم
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Progress Bar أنيميشن */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-xs text-muted-foreground transition-all duration-300 group-hover:text-foreground">
-                          <span>التقدم</span>
-                          <span className="font-semibold">{progressPercentage}%</span>
-                        </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
-                          <div 
-                            className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-1000 ease-out"
-                            style={{ 
-                              width: isVisible ? `${progressPercentage}%` : '0%'
-                            }}
-                          ></div>
-                        </div>
-                      </div>
-
-                      {/* Points مع أنيميشن */}
-                      <div className="text-center transform transition-all duration-300 group-hover:scale-105">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full text-sm font-semibold">
-                          <Sparkles className="w-3 h-3 animate-pulse" />
-                          {student.points} نقطة
-                        </div>
-                      </div>
-                    </CardContent>
-
-                    {/* تأثير Hover */}
-                    <div className="absolute inset-0 border-2 border-transparent group-hover:border-blue-300 dark:group-hover:border-blue-600 rounded-lg transition-all duration-500 pointer-events-none"></div>
-                  </Card>
-                );
-              })}
-            </div>
-
-            {/* Pagination مع أنيميشن */}
-            {totalPages > 1 && (
-              <div className={`flex justify-center items-center gap-2 mt-8 transition-all duration-700 ${
-                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-              }`}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="transition-all duration-300 hover:scale-105 disabled:opacity-50"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                
-                {[...Array(totalPages)].map((_, index) => (
-                  <Button
-                    key={index + 1}
-                    variant={currentPage === index + 1 ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handlePageChange(index + 1)}
-                    className={`transition-all duration-300 hover:scale-105 ${
-                      currentPage === index + 1 ? 'bg-blue-600 text-white' : ''
-                    }`}
+                    } text-white px-3 py-1 rounded-full flex items-center gap-2 text-sm font-bold z-10 transform transition-all duration-300 group-hover:scale-110 group-hover:rotate-3`}
                   >
-                    {index + 1}
-                  </Button>
-                ))}
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="transition-all duration-300 hover:scale-105 disabled:opacity-50"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
-          </>
+                    {getRankIcon(globalRank)}
+                    #{globalRank}
+                  </div>
+
+                  <CardHeader className="text-center pt-8 pb-4 relative z-10">
+                    {/* الصورة (Avatar) */}
+                    <div className="relative mx-auto mb-4">
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full scale-110 opacity-0 group-hover:opacity-100 transition-all duration-500 blur-sm"></div>
+                      <Avatar className="w-20 h-20 border-4 border-white shadow-lg transform transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 relative z-10">
+                        <AvatarImage
+                          src={getDefaultAvatar(student)}
+                          alt={student.name}
+                          className="transition-all duration-500 group-hover:brightness-110"
+                        />
+                        <AvatarFallback className="text-sm bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold transition-all duration-500 group-hover:scale-110">
+                          {student.name
+                            .split(' ')
+                            .map((n) => n[0])
+                            .join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+
+                    <CardTitle className="text-lg transition-all duration-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:scale-105">
+                      {student.name}
+                    </CardTitle>
+
+                    <div className="flex flex-col gap-1 mt-2">
+                      <Badge
+                        variant="secondary"
+                        className="mx-auto text-xs transition-all duration-300 group-hover:bg-blue-100 group-hover:text-blue-700 dark:group-hover:bg-blue-900/30"
+                      >
+                        {student.grade?.name || ''}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        className="mx-auto text-xs transition-all duration-300 group-hover:border-blue-300"
+                      >
+                        {student.country?.name || ''}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="space-y-4 relative z-10">
+                    <div className="grid grid-cols-3 gap-3 text-center">
+                      <div className="transform transition-all duration-300 group-hover:scale-110">
+                        <div className="text-xl font-bold text-primary flex flex-col items-center gap-1">
+                          <BookOpen className="w-4 h-4 transition-all duration-300 group-hover:scale-125 group-hover:text-blue-500" />
+                          {student.total_courses}
+                        </div>
+                        <div className="text-xs text-muted-foreground transition-all duration-300 group-hover:text-foreground group-hover:font-medium">
+                          الكورسات
+                        </div>
+                      </div>
+
+                      <div className="transform transition-all duration-300 group-hover:scale-110">
+                        <div className="text-xl font-bold text-green-600 flex flex-col items-center gap-1">
+                          <CheckCircle className="w-4 h-4 transition-all duration-300 group-hover:scale-125 group-hover:text-green-500" />
+                          {student.completed_courses}
+                        </div>
+                        <div className="text-xs text-muted-foreground transition-all duration-300 group-hover:text-foreground group-hover:font-medium">
+                          المكتملة
+                        </div>
+                      </div>
+
+                      <div className="transform transition-all duration-300 group-hover:scale-110">
+                        <div className="text-xl font-bold text-amber-600 flex flex-col items-center gap-1">
+                          <Star className="w-4 h-4 transition-all duration-300 group-hover:scale-125 group-hover:text-yellow-500" />
+                          {student.total_rate}
+                        </div>
+                        <div className="text-xs text-muted-foreground transition-all duration-300 group-hover:text-foreground group-hover:font-medium">
+                          التقييم
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+
+                  <div className="absolute inset-0 border-2 border-transparent group-hover:border-blue-300 dark:group-hover:border-blue-600 rounded-lg transition-all duration-500 pointer-events-none"></div>
+                </Card>
+              );
+            })}
+          </div>
         )}
 
-        {/* Error Message */}
         {error && (
-          <div className={`text-center text-yellow-600 bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-8 transition-all duration-500 ${
-            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-          }`}>
+          <div
+            className={`text-center text-yellow-600 bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-8 transition-all duration-500 ${
+              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+            }`}
+          >
             <p>ملاحظة: يتم عرض بيانات مخزنة - {error}</p>
           </div>
         )}
 
-        {/* Floating Particles Effect */}
+        {/* تأثير الجسيمات العائمة */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {[...Array(8)].map((_, i) => (
             <div
@@ -487,11 +356,50 @@ const StudentsHonorBoard = () => {
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
                 animationDelay: `${i * 1.5}s`,
-                animationDuration: `${8 + i * 1}s`
+                animationDuration: `${8 + i * 1}s`,
               }}
             />
           ))}
         </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 mt-8 relative z-10">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className={isArabic ? 'rotate-180' : ''}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            {Array.from({ length: totalPages }).map((_, i) => {
+              const pageNum = i + 1;
+              return (
+                <Button
+                  key={pageNum}
+                  variant={currentPage === pageNum ? 'default' : 'outline'}
+                  onClick={() => handlePageChange(pageNum)}
+                  className={
+                    currentPage === pageNum ? 'bg-tan text-white' : ''
+                  }
+                >
+                  {pageNum}
+                </Button>
+              );
+            })}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className={isArabic ? 'rotate-180' : ''}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

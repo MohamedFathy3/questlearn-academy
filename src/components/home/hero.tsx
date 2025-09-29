@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
+import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function Hero() {
   const [isVisible, setIsVisible] = useState(false);
+  const { t, i18n } = useTranslation();
+  const isArabic = i18n.language === 'ar';
 
   useEffect(() => {
     setIsVisible(true);
@@ -33,70 +37,76 @@ export default function Hero() {
 
       {/* المحتوى مع تخطيط جديد */}
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 md:px-8">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
+        <div className={`flex flex-col lg:flex-row items-center justify-between gap-12 ${
+          isArabic ? 'lg:flex-row-reverse' : ''
+        }`}>
           
-          {/* المحتوى على اليسار */}
+          {/* المحتوى على اليسار (أو اليمين في العربية) */}
           <div className={`flex-1 text-white transition-all duration-1000 delay-300 ${
-            isVisible ? 'translate-x-0 opacity-100' : '-translate-x-10 opacity-0'
+            isVisible 
+              ? 'translate-x-0 opacity-100' 
+              : isArabic 
+                ? 'translate-x-10 opacity-0' 
+                : '-translate-x-10 opacity-0'
           }`}>
             {/* العنوان الرئيسي */}
             <div className="mb-8">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight">
-                Professional Academy{" "}
-                <span className="bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent block">
-                  EDU
-                </span>
+                {t('hero.title')}
               </h1>
             </div>
             
             {/* الشعار والوصف */}
             <div className="space-y-6 mb-8">
               <h2 className="text-2xl md:text-3xl font-semibold text-white/90 leading-tight">
-                Your Gateway to Excellence in Education
+                {t('hero.subtitle')}
               </h2>
               <p className="text-lg md:text-xl text-blue-100 max-w-2xl leading-relaxed">
-                Join thousands of students on their journey to academic success with our comprehensive online learning platform.
+                {t('hero.description')}
               </p>
             </div>
 
-            {/* حقلين الإدخال */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mb-8">
-              <div className="space-y-2">
-                <input 
-                  type="email" 
-                  placeholder="Enter your email"
-                  className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <input 
-                  type="password" 
-                  placeholder="Enter your password"
-                  className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
-                />
-              </div>
-            </div>
-
             {/* الأزرار */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button className="bg-white text-blue-600 hover:bg-blue-50 px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 hover:scale-105 hover:shadow-2xl shadow-lg flex items-center justify-center gap-3">
-                <span>Start Learning Now</span>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className={`flex flex-col sm:flex-row gap-4 ${isArabic ? 'sm:flex-row-reverse' : ''}`}>
+              <Link
+                to="/login"
+                className="bg-white text-blue-600 hover:bg-blue-50 px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 hover:scale-105 hover:shadow-2xl shadow-lg flex items-center justify-center gap-3"
+              >
+                <span>{t('hero.startLearning')}</span>
+                <svg 
+                  className={`w-5 h-5 transform ${isArabic ? 'rotate-180' : ''}`} 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
-              </button>
-              <button className="border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3">
-                <span>Explore Courses</span>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              </Link>
+
+              <Link
+                to="/courses"
+                className="border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3"
+              >
+                <span>{t('hero.exploreCourses')}</span>
+                <svg 
+                  className="w-5 h-5" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
-              </button>
+              </Link>
             </div>
           </div>
 
           {/* الجانب الأيمن مع العناصر البصرية */}
           <div className={`flex-1 flex justify-center transition-all duration-1000 delay-500 ${
-            isVisible ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'
+            isVisible 
+              ? 'translate-x-0 opacity-100' 
+              : isArabic 
+                ? '-translate-x-10 opacity-0' 
+                : 'translate-x-10 opacity-0'
           }`}>
             <div className="relative">
               {/* دائرة رئيسية */}
@@ -108,8 +118,12 @@ export default function Hero() {
                       <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
                     </svg>
                   </div>
-                  <p className="text-xl font-semibold">Interactive Learning</p>
-                  <p className="text-blue-200 mt-2">Experience the future of education</p>
+                  <p className="text-xl font-semibold">
+                    {t('hero.interactiveLearning')}
+                  </p>
+                  <p className="text-blue-200 mt-2">
+                    {t('hero.experienceFuture')}
+                  </p>
                 </div>
               </div>
               
@@ -128,7 +142,9 @@ export default function Hero() {
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}>
         <div className="flex flex-col items-center gap-2">
-          <span className="text-white/70 text-sm">Scroll Down</span>
+          <span className="text-white/70 text-sm">
+            {t('hero.scrollDown')}
+          </span>
           <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center p-1">
             <div className="w-1 h-3 bg-white rounded-full animate-bounce"></div>
           </div>

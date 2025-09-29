@@ -2,7 +2,8 @@ import { Star, Clock, Users, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // ✅ import useNavigate
+import { useCallback } from "react"; // optional but clean
 
 interface CourseCardProps {
   id: string;
@@ -36,16 +37,18 @@ const CourseCard = ({
   isBestseller,
   type = "recorded"
 }: CourseCardProps) => {
+  const navigate = useNavigate();
+
   const discount = originalPrice && originalPrice > price 
     ? Math.round(((originalPrice - price) / originalPrice) * 100) 
     : 0;
 
-  const handleEnrollClick = (e: React.MouseEvent) => {
+  // ✅ handleEnroll now navigates to course details
+  const handleEnrollClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // هنا يمكنك إضافة منطق التسجيل
-    console.log(`Enrolling in course: ${id}`);
-  };
+    navigate(`/course/${id}`);
+  }, [id, navigate]);
 
   return (
     <Link to={`/course/${id}`} className="block">
@@ -89,7 +92,6 @@ const CourseCard = ({
           </div>
 
           <div className="flex items-center justify-between text-sm text-muted-foreground">
-           
             <div className="flex items-center gap-1">
               <Users className="w-4 h-4" />
               <span>{studentsCount.toLocaleString()}</span>
@@ -139,7 +141,7 @@ const CourseCard = ({
           <Button 
             size="sm" 
             className="bg-tan hover:bg-tan/90 transition-colors"
-            onClick={handleEnrollClick}
+            onClick={handleEnrollClick} // ✅ go to course details
           >
             <BookOpen className="w-4 h-4 mr-1" />
             حجز الآن
