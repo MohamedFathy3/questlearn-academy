@@ -12,6 +12,8 @@ import NotFound from "./pages/NotFound";
 import LoginPage from "@/pages/LoginPage";
 import Profile from "@/pages/Profile";
 import RegisterPage from "@/pages/RegisterPage";
+import Exam from "@/pages/exam";
+import Detailscourse from "@/pages/CourseDatailstatunt";
 import HonerBoard from "@/pages/HonorBoardStutent";
 import { useAuth } from "@/context/AuthContext";
 
@@ -33,6 +35,9 @@ const App = () => {
               <Route path="/HonerBoard" element={<HonerBoard />} />
               <Route path="/courses" element={<Courses />} />
               <Route path="/course/:id" element={<CourseDetail />} />
+              <Route path="/exam/:id" element={<Exam />} />
+              <Route path="/course/:id" element={<CourseDetail />} />
+              <Route path="/Detailscourse/:id" element={<Detailscourse />} />
               <Route path="/honor-board" element={<HonorBoard />} />
               <Route
                 path="/categories"

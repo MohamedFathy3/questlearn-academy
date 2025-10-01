@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, BookOpen, Sparkles, Clock, TrendingUp, Star } from "lucide-react";
+import { ArrowRight, BookOpen, Sparkles, Clock, TrendingUp, Star, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import CourseCard from "@/components/CourseCard";
 import { apiFetch } from '@/lib/api';
@@ -99,6 +99,29 @@ export default function LatestCourses() {
     }
   };
 
+  // دالة محسنة لتحويل رابط الصورة
+  const formatImageUrl = (url: string | null): string => {
+    if (!url) return "https://via.placeholder.com/400x250?text=No+Image";
+
+    // إذا كان الرابط يحتوي على localhost:8000، استبدله بالدومين الصحيح
+    if (url.includes('localhost:8000')) {
+      // استبدل localhost:8000 بـ localhost:7000 أو الدومين الحقيقي
+      return url.replace('http://localhost:8000', 'http://localhost:7000');
+    }
+
+    // إذا كان الرابط نسبي (يبدأ بـ /storage)
+    if (url.startsWith('/storage')) {
+      return `http://localhost:7000${url}`;
+    }
+
+    // إذا كان الرابط يحتوي على back.professionalacademyedu.com
+    if (url.includes('back.professionalacademyedu.com')) {
+      return url; // اتركه كما هو
+    }
+
+    return url;
+  };
+
   // دالة لتحويل البيانات لـ CourseCard format
   const transformCourseData = (course: Course) => {
     // حساب إذا الكورس جديد (تم إنشاؤه في آخر 7 أيام)
@@ -139,7 +162,7 @@ export default function LatestCourses() {
       id: course.id.toString(),
       title: course.title,
       instructor: course.teacher.name,
-      thumbnail: course.image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=300&fit=crop",
+      image: formatImageUrl(course.image),
       price: parseFloat(course.price) || 0,
       originalPrice: parseFloat(course.original_price) || 0,
       studentsCount: course.count_student || course.subscribers_count || 0,
@@ -355,6 +378,3 @@ export default function LatestCourses() {
     </section>
   );
 }
-
-// Add RefreshCw icon import at the top
-import { RefreshCw } from "lucide-react";

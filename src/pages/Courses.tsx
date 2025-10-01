@@ -334,7 +334,7 @@ const Courses = () => {
       id: course.id.toString(),
       title: course.title || t('courses.untitled', 'Untitled Course'),
       instructor: course.teacher?.name || t('courses.unknownInstructor', 'Unknown Instructor'),
-      thumbnail: course.image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=300&fit=crop",
+      thumbnail: course?.image ,
       price: currentPrice,
       originalPrice: hasDiscount ? originalPrice : undefined,
       rating: 4.5,
@@ -397,18 +397,7 @@ const Courses = () => {
     setSearchTerm(e.target.value);
   };
 
-  if (loading && courses.length === 0) {
-    return (
-      <div className="min-h-screen py-8">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-            <p>{t('common.loading', 'Loading courses...')}</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+ 
 
   if (error && courses.length === 0) {
     return (

@@ -8,6 +8,44 @@ import React, {
 import { apiFetch } from "@/lib/api";
 import Cookies from "js-cookie";
 
+interface Course {
+  id: number;
+  title: string;
+  description: string;
+  image: string;
+  price: string;
+  teacher: {
+    name: string;
+  };
+  subject: {
+    name: string;
+  };
+  details: Array<{
+    id: number;
+    title: string;
+    content_type: string;
+  }>;
+  exams:{
+    id :number,
+    title:string,
+    description:string,
+      duration:number,
+      course_id:number,
+      questions: Array<{
+        id: number;
+        question_text: string;
+        options: Array<{
+          id: number;
+          choice_text: string;
+          is_correct: boolean;
+        }>;
+      questions_count:number;
+
+      }>;
+
+    }
+}
+
 interface User {
   id: number;
   name: string;
@@ -15,6 +53,8 @@ interface User {
   image?: string | null;
   type?: string;
   qr_code?: string;
+  courses?: Course[];
+  total_rate?: number;
 }
 
 interface AuthContextType {
@@ -25,6 +65,8 @@ interface AuthContextType {
   logout: () => void;
   register: (formData: Record<string, any>) => Promise<void>;
   checkAuth: () => Promise<void>;
+   refreshUserData: () => Promise<void>; // أضف هذه الدالة
+
   isAuthenticated: boolean;
 }
 
@@ -47,99 +89,95 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-async function checkAuth() {
-  try {
-    console.log("🔄 Checking authentication...");
-    const token = Cookies.get("token");
-    
-    if (!token) {
-      console.log("❌ No token found");
-      setUser(null);
-      setLoading(false);
-      return;
-    }
-    
-    console.log("🔑 Found token, verifying...");
-    
-    // جرب الـ endpoint الصحيح - ممكن يكون مختلف في الباكند
-    const data = await apiFetch<any>("/student/check-auth");
-    
-    console.log("✅ User is authenticated:", data);
-    
-    // إذا كان الـ response مختلف، عدل حسب ما يرجع الباكند
-    if (data.message && data.message.student) {
-      setUser(data.message.student);
-    } else if (data.student) {
-      setUser(data.student);
-    } else {
-      setUser(data); // إذا كان الـ response مباشر
-    }
-    
-    setError(null);
-  } catch (err) {
-    console.log("❌ Authentication check failed:", err);
-    setUser(null);
-    Cookies.remove("token"); // نظف التوكن غير الصالح
-    
-    if (err instanceof Error) {
-      if (!err.message.includes("401") && !err.message.includes("403")) {
-        setError(err.message);
+  async function checkAuth() {
+    try {
+      console.log("🔄 Checking authentication...");
+      const token = Cookies.get("token");
+      
+      if (!token) {
+        console.log("❌ No token found");
+        setUser(null);
+        setLoading(false);
+        return;
       }
+      
+      console.log("🔑 Found token, verifying...");
+      
+      const data = await apiFetch<any>("/student/check-auth");
+      
+      console.log("✅ User is authenticated:", data);
+      
+      // تحديث هنا ليشمل الكورسات
+      if (data.message && data.message.student) {
+        setUser(data.message.student);
+      } else if (data.student) {
+        setUser(data.student);
+      } else {
+        setUser(data);
+      }
+      
+      setError(null);
+    } catch (err) {
+      console.log("❌ Authentication check failed:", err);
+      setUser(null);
+      Cookies.remove("token");
+      
+      if (err instanceof Error) {
+        if (!err.message.includes("401") && !err.message.includes("403")) {
+          setError(err.message);
+        }
+      }
+    } finally {
+      setLoading(false);
     }
-  } finally {
-    setLoading(false);
   }
-}
 
-  // دالة تسجيل الدخول
-// دالة تسجيل الدخول
-async function login(email: string, password: string) {
-  setLoading(true);
-  setError(null);
-  
-  try {
-    console.log("🔐 Attempting login...");
-    
-    const body = { email, password };
-    
-    // استخدم any مؤقتاً أو أنشئ interface للـ response
-    const response = await apiFetch<any>("/student/login", {
-      method: "POST",
-      body,
-    });
-    
-    console.log("✅ Login response:", response);
-    
-    // استخرج البيانات من الـ response
-    const { student, token } = response.message;
-    
-    // خزن التوكن في الكوكيز
-    if (token) {
-      Cookies.set("token", token, { expires: 7 }); // ينتهي بعد 7 أيام
-      console.log("🔑 Token stored:", token);
-    }
-    
-    // ضبط بيانات المستخدم
-    setUser({
-      id: student.id,
-      name: student.name,
-      email: student.email,
-      image: student.image,
-    });
-    
+  async function login(email: string, password: string) {
+    setLoading(true);
     setError(null);
     
-  } catch (err) {
-    console.error("❌ Login failed:", err);
-    setUser(null);
-    if (err instanceof Error) setError(err.message);
-    throw err;
-  } finally {
-    setLoading(false);
+    try {
+      console.log("🔐 Attempting login...");
+      
+      const body = { email, password };
+      
+      const response = await apiFetch<any>("/student/login", {
+        method: "POST",
+        body,
+      });
+      
+      console.log("✅ Login response:", response);
+      
+      const { student, token } = response.message;
+      
+      if (token) {
+        Cookies.set("token", token, { expires: 7 });
+        console.log("🔑 Token stored:", token);
+      }
+      
+      setUser({
+        id: student.id,
+        name: student.name,
+        email: student.email,
+        image: student.image,
+        courses: student.courses, // إضافة الكورسات
+        type: student.type,
+        qr_code: student.qr_code,
+        total_rate: student.total_rate
+      });
+      
+      setError(null);
+      
+    } catch (err) {
+      console.error("❌ Login failed:", err);
+      setUser(null);
+      if (err instanceof Error) setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   }
-}
 
-  // دالة تسجيل حساب جديد
   async function register(formData: Record<string, any>) {
     setLoading(true);
     setError(null);
@@ -156,7 +194,6 @@ async function login(email: string, password: string) {
       setUser(data);
       setError(null);
       
-      // بعد التسجيل الناجح، تحقق من المصادقة
       await checkAuth();
       
     } catch (err) {
@@ -169,38 +206,34 @@ async function login(email: string, password: string) {
     }
   }
 
-  // دالة تسجيل الخروج
   function logout() {
     console.log("🚪 Logging out...");
     
     setUser(null);
     setError(null);
     
-    // نظف التوكن من الكوكيز
     Cookies.remove("token");
-     setTimeout(() => {
-        window.location.href = "/login";
+    setTimeout(() => {
+      window.location.href = "/login";
     }, 500);
-    // ممكن تضيف هنا استدعاء API لتسجيل الخروج إذا كان عندك في الباكند
-    // await apiFetch("/student/logout", { method: "POST" });
   }
-const checkTokenValidity = () => {
-  const token = Cookies.get("token");
-  console.log("🔐 Token Status:", {
-    exists: !!token,
-    token: token ? `${token.substring(0, 10)}...` : 'None',
-    timestamp: new Date().toISOString()
-  });
-  if (!token) {
-    throw new Error("No authentication token found. Please login again.");
-  }
-  
-  return token;
-};
-  // تحقق من المصادقة عند تحميل التطبيق
+
   useEffect(() => {
     checkAuth();
   }, []);
+
+
+  // في الـ AuthProvider، أضف هذه الدالة
+const refreshUserData = async () => {
+  try {
+    console.log("🔄 Refreshing user data...");
+    await checkAuth(); // هذا سيحدث بيانات المستخدم بما فيهم الكورسات
+  } catch (error) {
+    console.error("❌ Error refreshing user data:", error);
+  }
+};
+
+// أضف refreshUserData إلى value
 
   const value: AuthContextType = {
     user,
@@ -210,7 +243,9 @@ const checkTokenValidity = () => {
     logout,
     register,
     checkAuth,
-    isAuthenticated: !!user, // خاصية مساعدة للتحقق من حالة المصادقة
+     refreshUserData, // أضف هذه
+
+    isAuthenticated: !!user,
   };
 
   return (

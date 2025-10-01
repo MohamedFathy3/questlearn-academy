@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import Cookies from "js-cookie";
+import { useAuth } from "@/context/AuthContext";
 
 import { 
   Play, 
@@ -108,6 +109,7 @@ const CourseDetail = () => {
   const [error, setError] = useState<string | null>(null);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
+         const { refreshUserData } = useAuth(); 
 
   useEffect(() => {
     if (id) {
@@ -147,6 +149,7 @@ const CourseDetail = () => {
           description: "You have been successfully enrolled in the course!",
           variant: "default",
         });
+      await refreshUserData();
         
         navigate('/profile');
         
@@ -234,93 +237,8 @@ const CourseDetail = () => {
       console.error('🚨 Error fetching course details:', err);
       
       // استخدام بيانات تجريبية في حالة فشل الـ API
-      const mockCourse: CourseDetail = {
-        id: parseInt(id || "1"),
-        title: "Introduction to Web Development",
-        description: "Learn the fundamentals of web development including HTML, CSS, and JavaScript. Perfect for beginners who want to start their journey in web development.",
-        type: "recorded",
-        original_price: "99.00",
-        discount: "20.00",
-        price: "79.00",
-        what_you_will_learn: "HTML Basics, CSS Styling, JavaScript Fundamentals, Responsive Design, Web Development Best Practices",
-        image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&h=600&fit=crop",
-        intro_video_url: "https://youtube.com/example",
-        views_count: 1500,
-        course_type: "group",
-        count_student: 45,
-        currency: "USD",
-        subscribers_count: 45,
-        active: true,
-        teacher: {
-          id: 1,
-          name: "Ahmed Ali",
-          email: "ahmed@example.com",
-          image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-          certificate_image: null,
-          experience_image: null,
-          students_count: 250,
-          courses_count: 8,
-          total_income: 5000
-        },
-        stage: {
-          name: "Beginner Level"
-        },
-        subject: {
-          name: "Web Development"
-        },
-        country: {
-          name: "Egypt"
-        },
-        details: [
-          {
-            id: 1,
-            title: "Introduction to HTML",
-            description: "Learn the basics of HTML structure and tags",
-            content_type: "video",
-            content_link: "https://youtube.com/html-intro",
-            session_date: null,
-            session_time: null,
-            file_path: null,
-            created_at: "2024-01-15T10:00:00.000Z"
-          },
-          {
-            id: 2,
-            title: "CSS Fundamentals",
-            description: "Understanding CSS styling and layout",
-            content_type: "video",
-            content_link: "https://youtube.com/css-fundamentals",
-            session_date: null,
-            session_time: null,
-            file_path: null,
-            created_at: "2024-01-15T10:00:00.000Z"
-          },
-          {
-            id: 3,
-            title: "JavaScript Basics",
-            description: "Introduction to JavaScript programming",
-            content_type: "video",
-            content_link: "https://youtube.com/javascript-basics",
-            session_date: null,
-            session_time: null,
-            file_path: null,
-            created_at: "2024-01-15T10:00:00.000Z"
-          },
-          {
-            id: 4,
-            title: "Course Materials PDF",
-            description: "Downloadable resources and exercises",
-            content_type: "pdf",
-            content_link: null,
-            session_date: null,
-            session_time: null,
-            file_path: "https://example.com/course-materials.pdf",
-            created_at: "2024-01-15T10:00:00.000Z"
-          }
-        ],
-        created_at: "2024-01-15T00:00:00.000Z"
-      };
+  
 
-      setCourse(mockCourse);
       console.log("📝 Using mock course data");
       
     } finally {
@@ -357,18 +275,6 @@ const CourseDetail = () => {
     window.open(shareUrls[platform as keyof Omit<typeof shareUrls, 'copy' | 'email'>], '_blank', 'width=600,height=400');
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen py-8">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-muted-foreground">Loading course details...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (error || !course) {
     return (
@@ -475,9 +381,9 @@ const CourseDetail = () => {
     <div className="min-h-screen bg-background">
       {/* Hero Section with Background Image */}
       <div 
-        className="relative py-20 lg:py-28 bg-cover bg-center bg-no-repeat"
+        className="relative py-20 lg:py-28  bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url(${course.image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&h=600&fit=crop"})`
+          backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url(${course?.image})`
         }}
       >
         <div className="container mx-auto px-4 relative z-10">
@@ -497,15 +403,15 @@ const CourseDetail = () => {
               </Badge>
             </div>
             
-            <h1 className="text-4xl lg:text-5xl font-bold leading-tight mb-4">
+            <h1 className="text-4xl ml-10 lg:text-5xl font-bold leading-tight mb-4">
               {course.title || "Untitled Course"}
             </h1>
-            
-            <p className="text-xl text-white/90 leading-relaxed mb-6">
+
+            <p className="text-xl ml-10 text-white/90 leading-relaxed mb-6">
               {course.description || "No description available"}
             </p>
 
-            <div className="flex flex-wrap items-center gap-6 text-white/80 mb-6">
+            <div className="flex flex-wrap ml-10 items-center gap-6 text-white/80 mb-6">
               <div className="flex items-center gap-2">
                 <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                 <span className="font-semibold">4.5</span>
@@ -525,7 +431,7 @@ const CourseDetail = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex ml-10 items-center gap-4">
               <Avatar className="w-14 h-14 border-2 border-white">
                 <AvatarImage src={course.teacher?.image || undefined} alt={getTeacherName()} />
                 <AvatarFallback className="bg-primary text-white">

@@ -1,20 +1,22 @@
 import Cookies from "js-cookie";
 
-const API_BASE_URL = "/api"; // حسب إعدادات البروكسي عندك في vite.config.ts
+const API_BASE_URL = "/api";
 
 export interface ApiFetchOptions extends RequestInit {
   body?: any;
 }
+
 export async function apiFetch<T>(
   endpoint: string,
   options: ApiFetchOptions = {}
 ): Promise<T> {
   const token = Cookies.get("token");
-  
+
   console.log("🔍 API Fetch Details:", {
     endpoint,
     method: options.method || "GET",
-    hasToken: !!token
+    hasToken: !!token,
+    API_BASE_URL,
   });
 
   const headers: HeadersInit = {
@@ -41,13 +43,11 @@ export async function apiFetch<T>(
 
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-    
+
     console.log("📡 Response Status:", response.status, response.statusText);
 
-    // لا تمسح التوكن تلقائياً - دع المكون الرئيسي يتعامل مع هذا
     if (response.status === 401) {
       console.log("🔐 401 Unauthorized - Token might be invalid");
-      // لا تمسح التوكن هنا، دع المكون يتعامل معه
     }
 
     if (!response.ok) {
@@ -55,13 +55,13 @@ export async function apiFetch<T>(
       try {
         const errorText = await response.text();
         console.log("❌ Error Response Text:", errorText);
-        
+
         if (errorText) {
           const parsedError = JSON.parse(errorText);
           errorMsg = parsedError.message || parsedError.error || errorText;
         }
       } catch (parseError) {
-        console.log("❌ Raw Error Response:", errorText);
+        console.log("❌ Raw Error Response:", parseError);
       }
       throw new Error(errorMsg);
     }
