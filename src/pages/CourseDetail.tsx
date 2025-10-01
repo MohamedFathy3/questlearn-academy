@@ -279,14 +279,7 @@ const CourseDetail = () => {
   if (error || !course) {
     return (
       <div className="min-h-screen py-8">
-        <div className="container mx-auto px-4">
-          <div className="text-center text-red-500">
-            <p>Error: {error || 'Course not found'}</p>
-            <Button onClick={fetchCourseDetail} className="mt-4">
-              Try Again
-            </Button>
-          </div>
-        </div>
+      
       </div>
     );
   }

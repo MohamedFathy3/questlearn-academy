@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import Cookies from "js-cookie";
 import { useAuth } from '@/context/AuthContext';
+import YouTubePlayer from '@/components/youtube';
 
 import { 
   Play, 
@@ -158,7 +159,6 @@ const CourseDetail = () => {
     };
   }, []);
 
-  // دالة لفتح رابط الزوم في نافذة جديدة
   const openZoomLink = (zoomLink: string | null, lesson: any) => {
     if (!zoomLink) {
       toast({
@@ -271,7 +271,7 @@ const CourseDetail = () => {
 
       console.log("✅ Video progress API response:", response);
 
-      if (response.result === "Success") {
+  if (response.message === "Watching data saved successfully") {
         setLessonProgress(prev => ({
           ...prev,
           [lesson.id]: {
@@ -299,7 +299,6 @@ const CourseDetail = () => {
     }
   };
 
-  // دالة لتحميل الملف
   const downloadFile = (filePath: string | null, fileName: string) => {
     if (!filePath) {
       toast({
@@ -313,19 +312,16 @@ const CourseDetail = () => {
     window.open(filePath, '_blank');
   };
 
-  // دالة للحصول على تقدم درس معين
   const getLessonProgress = (lessonId: number) => {
     return lessonProgress[lessonId] || { duration: 0, views: 0 };
   };
 
-  // دالة لعرض وقت المشاهدة بشكل منسق
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // دالة تنظيف البيانات
   const cleanCourseDetails = (courseData: CourseDetail): CourseDetail => {
     if (!courseData.details) {
       return { ...courseData, details: [] };
@@ -383,7 +379,6 @@ const CourseDetail = () => {
     return { ...courseData, details: [] };
   };
 
-  // دالة لجلب تفاصيل الكورس
   const fetchCourseDetail = async () => {
     try {
       setLoading(true);
@@ -433,7 +428,6 @@ const CourseDetail = () => {
     }
   };
 
-  // دالة لتحديث البيانات من الـ AuthContext
   const refreshFromContext = async () => {
     try {
       setLoading(true);
@@ -490,7 +484,7 @@ const CourseDetail = () => {
       setEnrolling(true);
       console.log("🛒 Enrolling in course ID:", course!.id);
       
-      const response = await apiFetch<any>('/student/enroll', {
+      const response = await apiFetch<any>('/student/unenroll', {
         method: 'POST',
         body: {
           course_id: course!.id
@@ -501,20 +495,20 @@ const CourseDetail = () => {
 
       if (response.result === "Success") {
         toast({
-          title: "Enrollment Successful",
-          description: "You have been successfully enrolled in the course!",
+          title: "Unenrollment Successful",
+          description: "You have been successfully unenrolled from the course!",
           variant: "default",
         });
         
         await refreshUserData();
         navigate('/profile');
       } else {
-        throw new Error(response.message || "Enrollment failed");
+        throw new Error(response.message || "unenroll failed");
       }
     } catch (error: any) {
-      console.error("❌ Enrollment error:", error);
-      
-      let errorMessage = "Failed to enroll in the course";
+      console.error("❌ unenroll error:", error);
+
+      let errorMessage = "Failed to unenroll in the course";
       if (error.message?.includes('already enrolled')) {
         errorMessage = "You are already enrolled in this course";
         navigate('/profile');
@@ -659,7 +653,6 @@ const CourseDetail = () => {
     detail && typeof detail === 'object'
   ).length;
 
-  // حساب المدة التقريبية
   const getEstimatedDuration = () => {
     const videoCount = videoLessons.length;
     if (videoCount === 0) return "Flexible";
@@ -668,7 +661,6 @@ const CourseDetail = () => {
     return "5+ hours";
   };
 
-  // تحديد المستوى
   const getCourseLevel = () => {
     const title = course.title ? course.title.toLowerCase() : "";
     if (title.includes('basic') || title.includes('intro') || title.includes('beginner')) {
@@ -681,27 +673,22 @@ const CourseDetail = () => {
     return "All Levels";
   };
 
-  // الحصول على اسم المعلم بشكل آمن
   const getTeacherName = () => {
     return course.teacher?.name || "Unknown Teacher";
   };
 
-  // الحصول على اسم المادة بشكل آمن
   const getSubjectName = () => {
     return course.subject?.name || "Unknown Subject";
   };
 
-  // الحصول على اسم المرحلة بشكل آمن
   const getStageName = () => {
     return course.stage?.name || "Unknown Stage";
   };
 
-  // الحصول على عدد الطلاب بشكل آمن
   const getStudentCount = () => {
     return (course.count_student || course.subscribers_count || 0).toLocaleString();
   };
 
-  // الحصول على عدد الكورسات للمعلم
   const getTeacherCoursesCount = () => {
     return course.teacher?.courses_count || 0;
   };
@@ -906,7 +893,9 @@ const CourseDetail = () => {
                                         )}
                                       </div>
                                       <span className="text-xs font-semibold">
-                                        {progress.duration > 0 ? formatDuration(progress.duration) : '0:00'}
+{user?.courses?.details?.watching_data.watched_duration
+  ? formatDuration(user.courses.details.watching_data.watched_duration)
+  : '0:00'}
                                       </span>
                                     </div>
                                   </div>
@@ -1053,49 +1042,71 @@ const CourseDetail = () => {
                     </p>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      {course.exams && course.exams.length > 0 ? (
-                        course.exams.map((exam) => (
-                          <div key={exam.id} className="flex items-center justify-between p-6 border rounded-lg hover:bg-muted/30 transition-colors">
-                            <div className="flex items-start gap-4">
-                              <div className="p-3 bg-primary/10 rounded-lg">
-                                <FileQuestion className="w-6 h-6 text-primary" />
-                              </div>
-                              <div className="flex-1">
-                                <h4 className="text-lg font-semibold mb-2">{exam.title}</h4>
-                                <p className="text-muted-foreground mb-3">{exam.description}</p>
-                                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                                  <div className="flex items-center gap-1">
-                                    <Timer className="w-4 h-4" />
-                                    <span>{exam.duration} minutes</span>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <FileQuestion className="w-4 h-4" />
-                                    <span>{exam.questions_count} questions</span>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <Award className="w-4 h-4" />
-                                    <span>Passing: {exam.passing_marks}/{exam.total_marks}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                            <Button 
-                              onClick={() => startExam(exam.id)}
-                              className="bg-green-600 hover:bg-green-700"
-                            >
-                              Start Exam
-                            </Button>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-8">
-                          <FileQuestion className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                          <h4 className="text-lg font-semibold mb-2">No Exams Available</h4>
-                          <p className="text-muted-foreground">Exams will be added soon.</p>
-                        </div>
-                      )}
+                 <div className="space-y-4">
+  {user?.courses?.length > 0 &&
+  user.courses.some((course) => course.exams?.length > 0) ? (
+    user.courses.map((course) =>
+      course.exams?.map((exam) => {
+        const studentExam = exam.studentExams?.[0]; // نفترض محاولة واحدة فقط
+        const attended = studentExam?.attend === 1;
+
+        return (
+          <div
+            key={exam.id}
+            className="flex items-center justify-between p-6 border rounded-lg hover:bg-muted/30 transition-colors"
+          >
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-primary/10 rounded-lg">
+                <FileQuestion className="w-6 h-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-lg font-semibold mb-2">{exam.title}</h4>
+                <p className="text-muted-foreground mb-3">{exam.description}</p>
+                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Timer className="w-4 h-4" />
+                    <span>{exam.duration} minutes</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <FileQuestion className="w-4 h-4" />
+                    <span>{exam.questions_count} questions</span>
+                  </div>
+
+                  {/* ✅ عرض السكور فقط لو حضر */}
+                  {attended && (
+                    <div className="flex items-center gap-1">
+                      <Award className="w-4 h-4" />
+                      <span>
+                        Score: {studentExam?.score ?? 0}/{exam.questions_count}
+                      </span>
                     </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* ✅ عرض الزر فقط لو ما حضرش */}
+            {!attended && (
+              <Button
+                onClick={() => startExam(exam.id)}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                Start Exam
+              </Button>
+            )}
+          </div>
+        );
+      })
+    )
+  ) : (
+    <div className="text-center py-8">
+      <FileQuestion className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+      <h4 className="text-lg font-semibold mb-2">No Exams Available</h4>
+      <p className="text-muted-foreground">Exams will be added soon.</p>
+    </div>
+  )}
+</div>
+
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -1135,14 +1146,14 @@ const CourseDetail = () => {
 
                   {/* Enroll Button */}
                   <Button 
-                    className="w-full bg-green-600 hover:bg-green-700 text-white py-3 text-lg font-semibold"
+                    className="w-full bg-red-600 hover:bg-red-700 text-white py-3 text-lg font-semibold"
                     onClick={handleEnrollClick}
                     disabled={enrolling}
                   >
                     {enrolling ? (
                       <>
                         <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        Enrolling...
+                        Unenroll...
                       </>
                     ) : (
                       <>
@@ -1229,18 +1240,14 @@ const CourseDetail = () => {
             </div>
 
             {/* Video Player */}
-            <div className="aspect-video bg-black">
-              <iframe
-                ref={videoRef}
-                src={selectedVideo}
-                className="w-full h-full"
-                allowFullScreen
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                style={{ border: 'none' }}
-                onLoad={() => console.log("✅ Video loaded successfully")}
-                onError={(e) => console.error("❌ Video loading error:", e)}
-              />
-            </div>
+          <div className="aspect-video bg-black">
+  {selectedVideo ? (
+    <YouTubePlayer videoUrl={selectedVideo} />
+  ) : (
+    <div className="text-white text-center p-4">No video selected</div>
+  )}
+</div>
+
 
             {/* Footer with Progress Info */}
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent z-10 p-4">
