@@ -14,7 +14,9 @@ const resources = {
         Board: 'Top Students',
         profile: 'Profile',
         signIn: 'Sign In',
-        signUp: 'Sign Up'
+        signUp: 'Sign Up',
+        contact: 'Contact',
+        logout: 'Logout'
       },
  
   profile: {
@@ -212,7 +214,9 @@ const resources = {
         profile: 'الملف الشخصي',
         Board: 'لوحة شرف الطلاب',
         signIn: 'تسجيل الدخول',
-        signUp: 'إنشاء حساب'
+        signUp: 'إنشاء حساب',
+        contact: 'اتصل بنا',
+        logout: 'تسجيل الخروج'
       },
   profile: {
     "learningStats": "إحصائيات التعلم",

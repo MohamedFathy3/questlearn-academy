@@ -36,6 +36,7 @@ const Navigation = () => {
     { name: t('nav.courses'), path: "/courses" },
     { name: t('nav.honorBoard'), path: "/honor-board" },
     { name: t('nav.Board'), path: "/HonerBoard" },
+    { name: t('nav.contact'), path: "/contact" },
   ];
 
   const handleLogout = () => {
@@ -115,18 +116,7 @@ const Navigation = () => {
             ))}
           </div>
 
-          {/* Search Bar with animation */}
-          <div className="hidden lg:flex items-center space-x-4 flex-1 max-w-md mx-8">
-            <form onSubmit={handleSearch} className="relative w-full">
-              <Search className={`absolute ${isArabic ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors duration-300`} />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t('common.search')}
-                className={`${isArabic ? 'pr-10 text-right' : 'pl-10'} bg-muted/50 border-transparent focus:bg-background transition-all duration-300 focus:scale-105 focus:shadow-lg`}
-              />
-            </form>
-          </div>
+        
 
           {/* Right Actions with enhanced animations */}
           <div className="flex items-center space-x-2">
@@ -134,24 +124,7 @@ const Navigation = () => {
             <ThemeToggle />
             
             {/* Notification Bell */}
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="relative hidden md:flex transition-all duration-300 hover:scale-110 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:shadow-lg"
-            >
-              <Bell className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping opacity-75"></span>
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-background"></span>
-            </Button>
-
-            {/* Shopping Cart with animation */}
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="hidden md:flex transition-all duration-300 hover:scale-110 hover:bg-green-50 dark:hover:bg-green-950/30 hover:shadow-lg"
-            >
-              <ShoppingCart className="w-5 h-5" />
-            </Button>
+           
 
             {/* User Section */}
             {isAuthenticated ? (

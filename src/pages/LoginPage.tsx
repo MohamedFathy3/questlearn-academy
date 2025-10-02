@@ -28,7 +28,7 @@ export default function LoginPage() {
   }
 
   const handleTeacherRedirect = () => {
-    window.open('https://teacher-platform.example.com', '_blank');
+    window.open('https://dashboards.professionalacademyedu.com/teacher/login', '_blank');
   };
 
   const tabConfig = {

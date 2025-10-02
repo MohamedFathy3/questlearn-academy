@@ -67,17 +67,15 @@ const Footer = () => {
               <Link to="/courses" className="block text-muted-foreground hover:text-tan transition-colors">
                 {t('courses.title', 'All Courses')}
               </Link>
-              <Link to="/categories" className="block text-muted-foreground hover:text-tan transition-colors">
-                {t('nav.categories', 'Categories')}
+              <Link to="/honor-board" className="block text-muted-foreground hover:text-tan transition-colors">
+                {t('nav.topTeachers', 'Top Teachers')}
               </Link>
-              <Link to="/free-courses" className="block text-muted-foreground hover:text-tan transition-colors">
-                {t('footer.freeCourses', 'Free Courses')}
+              <Link to="/HonerBoard" className="block text-muted-foreground hover:text-tan transition-colors">
+                {t('footer.topStudents', 'Top Students')}
               </Link>
-              <Link to="/certificates" className="block text-muted-foreground hover:text-tan transition-colors">
-                {t('footer.certificates', 'Certificates')}
-              </Link>
-              <Link to="/learning-paths" className="block text-muted-foreground hover:text-tan transition-colors">
-                {t('footer.learningPaths', 'Learning Paths')}
+
+              <Link to="/Contact" className="block text-muted-foreground hover:text-tan transition-colors">
+                {t('footer.content', 'Contact us')}
               </Link>
             </div>
           </div>
@@ -88,9 +86,7 @@ const Footer = () => {
               {t('footer.support', 'Support')}
             </h3>
             <div className="space-y-3">
-              <Link to="/help" className="block text-muted-foreground hover:text-tan transition-colors">
-                {t('footer.helpCenter', 'Help Center')}
-              </Link>
+            
               <Link to="/contact" className="block text-muted-foreground hover:text-tan transition-colors">
                 {t('footer.contact', 'Contact Us')}
               </Link>
