@@ -12,7 +12,7 @@ type LoginType = 'student' | 'parent' | 'teacher';
 export default function LoginPage() {
   const { login, error, loading } = useAuth();
   const { t, i18n } = useTranslation();
-
+const [qrCode, setQrCode] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
