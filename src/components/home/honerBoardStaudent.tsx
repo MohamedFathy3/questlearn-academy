@@ -362,44 +362,7 @@ const StudentsHonorBoard = () => {
           ))}
         </div>
 
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-2 mt-8 relative z-10">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className={isArabic ? 'rotate-180' : ''}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            {Array.from({ length: totalPages }).map((_, i) => {
-              const pageNum = i + 1;
-              return (
-                <Button
-                  key={pageNum}
-                  variant={currentPage === pageNum ? 'default' : 'outline'}
-                  onClick={() => handlePageChange(pageNum)}
-                  className={
-                    currentPage === pageNum ? 'bg-tan text-white' : ''
-                  }
-                >
-                  {pageNum}
-                </Button>
-              );
-            })}
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className={isArabic ? 'rotate-180' : ''}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
+     
       </div>
     </div>
   );

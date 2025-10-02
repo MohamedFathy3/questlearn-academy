@@ -15,20 +15,22 @@ const YouTubePlayer = ({ videoUrl }: { videoUrl: string }) => {
   }
 
   return (
-    <YouTube
-      videoId={videoId}
-      opts={{
-        height: '100%',
-        width: '100%',
-        playerVars: {
-          autoplay: 1,
-          controls: 1,
-        },
-      }}
-      onReady={() => console.log('✅ Video loaded successfully')}
-      onError={(e) => console.error('❌ Error loading video:', e)}
-      className="w-full h-full"
-    />
+    <div className="w-full aspect-video">
+      <YouTube
+        videoId={videoId}
+        opts={{
+          width: '100%',
+          height: '100%',
+          playerVars: {
+            autoplay: 1,
+            controls: 1,
+          },
+        }}
+        onReady={() => console.log('✅ Video loaded successfully')}
+        onError={(e) => console.error('❌ Error loading video:', e)}
+        className="w-full h-full"
+      />
+    </div>
   );
 };
 

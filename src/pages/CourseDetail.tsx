@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import Cookies from "js-cookie";
 import { useAuth } from "@/context/AuthContext";
-
+import YouTubePlayer from '@/components/youtube';
 import { 
   Play, 
   Clock, 
@@ -486,6 +486,7 @@ const CourseDetail = () => {
             </Card>
 
             {/* Curriculum */}
+            {false && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-2xl">Course Curriculum</CardTitle>
@@ -548,6 +549,16 @@ const CourseDetail = () => {
                 </div>
               </CardContent>
             </Card>
+            )}
+{course?.intro_video_url && (
+  <div className="">
+    <h2 className="text-2xl font-semibold mb-14 text-primary">Course Intro Video</h2>
+    <YouTubePlayer videoUrl={course.intro_video_url} />
+  </div>
+)}
+
+
+
           </div>
 
           {/* Right Column - Sidebar */}

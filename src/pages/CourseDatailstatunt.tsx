@@ -717,15 +717,7 @@ const CourseDetail = () => {
               <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
                 {getCourseLevel()}
               </Badge>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={refreshFromContext}
-                className="bg-white/20 text-white border-white/30 hover:bg-white/30"
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh Data
-              </Button>
+           
             </div>
             
             <h1 className="text-4xl lg:text-5xl font-bold leading-tight mb-4">
@@ -1034,81 +1026,51 @@ const CourseDetail = () => {
 
               {/* Exams Tab */}
               <TabsContent value="exams" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-2xl">Course Exams</CardTitle>
-                    <p className="text-muted-foreground">
-                      Test your knowledge with these exams
-                    </p>
-                  </CardHeader>
-                  <CardContent>
-                 <div className="space-y-4">
-  {user?.courses?.length > 0 &&
-  user.courses.some((course) => course.exams?.length > 0) ? (
-    user.courses.map((course) =>
-      course.exams?.map((exam) => {
-        const studentExam = exam.studentExams?.[0]; // نفترض محاولة واحدة فقط
-        const attended = studentExam?.attend === 1;
-
-        return (
-          <div
-            key={exam.id}
-            className="flex items-center justify-between p-6 border rounded-lg hover:bg-muted/30 transition-colors"
-          >
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <FileQuestion className="w-6 h-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-lg font-semibold mb-2">{exam.title}</h4>
-                <p className="text-muted-foreground mb-3">{exam.description}</p>
-                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Timer className="w-4 h-4" />
-                    <span>{exam.duration} minutes</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <FileQuestion className="w-4 h-4" />
-                    <span>{exam.questions_count} questions</span>
-                  </div>
-
-                  {/* ✅ عرض السكور فقط لو حضر */}
-                  {attended && (
-                    <div className="flex items-center gap-1">
-                      <Award className="w-4 h-4" />
-                      <span>
-                        Score: {studentExam?.score ?? 0}/{exam.questions_count}
-                      </span>
+            <CardContent>
+                    <div className="space-y-4">
+                      {course.exams && course.exams.length > 0 ? (
+                        course.exams.map((exam) => (
+                          <div key={exam.id} className="flex items-center justify-between p-6 border rounded-lg hover:bg-muted/30 transition-colors">
+                            <div className="flex items-start gap-4">
+                              <div className="p-3 bg-primary/10 rounded-lg">
+                                <FileQuestion className="w-6 h-6 text-primary" />
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="text-lg font-semibold mb-2">{exam.title}</h4>
+                                <p className="text-muted-foreground mb-3">{exam.description}</p>
+                                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                                  <div className="flex items-center gap-1">
+                                    <Timer className="w-4 h-4" />
+                                    <span>{exam.duration} minutes</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <FileQuestion className="w-4 h-4" />
+                                    <span>{exam.questions_count} questions</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <Award className="w-4 h-4" />
+                                    <span>Passing: {exam.passing_marks}/{exam.total_marks}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <Button 
+                              onClick={() => startExam(exam.id)}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              Start Exam
+                            </Button>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8">
+                          <FileQuestion className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                          <h4 className="text-lg font-semibold mb-2">No Exams Available</h4>
+                          <p className="text-muted-foreground">Exams will be added soon.</p>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* ✅ عرض الزر فقط لو ما حضرش */}
-            {!attended && (
-              <Button
-                onClick={() => startExam(exam.id)}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                Start Exam
-              </Button>
-            )}
-          </div>
-        );
-      })
-    )
-  ) : (
-    <div className="text-center py-8">
-      <FileQuestion className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-      <h4 className="text-lg font-semibold mb-2">No Exams Available</h4>
-      <p className="text-muted-foreground">Exams will be added soon.</p>
-    </div>
-  )}
-</div>
-
                   </CardContent>
-                </Card>
               </TabsContent>
             </Tabs>
           </div>
@@ -1194,17 +1156,7 @@ const CourseDetail = () => {
                     </div>
                   </div>
 
-                  {/* Debug Toggle */}
-                  <div className="pt-4 border-t">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setDebugMode(!debugMode)}
-                      className="w-full"
-                    >
-                      {debugMode ? 'Hide Debug' : 'Show Debug'}
-                    </Button>
-                  </div>
+                
                 </div>
               </CardContent>
             </Card>

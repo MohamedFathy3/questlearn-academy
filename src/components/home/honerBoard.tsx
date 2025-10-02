@@ -369,59 +369,6 @@ const HonorBoard = () => {
               })}
             </div>
 
-            {/* Pagination مع أنيميشن */}
-            {totalPages > 1 && (
-              <div className={`flex justify-center items-center gap-2 mt-8 transition-all duration-700 ${
-                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-              }`}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="transition-all duration-300 hover:scale-105 disabled:opacity-50"
-                >
-                  <ChevronLeft className={`w-4 h-4 ${isArabic ? 'rotate-180' : ''}`} />
-                </Button>
-
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
-
-                  return (
-                    <Button
-                      key={pageNum}
-                      variant={currentPage === pageNum ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handlePageChange(pageNum)}
-                      className={`transition-all duration-300 hover:scale-105 ${
-                        currentPage === pageNum ? 'bg-blue-600 text-white' : ''
-                      }`}
-                    >
-                      {pageNum}
-                    </Button>
-                  );
-                })}
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="transition-all duration-300 hover:scale-105 disabled:opacity-50"
-                >
-                  <ChevronRight className={`w-4 h-4 ${isArabic ? 'rotate-180' : ''}`} />
-                </Button>
-              </div>
-            )}
           </>
         )}
 

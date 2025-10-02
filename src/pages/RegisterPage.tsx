@@ -53,6 +53,7 @@ interface FormErrors {
   stage_id?: string;
   subject_id?: string;
   image?: string;
+  qr_code?: string;
   certificate_image?: string;
   experience_image?: string;
 }
@@ -71,6 +72,7 @@ const UnifiedRegisterPage: React.FC = () => {
     country_id: '',
     stage_id: '',
     subject_id: '',
+    qr_code: '',
     image: null as File | null,
     certificate_image: null as File | null,
     experience_image: null as File | null,
@@ -227,8 +229,12 @@ const UnifiedRegisterPage: React.FC = () => {
       if (activeTab === 'teacher') {
         if (!formData.national_id.trim()) newErrors.national_id = 'الرقم القومي مطلوب';
         else if (!/^[0-9]{14}$/.test(formData.national_id)) newErrors.national_id = 'الرقم القومي يجب أن يكون 14 رقمًا';
+       
       }
-
+      if (activeTab === 'parent') {
+         if(!formData.qr_code.trim()) newErrors.qr_code = 'رمز الاستجابة السريعة مطلوب';
+      else if (!/^[A-Za-z0-9]{6,}$/.test(formData.qr_code)) newErrors.qr_code = 'رمز الاستجابة السريعة غير صالح';
+      }
       if (!formData.password) newErrors.password = 'كلمة المرور مطلوبة';
       else if (formData.password.length < 6) newErrors.password = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
 
@@ -377,6 +383,7 @@ const UnifiedRegisterPage: React.FC = () => {
       image: null,
       certificate_image: null,
       experience_image: null,
+      qr_code: '',
     });
     setImagePreview(null);
     setCertificatePreview(null);
@@ -586,7 +593,32 @@ return (
                 </div>
                 {errors.phone && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.phone}</p>}
               </div>
-
+{activeTab === 'parent' && (
+         <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold mb-2 text-blue-600">
+                    رمز الاستجابة السريعة (QR Code)
+                  </label>
+                  <div className="relative">
+                    <div className="absolute right-3 top-3 text-blue-500">
+                      <FiFlag />
+                    </div>
+                    <input
+                      type="text"
+                      name="qr_code"
+                      value={formData.qr_code}
+                      onChange={handleInputChange}
+                      required
+                      className={`w-full p-3 pr-10 rounded-lg border-2 focus:outline-none focus:ring-2 transition-all duration-300 ${
+                        errors.qr_code 
+                          ? 'border-red-500 focus:ring-red-500 bg-red-50' 
+                          : 'border-blue-400 focus:ring-blue-400 bg-white text-gray-800 placeholder-gray-500'
+                      }`}
+                      placeholder="أدخل رمز الاستجابة السريعة الخاص بك"
+                    />
+                  </div>
+                  {errors.qr_code && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.qr_code}</p>}
+                </div>
+              )}
               {/* الرقم القومي للمعلم فقط */}
               {activeTab === 'teacher' && (
                 <div className="md:col-span-2">
@@ -613,7 +645,9 @@ return (
                     />
                   </div>
                   {errors.national_id && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.national_id}</p>}
+               
                 </div>
+            
               )}
 
               <div>

@@ -12,7 +12,9 @@ const resources = {
         about: 'About',
         honorBoard: 'Top Teachers',
         Board: 'Top Students',
-        profile: 'Profile'
+        profile: 'Profile',
+        signIn: 'Sign In',
+        signUp: 'Sign Up'
       },
  
   profile: {
@@ -31,7 +33,10 @@ const resources = {
     "enrollInCoursesToSeeThemHere": "Enroll in courses to see them here",
     "browseCourses": "Browse Courses",
     "logout": "Logout",
-    "notStarted": "Not Started"
+    "notStarted": "Not Started",
+    "lessonsCompleted": "Lessons Completed",
+    "learningProgress": "Learning Progress",
+    "successRate": "Success Rate"
   },
       home: {
         title: 'Welcome to Professional Academy',
@@ -206,6 +211,8 @@ const resources = {
         honorBoard: 'المعلمين المتميزين',
         profile: 'الملف الشخصي',
         Board: 'لوحة شرف الطلاب',
+        signIn: 'تسجيل الدخول',
+        signUp: 'إنشاء حساب'
       },
   profile: {
     "learningStats": "إحصائيات التعلم",
@@ -223,8 +230,12 @@ const resources = {
     "enrollInCoursesToSeeThemHere": "سجل في الكورسات لتراها هنا",
     "browseCourses": "تصفح الكورسات",
     "logout": "تسجيل الخروج",
-    "notStarted": "لم يبدأ"
-  },
+    "notStarted": "لم يبدأ",
+    "lessonsCompleted": "الدروس المكتملة",
+    "learningProgress": "تقدم التعلم",
+    "successRate": "معدل النجاح"
+  }
+  ,
       home: {
         title: 'مرحباً بكم في الأكاديمية الاحترافية',
         subtitle: 'بوابتكم إلى المعرفة',
@@ -328,7 +339,8 @@ const resources = {
         signIn: 'تسجيل الدخول',
         or: 'أو',
         noAccount: 'ليس لديك حساب؟',
-        signUpNow: 'سجل الآن'
+        signUpNow: 'سجل الآن',
+        details: 'سجل الدخول لحسابك الطلابي والوصول إلى الدورات'
       },
       register: {
         title: 'إنشاء حساب',
@@ -352,7 +364,8 @@ const resources = {
         invalidImageType: 'يرجى اختيار ملف صورة صالح',
         imageTooLarge: 'يجب أن يكون حجم الصورة أقل من 5 ميجابايت',
         registrationFailed: 'فشل إنشاء الحساب',
-        registrationError: 'حدث خطأ أثناء إنشاء الحساب'
+        registrationError: 'حدث خطأ أثناء إنشاء الحساب',
+        details: 'أنشئ حسابك الطلابي وابدأ رحلتك التعليمية معنا'
       },
       common: {
         loading: 'جاري التحميل...',
