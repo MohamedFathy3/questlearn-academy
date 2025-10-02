@@ -38,7 +38,18 @@ const resources = {
     "notStarted": "Not Started",
     "lessonsCompleted": "Lessons Completed",
     "learningProgress": "Learning Progress",
-    "successRate": "Success Rate"
+    "successRate": "Success Rate",
+      totalChildren :  "Total Children",
+averageProgress :  "Average Progress" ,
+totalStudyTime :  "Total Study Time",
+overallPerformance :  "Overall Performance",
+myChildren :  "My Children",
+childrenUnderYourCare :  "Children Under Your Care",
+student :  "Student",
+courses :  "Courses",
+joined :  "Joined",
+performance :  "Performance",
+basedOnOverallRating :  "Based on Overall Rating",
   },
       home: {
         title: 'Welcome to Professional Academy',
@@ -67,6 +78,19 @@ const resources = {
           instructors: 'Instructors',
           satisfaction: 'Satisfaction Rate'
         }
+      },
+     childDetails: {
+        learningProgress: "Learning Progress",
+        studentPerformanceOverview: "Student Performance Overview",
+        totalCourses: "Total Courses",
+        completedLessons: "Completed Lessons",
+        totalExams: "Total Exams",
+        totalStudyTime: "Total Study Time",
+        overallProgress: "Overall Progress",
+        lessons: "Lessons",
+        exams: "Exams",
+        whatYouWillLearn: "What You Will Learn",
+        progress: "Progress"
       },
       courses: {
         title: 'All Courses',
@@ -218,6 +242,7 @@ const resources = {
         contact: 'اتصل بنا',
         logout: 'تسجيل الخروج'
       },
+      
   profile: {
     "learningStats": "إحصائيات التعلم",
     "yourLearningProgress": "تقدمك في التعلم وإنجازاتك",
@@ -237,9 +262,47 @@ const resources = {
     "notStarted": "لم يبدأ",
     "lessonsCompleted": "الدروس المكتملة",
     "learningProgress": "تقدم التعلم",
-    "successRate": "معدل النجاح"
+    "successRate": "معدل النجاح",
+    totalChildren :  "Total Children",
+averageProgress :  "Average Progress" ,
+totalStudyTime :  "Total Study Time",
+overallPerformance :  "Overall Performance",
+myChildren :  "My Children",
+childrenUnderYourCare :  "Children Under Your Care",
+student :  "Student",
+courses :  "Courses",
+joined :  "Joined",
+performance :  "Performance",
+basedOnOverallRating :  "Based on Overall Rating",
   }
   ,
+
+    "childDetails": { 
+    "backToDashboard": "العودة للوحة التحكم",
+    "student": "طالب",
+    "learningProgress": "التقدم التعليمي",
+    "studentPerformanceOverview": "نظرة عامة على أداء الطالب",
+    "totalCourses": "إجمالي الكورسات",
+    "completedLessons": "الدروس المكتملة",
+    "totalExams": "إجمالي الامتحانات",
+    "totalStudyTime": "إجمالي وقت الدراسة",
+    "overallProgress": "التقدم العام",
+    "courses": "الكورسات",
+    "exams": "الامتحانات",
+    "lessons": "دروس",
+    "whatYouWillLearn": "ما سوف تتعلمه",
+    "progress": "التقدم",
+    "lessonsCompleted": "درس مكتمل",
+    "questions": "أسئلة",
+    "minutes": "دقيقة",
+    "createdAt": "تم الإنشاء في",
+    "noCourses": "لا توجد كورسات",
+    "noCoursesEnrolled": "لم يتم التسجيل في أي كورسات بعد",
+    "noExams": "لا توجد امتحانات",
+    "noExamsAvailable": "لا توجد امتحانات متاحة حالياً",
+    "studentNotFound": "الطالب غير موجود"
+  },
+
       home: {
         title: 'مرحباً بكم في الأكاديمية الاحترافية',
         subtitle: 'بوابتكم إلى المعرفة',

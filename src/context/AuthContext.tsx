@@ -29,21 +29,19 @@ interface Course {
     id :number,
     title:string,
     description:string,
-      duration:number,
-      course_id:number,
-      questions: Array<{
+    duration:number,
+    course_id:number,
+    questions: Array<{
+      id: number;
+      question_text: string;
+      options: Array<{
         id: number;
-        question_text: string;
-        options: Array<{
-          id: number;
-          choice_text: string;
-          is_correct: boolean;
-        }>;
-      questions_count:number;
-
+        choice_text: string;
+        is_correct: boolean;
       }>;
-
-    }
+      questions_count:number;
+    }>;
+  }
 }
 
 interface User {
@@ -55,18 +53,19 @@ interface User {
   qr_code?: string;
   courses?: Course[];
   total_rate?: number;
+  children?: any[];
+  phone?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (identifier: string, password: string, userType: 'student' | 'parent') => Promise<void>;
   logout: () => void;
   register: (formData: Record<string, any>) => Promise<void>;
   checkAuth: () => Promise<void>;
-   refreshUserData: () => Promise<void>; // أضف هذه الدالة
-
+  refreshUserData: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -88,39 +87,57 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userType, setUserType] = useState<'student' | 'parent' | null>(null);
 
   async function checkAuth() {
     try {
       console.log("🔄 Checking authentication...");
       const token = Cookies.get("token");
+      const storedUserType = Cookies.get("userType") as 'student' | 'parent' | null;
       
-      if (!token) {
-        console.log("❌ No token found");
+      if (!token || !storedUserType) {
+        console.log("❌ No token or user type found");
         setUser(null);
+        setUserType(null);
         setLoading(false);
         return;
       }
       
       console.log("🔑 Found token, verifying...");
+      setUserType(storedUserType);
       
-      const data = await apiFetch<any>("/student/check-auth");
+      const endpoint = storedUserType === 'student' ? "/student/check-auth" : "/parent/check-auth";
+      const data = await apiFetch<any>(endpoint);
       
       console.log("✅ User is authenticated:", data);
       
-      // تحديث هنا ليشمل الكورسات
-      if (data.message && data.message.student) {
-        setUser(data.message.student);
-      } else if (data.student) {
-        setUser(data.student);
-      } else {
-        setUser(data);
+      if (storedUserType === 'student') {
+        // معالجة response للطالب
+        if (data.message && data.message.student) {
+          setUser(data.message.student);
+        } else if (data.student) {
+          setUser(data.student);
+        } else {
+          setUser(data);
+        }
+      } else if (storedUserType === 'parent') {
+        // معالجة response لولي الأمر
+        if (data.message && data.message.parent) {
+          setUser(data.message.parent);
+        } else if (data.parent) {
+          setUser(data.parent);
+        } else {
+          setUser(data);
+        }
       }
       
       setError(null);
     } catch (err) {
       console.log("❌ Authentication check failed:", err);
       setUser(null);
+      setUserType(null);
       Cookies.remove("token");
+      Cookies.remove("userType");
       
       if (err instanceof Error) {
         if (!err.message.includes("401") && !err.message.includes("403")) {
@@ -132,46 +149,96 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
-  async function login(email: string, password: string) {
+  async function login(identifier: string, password: string, userType: 'student' | 'parent') {
     setLoading(true);
     setError(null);
     
     try {
-      console.log("🔐 Attempting login...");
+      console.log("🔐 Attempting login...", { userType, identifier });
       
-      const body = { email, password };
+      let endpoint = '';
+      let body = {};
+
+      if (userType === 'student') {
+        endpoint = "/student/login";
+        body = { email: identifier, password };
+      } else if (userType === 'parent') {
+        endpoint = "/parent/login";
+        body = { qr_code: identifier, password };
+      }
       
-      const response = await apiFetch<any>("/student/login", {
+      const response = await apiFetch<any>(endpoint, {
         method: "POST",
         body,
       });
       
       console.log("✅ Login response:", response);
       
-      const { student, token } = response.message;
+      let userData;
+      let token;
+
+      if (userType === 'student') {
+        // معالجة response للطالب
+        if (response.message && response.message.student) {
+          userData = response.message.student;
+          token = response.message.token;
+        } else if (response.student) {
+          userData = response.student;
+          token = response.token;
+        } else {
+          userData = response;
+          token = response.token;
+        }
+      } else if (userType === 'parent') {
+        // معالجة response لولي الأمر - بناءً على الـ response الجديد
+        if (response.message && response.message.parent) {
+          userData = response.message.parent;
+          token = response.message.token;
+        } else if (response.parent) {
+          userData = response.parent;
+          token = response.token;
+        } else {
+          userData = response;
+          token = response.token;
+        }
+      }
+      
+      if (!userData || !token) {
+        throw new Error("Invalid response from server");
+      }
       
       if (token) {
         Cookies.set("token", token, { expires: 7 });
-        console.log("🔑 Token stored:", token);
+        Cookies.set("userType", userType, { expires: 7 });
+        console.log("🔑 Token and user type stored");
       }
       
-      setUser({
-        id: student.id,
-        name: student.name,
-        email: student.email,
-        image: student.image,
-        courses: student.courses, // إضافة الكورسات
-        type: student.type,
-        qr_code: student.qr_code,
-        total_rate: student.total_rate
-      });
+      // بناء كائن المستخدم بناءً على البيانات المستلمة
+      const userObject: User = {
+        id: userData.id,
+        name: userData.name,
+        email: userData.email,
+        phone: userData.phone,
+        image: userData.image,
+        type: userType,
+        qr_code: userData.qr_code,
+        total_rate: userData.total_rate,
+        courses: userData.courses,
+        children: userData.children || (response.student ? [response.student] : []) // إضافة الأبناء إذا وجدوا
+      };
       
+      setUser(userObject);
+      setUserType(userType);
       setError(null);
       
     } catch (err) {
       console.error("❌ Login failed:", err);
       setUser(null);
-      if (err instanceof Error) setError(err.message);
+      setUserType(null);
+      if (err instanceof Error) {
+        const errorMessage = err.message || 'فشل تسجيل الدخول';
+        setError(errorMessage);
+      }
       throw err;
     } finally {
       setLoading(false);
@@ -210,9 +277,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     console.log("🚪 Logging out...");
     
     setUser(null);
+    setUserType(null);
     setError(null);
     
     Cookies.remove("token");
+    Cookies.remove("userType");
     setTimeout(() => {
       window.location.href = "/login";
     }, 500);
@@ -222,18 +291,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     checkAuth();
   }, []);
 
-
-  // في الـ AuthProvider، أضف هذه الدالة
-const refreshUserData = async () => {
-  try {
-    console.log("🔄 Refreshing user data...");
-    await checkAuth(); // هذا سيحدث بيانات المستخدم بما فيهم الكورسات
-  } catch (error) {
-    console.error("❌ Error refreshing user data:", error);
-  }
-};
-
-// أضف refreshUserData إلى value
+  const refreshUserData = async () => {
+    try {
+      console.log("🔄 Refreshing user data...");
+      await checkAuth();
+    } catch (error) {
+      console.error("❌ Error refreshing user data:", error);
+    }
+  };
 
   const value: AuthContextType = {
     user,
@@ -243,8 +308,7 @@ const refreshUserData = async () => {
     logout,
     register,
     checkAuth,
-     refreshUserData, // أضف هذه
-
+    refreshUserData,
     isAuthenticated: !!user,
   };
 

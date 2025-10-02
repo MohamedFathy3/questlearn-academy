@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Mail, Lock, User, GraduationCap, Users, ExternalLink, BookOpen, Shield, Star } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, GraduationCap, Users, ExternalLink, BookOpen, Shield, Star, QrCode } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import logo from '@/assets/logo.png';
 import { Link } from "react-router-dom";
@@ -12,7 +12,8 @@ type LoginType = 'student' | 'parent' | 'teacher';
 export default function LoginPage() {
   const { login, error, loading } = useAuth();
   const { t, i18n } = useTranslation();
-const [qrCode, setQrCode] = useState("");
+  
+  const [qrCode, setQrCode] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -24,7 +25,14 @@ const [qrCode, setQrCode] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    await login(email, password);
+    
+    if (activeTab === 'parent') {
+      // استخدام QR code للوالدين
+      await login(qrCode, password, 'parent');
+    } else if (activeTab === 'student') {
+      // استخدام email للطلاب
+      await login(email, password, 'student');
+    }
   }
 
   const handleTeacherRedirect = () => {
@@ -317,30 +325,61 @@ const [qrCode, setQrCode] = useState("");
           ) : (
             // Student & Parent Tabs - Login Form
             <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in-up">
-              {/* Email Input */}
-              <div className="space-y-3">
-                <Label htmlFor="email" className="text-gray-700 font-semibold text-base flex items-center gap-2">
-                  <Mail className="w-5 h-5" />
-                  {t('login.email', 'البريد الإلكتروني')}
-                </Label>
-                <div className="relative group">
-                  <div className={`absolute ${isRTL ? 'left-4' : 'right-4'} top-1/2 transform -translate-y-1/2 transition-colors duration-300 group-focus-within:text-${CurrentTab.color}-500`}>
-                    <Mail className="w-6 h-6 text-gray-400 group-focus-within:scale-110 transition-transform duration-300" />
+              {/* Identifier Input - يختلف حسب نوع المستخدم */}
+              {activeTab === 'parent' ? (
+                // QR Code Input للوالدين
+                <div className="space-y-3">
+                  <Label htmlFor="qrCode" className="text-gray-700 font-semibold text-base flex items-center gap-2">
+                    <QrCode className="w-5 h-5" />
+                    {t('login.qrCode', 'كود QR')}
+                  </Label>
+                  <div className="relative group">
+                    <div className={`absolute ${isRTL ? 'left-4' : 'right-4'} top-1/2 transform -translate-y-1/2 transition-colors duration-300 group-focus-within:text-${CurrentTab.color}-500`}>
+                      <QrCode className="w-6 h-6 text-gray-400 group-focus-within:scale-110 transition-transform duration-300" />
+                    </div>
+                    <input
+                      id="qrCode"
+                      type="text"
+                      required
+                      value={qrCode}
+                      onChange={(e) => setQrCode(e.target.value)}
+                      className={`w-full border-2 border-gray-200 rounded-xl py-4 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-${CurrentTab.color}-500/20 focus:border-${CurrentTab.color}-500 transition-all duration-300 ${
+                        isRTL ? 'pl-16 pr-6' : 'pr-16 pl-6'
+                      } text-lg hover:border-${CurrentTab.color}-300`}
+                      placeholder={t('login.qrCodePlaceholder', 'أدخل كود QR الخاص بك')}
+                      dir="ltr"
+                    />
                   </div>
-                  <input
-                    id="email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className={`w-full border-2 border-gray-200 rounded-xl py-4 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-${CurrentTab.color}-500/20 focus:border-${CurrentTab.color}-500 transition-all duration-300 ${
-                      isRTL ? 'pl-16 pr-6' : 'pr-16 pl-6'
-                    } text-lg hover:border-${CurrentTab.color}-300`}
-                    placeholder={t('login.emailPlaceholder', 'example@example.com')}
-                    dir="ltr"
-                  />
+                  <p className="text-sm text-gray-500">
+                    {t('login.qrCodeHelp', 'استخدم كود QR المخصص لمتابعة أبنائك')}
+                  </p>
                 </div>
-              </div>
+              ) : (
+                // Email Input للطلاب
+                <div className="space-y-3">
+                  <Label htmlFor="email" className="text-gray-700 font-semibold text-base flex items-center gap-2">
+                    <Mail className="w-5 h-5" />
+                    {t('login.email', 'البريد الإلكتروني')}
+                  </Label>
+                  <div className="relative group">
+                    <div className={`absolute ${isRTL ? 'left-4' : 'right-4'} top-1/2 transform -translate-y-1/2 transition-colors duration-300 group-focus-within:text-${CurrentTab.color}-500`}>
+                      <Mail className="w-6 h-6 text-gray-400 group-focus-within:scale-110 transition-transform duration-300" />
+                    </div>
+                    <input
+                      id="email"
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className={`w-full border-2 border-gray-200 rounded-xl py-4 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-${CurrentTab.color}-500/20 focus:border-${CurrentTab.color}-500 transition-all duration-300 ${
+                        isRTL ? 'pl-16 pr-6' : 'pr-16 pl-6'
+                      } text-lg hover:border-${CurrentTab.color}-300`}
+                      placeholder={t('login.emailPlaceholder', 'example@example.com')}
+                      dir="ltr"
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Password Input */}
               <div className="space-y-3">

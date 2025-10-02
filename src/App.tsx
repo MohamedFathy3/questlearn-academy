@@ -11,10 +11,13 @@ import HonorBoard from "./pages/HonorBoard";
 import NotFound from "./pages/NotFound";
 import LoginPage from "@/pages/LoginPage";
 import Profile from "@/pages/Profile";
+import Profileparent from "@/pages/Profileparent";
 import RegisterPage from "@/pages/RegisterPage";
 import Exam from "@/pages/exam";
 import Detailscourse from "@/pages/CourseDatailstatunt";
 import HonerBoard from "@/pages/HonorBoardStutent";
+import ContactUs from "@/pages/Contact";
+import ParentDetils from "@/pages/parentDetials";
 import { useAuth } from "@/context/AuthContext";
 
 const queryClient = new QueryClient();
@@ -32,9 +35,12 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/contact" element={<ContactUs />} />
+              <Route path="/profileParent" element={<Profileparent />} />
               <Route path="/HonerBoard" element={<HonerBoard />} />
               <Route path="/courses" element={<Courses />} />
               <Route path="/course/:id" element={<CourseDetail />} />
+              <Route path="/parent/child/:id" element={<ParentDetils />} />
               <Route path="/exam/:id" element={<Exam />} />
               <Route path="/course/:id" element={<CourseDetail />} />
               <Route path="/Detailscourse/:id" element={<Detailscourse />} />

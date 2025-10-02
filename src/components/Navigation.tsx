@@ -47,11 +47,15 @@ const Navigation = () => {
   };
 
   const handleProfile = () => {
-    navigate("/profile");
-    setIsMenuOpen(false);
-    setIsProfileOpen(false);
-  };
-
+  // التوجيه بناءً على نوع المستخدم مع معالجة الخطأ الإملائي
+  if (user?.type === 'parent' || user?.type === 'Perant') {
+    navigate("/profileParent");
+  } else {
+    navigate("/profile"); // للطالب أو الأنواع الأخرى
+  }
+  setIsMenuOpen(false);
+  setIsProfileOpen(false);
+};
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
