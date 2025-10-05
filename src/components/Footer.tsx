@@ -135,7 +135,7 @@ const Footer = () => {
 
         <div className="border-t border-tan/20 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-muted-foreground text-sm">
-            © 2024 LearnHub. {t('footer.rights', 'All rights reserved.')}
+            © 2026 Professional Academy. {t('footer.rights', 'All rights reserved.')}
           </div>
           
           {/* Language Selector */}
@@ -144,7 +144,7 @@ const Footer = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                className="flex items-center gap-2 hover:text-tan"
+                className="flex items-center gap-2"
                 onClick={() => setLanguageOpen(!languageOpen)}
               >
                 <Globe className="w-4 h-4" />
@@ -173,9 +173,7 @@ const Footer = () => {
               )}
             </div>
             
-            <span className="flex items-center gap-1">
-              💵 USD
-            </span>
+        
           </div>
         </div>
       </div>

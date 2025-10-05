@@ -128,7 +128,6 @@ export default function LatestCourses() {
       return "All Levels";
     };
 
-    // حساب المدة التقريبية بناءً على عدد الدروس
     const getCourseDuration = () => {
       const lessonCount = course.details?.length || 0;
       if (lessonCount === 0) return "Flexible";

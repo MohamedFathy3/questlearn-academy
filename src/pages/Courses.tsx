@@ -108,7 +108,7 @@ const Courses = () => {
     sort: "popular"
   });
 
-  // Fetch courses from API without token
+  // Fetch courses from API
   const fetchCourses = async (page = 1, loadMore = false) => {
     try {
       if (loadMore) {
@@ -118,7 +118,6 @@ const Courses = () => {
       }
       setError(null);
 
-      // استخدام fetch مباشرة بدون token
       const response = await fetch('/api/course/index', {
         method: 'POST',
         headers: {
@@ -149,57 +148,10 @@ const Courses = () => {
           setCourses(data.data);
         }
         
-        // Check if there are more pages
         setHasMore(data.meta.current_page < data.meta.last_page);
         setCurrentPage(data.meta.current_page);
       } else {
         setError(data.message || 'Failed to fetch courses');
-      }
-    } catch (err: any) {
-      console.error('Error fetching courses:', err);
-      setError(err.message || 'An error occurred while loading courses');
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  };
-
-  // بديل باستخدام apiFetch إذا كان يدعم الطلبات بدون توكن
-  const fetchCoursesWithApiFetch = async (page = 1, loadMore = false) => {
-    try {
-      if (loadMore) {
-        setLoadingMore(true);
-      } else {
-        setLoading(true);
-      }
-      setError(null);
-
-      const response = await apiFetch<ApiResponse>('/course/index', {
-        method: 'POST',
-        body: {
-          filters: {},
-          orderBy: "id",
-          orderByDirection: "asc",
-          perPage: 10,
-          paginate: true,
-          delete: false,
-          page: page
-        },
-        // إذا كان apiFetch يتطلب token افتراضياً، يمكن تجاوزه
-        skipAuth: true // أو أي option متاح لإلغاء إرسال التوكن
-      });
-
-      if (response.result === "Success" && response.data) {
-        if (loadMore) {
-          setCourses(prev => [...prev, ...response.data]);
-        } else {
-          setCourses(response.data);
-        }
-        
-        setHasMore(response.meta.current_page < response.meta.last_page);
-        setCurrentPage(response.meta.current_page);
-      } else {
-        setError(response.message || 'Failed to fetch courses');
       }
     } catch (err: any) {
       console.error('Error fetching courses:', err);
@@ -301,13 +253,13 @@ const Courses = () => {
     }
   };
 
-  // Transform API data to match CourseCard props
+  // ✅ تحسين دورة تحويل البيانات
   const transformCourseData = (course: Course) => {
     const originalPrice = parseFloat(course.original_price || "0");
     const currentPrice = parseFloat(course.price || "0");
     const hasDiscount = originalPrice > currentPrice && parseFloat(course.discount || "0") > 0;
     
-    // Calculate estimated duration from details
+    // ✅ حساب المدة المقدرة
     const videoLessons = course.details?.filter(detail => detail.content_type === 'video') || [];
     const getEstimatedDuration = () => {
       const videoCount = videoLessons.length;
@@ -317,7 +269,7 @@ const Courses = () => {
       return "5+ " + t('courses.hours', 'hours');
     };
 
-    // Determine course level from title
+    // ✅ تحديد مستوى الكورس
     const getCourseLevel = () => {
       const title = course.title ? course.title.toLowerCase() : "";
       if (title.includes('basic') || title.includes('intro') || title.includes('beginner')) {
@@ -330,21 +282,36 @@ const Courses = () => {
       return t('courses.allLevels', 'All Levels');
     };
 
+    // ✅ حساب الحد الأقصى للطلاب ونسبة التقدم
+    const calculateMaxStudents = () => {
+      // يمكنك تعديل هذا المنطق بناءً على بياناتك
+      const baseStudents = course.count_student || course.subscribers_count || 0;
+      if (baseStudents < 10) return 20;
+      if (baseStudents < 50) return 100;
+      if (baseStudents < 100) return 200;
+      return 300;
+    };
+
+    const maxStudents = calculateMaxStudents();
+    const enrollmentProgress = Math.min(100, ((course.count_student || 0) / maxStudents) * 100);
+
     return {
       id: course.id.toString(),
       title: course.title || t('courses.untitled', 'Untitled Course'),
       instructor: course.teacher?.name || t('courses.unknownInstructor', 'Unknown Instructor'),
-      thumbnail: course?.image ,
+      thumbnail: course.image || 'https://via.placeholder.com/400x300?text=Course+Image',
       price: currentPrice,
       originalPrice: hasDiscount ? originalPrice : undefined,
       rating: 4.5,
       studentsCount: course.count_student || course.subscribers_count || 0,
+      maxStudents: maxStudents, // ✅ إضافة العدد الأقصى
       duration: getEstimatedDuration(),
       level: getCourseLevel() as "Beginner" | "Intermediate" | "Advanced",
       category: course.subject?.name || t('courses.general', 'General'),
       isBestseller: course.views_count > 100,
       isNew: Date.now() - new Date(course.created_at).getTime() < 7 * 24 * 60 * 60 * 1000,
-      currency: course.currency || "USD"
+      currency: course.currency || "USD",
+      enrollmentProgress: enrollmentProgress // ✅ إضافة نسبة التقدم
     };
   };
 
@@ -396,8 +363,6 @@ const Courses = () => {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
-
- 
 
   if (error && courses.length === 0) {
     return (
@@ -647,7 +612,12 @@ const Courses = () => {
         <Separator className="mb-8" />
 
         {/* Courses Grid */}
-        {filteredCourses.length > 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-tan" />
+            <span className="ml-2">{t('common.loading', 'Loading courses...')}</span>
+          </div>
+        ) : filteredCourses.length > 0 ? (
           <>
             <div className={`grid gap-6 ${
               viewMode === "grid" 
@@ -655,7 +625,10 @@ const Courses = () => {
                 : "grid-cols-1"
             }`}>
               {filteredCourses.map((course) => (
-                <CourseCard key={course.id} {...transformCourseData(course)} />
+                <CourseCard 
+                  key={course.id} 
+                  {...transformCourseData(course)}
+                />
               ))}
             </div>
 

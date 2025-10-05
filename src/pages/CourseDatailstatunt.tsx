@@ -96,29 +96,43 @@ interface CourseDetail {
     session_time: string | null;
     file_path: string | null;
     created_at: string;
-    watched_duration?: number;
-    view_count?: number;
+    watching_data?: {
+      started_at: string;
+      watched_duration: number;
+      view: boolean;
+    };
+    students?: Array<{
+      id: number;
+      name: string;
+      email: string;
+      pivot: {
+        course_id: number;
+        started_at: string;
+        watched_duration: number;
+        view: boolean;
+      };
+    }>;
   }[];
   exams: {
     id: number;
     title: string;
     description: string;
     duration: number;
+    course_id: number;
+    questions: Array<{
+      id: number;
+      question_text: string;
+      choices: Array<{
+        id: number;
+        choice_text: string;
+        is_correct: boolean;
+      }>;
+    }>;
+    studentExams: any[];
     questions_count: number;
-    total_marks: number;
-    passing_marks: number;
-    available_from: string;
-    available_to: string;
-    status: string;
+    created_at: string;
   }[];
   created_at: string;
-}
-
-interface ApiResponse {
-  result: string;
-  data: CourseDetail;
-  message: string;
-  status: number;
 }
 
 const CourseDetail = () => {
@@ -147,9 +161,9 @@ const CourseDetail = () => {
 
   useEffect(() => {
     if (id) {
-      fetchCourseDetail();
+      fetchCourseFromContext();
     }
-  }, [id]);
+  }, [id, user]);
 
   useEffect(() => {
     return () => {
@@ -158,6 +172,63 @@ const CourseDetail = () => {
       }
     };
   }, []);
+
+  // جلب البيانات من الـ AuthContext بدل API
+  const fetchCourseFromContext = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log("🔄 Fetching course from AuthContext...");
+      console.log("👤 Current user:", user);
+      console.log("🎯 Looking for course ID:", id);
+
+      if (!user || !user.courses) {
+        setError("No courses found in your profile");
+        setLoading(false);
+        return;
+      }
+
+      const userCourses = user.courses || [];
+      console.log("📚 User courses:", userCourses);
+
+      const foundCourse = userCourses.find((c: any) => c.id.toString() === id);
+      
+      if (foundCourse) {
+        console.log("✅ Course found in context:", foundCourse);
+        const cleanedData = cleanCourseDetails(foundCourse);
+        setCourse(cleanedData);
+        
+        // تحميل تقدم المشاهدة من البيانات الموجودة
+        loadWatchingProgress(cleanedData);
+      } else {
+        console.log("❌ Course not found in user context");
+        setError("Course not found in your enrolled courses");
+      }
+    } catch (err: any) {
+      console.error('🚨 Error fetching course from context:', err);
+      setError(err.message || 'Failed to load course details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // تحميل تقدم المشاهدة من البيانات الموجودة
+  const loadWatchingProgress = (courseData: CourseDetail) => {
+    const progress: {[key: number]: {duration: number, views: number}} = {};
+    
+    courseData.details?.forEach(detail => {
+      if (detail.watching_data) {
+        progress[detail.id] = {
+          duration: detail.watching_data.watched_duration || 0,
+          views: detail.watching_data.view ? 1 : 0
+        };
+      }
+    });
+    
+    setLessonProgress(progress);
+    console.log("📊 Loaded watching progress:", progress);
+  };
 
   const openZoomLink = (zoomLink: string | null, lesson: any) => {
     if (!zoomLink) {
@@ -271,7 +342,7 @@ const CourseDetail = () => {
 
       console.log("✅ Video progress API response:", response);
 
-  if (response.message === "Watching data saved successfully") {
+      if (response.message === "Watching data saved successfully") {
         setLessonProgress(prev => ({
           ...prev,
           [lesson.id]: {
@@ -379,55 +450,6 @@ const CourseDetail = () => {
     return { ...courseData, details: [] };
   };
 
-  const fetchCourseDetail = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const token = Cookies.get("token");
-      if (token && user) {
-        try {
-          const userCourses = user.courses || [];
-          const foundCourse = userCourses.find((c: any) => c.id.toString() === id);
-          if (foundCourse) {
-            const cleanedData = cleanCourseDetails(foundCourse);
-            setCourse(cleanedData);
-            setLoading(false);
-            return;
-          }
-        } catch (userError) {
-          console.log("⚠️ Could not fetch user data, trying public API");
-        }
-      }
-
-      const response = await fetch(`/api/student-course/${id}`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data: ApiResponse = await response.json();
-
-      if (data.result === "Success" && data.data) {
-        const cleanedData = cleanCourseDetails(data.data);
-        setCourse(cleanedData);
-      } else {
-        throw new Error(data.message || 'Failed to fetch course details');
-      }
-    } catch (err: any) {
-      console.error('🚨 Error fetching course details:', err);
-      setError(err.message || 'Failed to load course details');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const refreshFromContext = async () => {
     try {
       setLoading(true);
@@ -442,6 +464,7 @@ const CourseDetail = () => {
         console.log("✅ Updated course from context:", foundCourse);
         const cleanedData = cleanCourseDetails(foundCourse);
         setCourse(cleanedData);
+        loadWatchingProgress(cleanedData);
         toast({
           title: "Data Refreshed",
           description: "Course data updated from your profile",
@@ -601,7 +624,7 @@ const CourseDetail = () => {
           <div className="text-center text-red-500">
             <p>Error: {error || 'Course not found'}</p>
             <div className="flex gap-2 justify-center mt-4">
-              <Button onClick={fetchCourseDetail}>
+              <Button onClick={fetchCourseFromContext}>
                 Try Again
               </Button>
               <Button 
@@ -693,6 +716,20 @@ const CourseDetail = () => {
     return course.teacher?.courses_count || 0;
   };
 
+  // حساب التقدم العام في الكورس
+  const calculateOverallProgress = () => {
+    if (!details.length) return 0;
+    
+    const totalDuration = details.reduce((total, detail) => {
+      const progress = getLessonProgress(detail.id);
+      return total + (progress.duration > 0 ? 1 : 0);
+    }, 0);
+    
+    return Math.round((totalDuration / details.length) * 100);
+  };
+
+  const overallProgress = calculateOverallProgress();
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section with Background Image */}
@@ -717,7 +754,11 @@ const CourseDetail = () => {
               <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
                 {getCourseLevel()}
               </Badge>
-           
+              {overallProgress > 0 && (
+                <Badge variant="secondary" className="bg-green-500/20 text-green-300 border-green-400/30">
+                  {overallProgress}% Complete
+                </Badge>
+              )}
             </div>
             
             <h1 className="text-4xl lg:text-5xl font-bold leading-tight mb-4">
@@ -751,6 +792,17 @@ const CourseDetail = () => {
                 <span>{totalLessons} lessons</span>
               </div>
             </div>
+
+            {/* Progress Bar */}
+            {overallProgress > 0 && (
+              <div className="mb-6">
+                <div className="flex justify-between text-sm mb-2">
+                  <span>Your Progress</span>
+                  <span>{overallProgress}%</span>
+                </div>
+                <Progress value={overallProgress} className="h-2 bg-white/20" />
+              </div>
+            )}
 
             <div className="flex items-center gap-4">
               <Avatar className="w-14 h-14 border-2 border-white">
@@ -810,7 +862,7 @@ const CourseDetail = () => {
                           <span>No prior experience required</span>
                         </li>
                         <li className="flex items-start gap-3">
-                          <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full mt=2 flex-shrink-0"></div>
+                          <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full mt-2 flex-shrink-0"></div>
                           <span>Basic computer skills</span>
                         </li>
                         <li className="flex items-start gap-3">
@@ -827,14 +879,19 @@ const CourseDetail = () => {
               <TabsContent value="curriculum" className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-2xl">Course Curriculum</CardTitle>
-                    <p className="text-muted-foreground">
-                      {totalLessons} lessons • {getEstimatedDuration()} total length
-                    </p>
-                    <div className="flex gap-2 text-sm">
-                      <Badge variant="outline">{videoLessons.length} Videos</Badge>
-                      <Badge variant="outline">{pdfLessons.length} PDFs</Badge>
-                      <Badge variant="outline">{zoomLessons.length} Zoom</Badge>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <CardTitle className="text-2xl">Course Curriculum</CardTitle>
+                        <p className="text-muted-foreground">
+                          {totalLessons} lessons • {getEstimatedDuration()} total length
+                        </p>
+                        <div className="flex gap-2 text-sm mt-2">
+                          <Badge variant="outline">{videoLessons.length} Videos</Badge>
+                          <Badge variant="outline">{pdfLessons.length} PDFs</Badge>
+                          <Badge variant="outline">{zoomLessons.length} Zoom</Badge>
+                        </div>
+                      </div>
+                   
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -850,6 +907,7 @@ const CourseDetail = () => {
                             {videoLessons.map((lesson, index) => {
                               const progress = getLessonProgress(lesson.id);
                               const hasWatched = progress.duration > 0;
+                              const isCompleted = progress.duration >= 300;
                               
                               return (
                                 <div key={lesson.id || `video-${index}`} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30 transition-colors group">
@@ -858,17 +916,29 @@ const CourseDetail = () => {
                                       variant="ghost"
                                       size="sm"
                                       onClick={() => playVideo(lesson.content_link, lesson)}
-                                      className="p-0 h-8 w-8 hover:bg-primary hover:text-primary-foreground"
+                                      className={`p-0 h-8 w-8 hover:bg-primary hover:text-primary-foreground ${
+                                        isCompleted ? 'bg-green-500 text-white hover:bg-green-600' : ''
+                                      }`}
                                     >
-                                      <Play className="w-4 h-4" />
+                                      {isCompleted ? <CheckCircle className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                                     </Button>
                                     <div>
                                       <span className="font-medium">{lesson.title || `Video Lesson ${index + 1}`}</span>
                                       {lesson.description && (
                                         <p className="text-sm text-muted-foreground">{lesson.description}</p>
                                       )}
-                                      {debugMode && (
-                                        <p className="text-xs text-gray-500">ID: {lesson.id} | Type: {lesson.content_type}</p>
+                                      {progress.duration > 0 && (
+                                        <div className="flex items-center gap-2 mt-1">
+                                          <div className="w-24 bg-gray-200 rounded-full h-1.5">
+                                            <div 
+                                              className="bg-green-500 h-1.5 rounded-full"
+                                              style={{ width: `${Math.min((progress.duration / 300) * 100, 100)}%` }}
+                                            ></div>
+                                          </div>
+                                          <span className="text-xs text-muted-foreground">
+                                            {formatDuration(progress.duration)}
+                                          </span>
+                                        </div>
                                       )}
                                     </div>
                                   </div>
@@ -885,9 +955,7 @@ const CourseDetail = () => {
                                         )}
                                       </div>
                                       <span className="text-xs font-semibold">
-{user?.courses?.details?.watching_data.watched_duration
-  ? formatDuration(user.courses.details.watching_data.watched_duration)
-  : '0:00'}
+                                        {progress.duration > 0 ? formatDuration(progress.duration) : '0:00'}
                                       </span>
                                     </div>
                                   </div>
@@ -917,9 +985,11 @@ const CourseDetail = () => {
                                       variant="ghost"
                                       size="sm"
                                       onClick={() => openZoomLink(lesson.content_link, lesson)}
-                                      className="p-0 h-8 w-8 hover:bg-primary hover:text-primary-foreground"
+                                      className={`p-0 h-8 w-8 hover:bg-primary hover:text-primary-foreground ${
+                                        hasAttended ? 'bg-green-500 text-white hover:bg-green-600' : ''
+                                      }`}
                                     >
-                                      <ExternalLink className="w-4 h-4" />
+                                      {hasAttended ? <CheckCircle className="w-4 h-4" /> : <ExternalLink className="w-4 h-4" />}
                                     </Button>
                                     <div>
                                       <span className="font-medium">{lesson.title || `Live Session ${index + 1}`}</span>
@@ -930,9 +1000,6 @@ const CourseDetail = () => {
                                         <p className="text-sm text-muted-foreground">
                                           📅 {lesson.session_date} {lesson.session_time && `at ${lesson.session_time}`}
                                         </p>
-                                      )}
-                                      {debugMode && (
-                                        <p className="text-xs text-gray-500">ID: {lesson.id} | Type: {lesson.content_type}</p>
                                       )}
                                     </div>
                                   </div>
@@ -977,9 +1044,6 @@ const CourseDetail = () => {
                                     {lesson.description && (
                                       <p className="text-sm text-muted-foreground">{lesson.description}</p>
                                     )}
-                                    {debugMode && (
-                                      <p className="text-xs text-gray-500">ID: {lesson.id} | Type: {lesson.content_type}</p>
-                                    )}
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -1005,20 +1069,6 @@ const CourseDetail = () => {
                           <p className="text-muted-foreground">Course content will be added soon.</p>
                         </div>
                       )}
-
-                      {/* Debug Information */}
-                      {debugMode && (
-                        <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                          <h4 className="text-lg font-semibold mb-2 text-yellow-800">Debug Information</h4>
-                          <div className="text-sm text-yellow-700">
-                            <p>Total Details: {details.length}</p>
-                            <p>Video Lessons: {videoLessons.length}</p>
-                            <p>PDF Lessons: {pdfLessons.length}</p>
-                            <p>Zoom Lessons: {zoomLessons.length}</p>
-                            <pre className="mt-2 text-xs">{JSON.stringify(details, null, 2)}</pre>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -1026,7 +1076,14 @@ const CourseDetail = () => {
 
               {/* Exams Tab */}
               <TabsContent value="exams" className="space-y-6">
-            <CardContent>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-2xl">Course Exams</CardTitle>
+                    <p className="text-muted-foreground">
+                      Test your knowledge with these exams
+                    </p>
+                  </CardHeader>
+                  <CardContent>
                     <div className="space-y-4">
                       {course.exams && course.exams.length > 0 ? (
                         course.exams.map((exam) => (
@@ -1049,7 +1106,7 @@ const CourseDetail = () => {
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <Award className="w-4 h-4" />
-                                    <span>Passing: {exam.passing_marks}/{exam.total_marks}</span>
+                                    <span>Passing: 60%</span>
                                   </div>
                                 </div>
                               </div>
@@ -1071,6 +1128,7 @@ const CourseDetail = () => {
                       )}
                     </div>
                   </CardContent>
+                </Card>
               </TabsContent>
             </Tabs>
           </div>
@@ -1156,7 +1214,24 @@ const CourseDetail = () => {
                     </div>
                   </div>
 
-                
+                  {/* Share Course */}
+                  <div className="pt-4 border-t">
+                    <h4 className="font-semibold mb-3">Share this course</h4>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="flex-1">
+                        <Facebook className="w-4 h-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" className="flex-1">
+                        <Twitter className="w-4 h-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" className="flex-1">
+                        <Linkedin className="w-4 h-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" className="flex-1">
+                        <Link className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -1192,14 +1267,13 @@ const CourseDetail = () => {
             </div>
 
             {/* Video Player */}
-          <div className="aspect-video bg-black">
-  {selectedVideo ? (
-    <YouTubePlayer videoUrl={selectedVideo} />
-  ) : (
-    <div className="text-white text-center p-4">No video selected</div>
-  )}
-</div>
-
+            <div className="aspect-video bg-black">
+              {selectedVideo ? (
+                <YouTubePlayer videoUrl={selectedVideo} />
+              ) : (
+                <div className="text-white text-center p-4">No video selected</div>
+              )}
+            </div>
 
             {/* Footer with Progress Info */}
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent z-10 p-4">
