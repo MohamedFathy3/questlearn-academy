@@ -72,6 +72,7 @@ const UnifiedRegisterPage: React.FC = () => {
         if (countriesData.status === 200) setCountries(countriesData.data);
         if (stagesData.status === 200) setStages(stagesData.data);
         if (subjectsData.status === 200) setSubjects(subjectsData.data);
+        toast.success('success onload page')
       } catch (error) {
         toast.error('حدث خطأ في تحميل البيانات');
       }
@@ -583,7 +584,7 @@ const UnifiedRegisterPage: React.FC = () => {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold mb-2 text-blue-600">الصورة الشخصية {activeTab !== 'teacher' && '(اختياري)'}</label>
+                <label className="block text-sm font-semibold mb-2 text-blue-600">الصورة الشخصية </label>
                 <div className={`border-2 border-dashed rounded-xl p-6 text-center transition-all duration-300 hover:scale-105 ${
                   errors.image ? 'border-red-500 bg-red-50' : 'border-blue-400 bg-blue-50 hover:bg-blue-100'
                 }`}>
@@ -624,11 +625,11 @@ const UnifiedRegisterPage: React.FC = () => {
                     ))}
                   </div>
                   
-                  <button type="button" onClick={() => setShowCustomStage(!showCustomStage)} 
+                  {/* <button type="button" onClick={() => setShowCustomStage(!showCustomStage)} 
                     className="flex items-center gap-2 text-blue-600 font-medium text-sm hover:text-blue-700 transition-colors duration-300">
                     {showCustomStage ? <FiMinus /> : <FiPlus />}
                     إضافة مرحلة جديدة
-                  </button>
+                  </button> */}
                   
                   {showCustomStage && (
                     <div className="animate-fade-in-up">
@@ -654,11 +655,11 @@ const UnifiedRegisterPage: React.FC = () => {
                     ))}
                   </div>
                   
-                  <button type="button" onClick={() => setShowCustomSubject(!showCustomSubject)} 
+                  {/* <button type="button" onClick={() => setShowCustomSubject(!showCustomSubject)} 
                     className="flex items-center gap-2 text-blue-600 font-medium text-sm hover:text-blue-700 transition-colors duration-300">
                     {showCustomSubject ? <FiMinus /> : <FiPlus />}
                     إضافة مادة جديدة
-                  </button>
+                  </button> */}
                   
                   {showCustomSubject && (
                     <div className="animate-fade-in-up">

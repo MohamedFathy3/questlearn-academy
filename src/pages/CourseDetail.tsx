@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import Cookies from "js-cookie";
 import { useAuth } from "@/context/AuthContext";
 import YouTubePlayer from '@/components/youtube';
+import { Link } from "react-router-dom";
 import { 
   Play, 
   Clock, 
@@ -41,9 +43,31 @@ import {
   Mail,
   Captions,
   Eye,
-  Calendar
+  Calendar,
+  Send,
+  TrendingUp,
+  DollarSign
 } from "lucide-react";
 import { apiFetch } from '@/lib/api';
+
+interface Comment {
+  id: number;
+  comment: string;
+  rating: number;
+  created_at: string;
+  student: {
+    id: number;
+    name: string;
+    phone: string;
+    email: string;
+    type: string;
+    image: string;
+    qr_code: string;
+    delete_reason: string | null;
+    birth_day: string;
+    average_rating: number;
+  };
+}
 
 interface CourseDetail {
   id: number;
@@ -117,6 +141,8 @@ interface CourseDetail {
     questions_count: number;
     created_at: string;
   }[];
+  comments: Comment[];
+  average_rating: number;
   created_at: string;
 }
 
@@ -127,7 +153,7 @@ interface ApiResponse {
   status: number;
 }
 
-// بيانات تقييمات وهمية لحين ما تجي من الـ API
+// بيانات تقييمات وهمية
 const mockReviews = [
   {
     id: 1,
@@ -150,28 +176,6 @@ const mockReviews = [
     comment: "المحتوى جيد ولكن أتمنى وجود أمثلة أكثر تطبيقية. بشكل عام دورة مفيدة.",
     date: "2024-01-10",
     likes: 12
-  },
-  {
-    id: 3,
-    user: {
-      name: "خالد عبدالله",
-      avatar: "KA"
-    },
-    rating: 5,
-    comment: "أفضل دورة في هذا المجال. المدرس محترف والتمارين عملية جداً.",
-    date: "2024-01-08",
-    likes: 31
-  },
-  {
-    id: 4,
-    user: {
-      name: "سارة أحمد",
-      avatar: "SA"
-    },
-    rating: 3,
-    comment: "جيدة ولكن تحتاج بعض التحسينات في جودة الفيديوهات.",
-    date: "2024-01-05",
-    likes: 8
   }
 ];
 
@@ -197,6 +201,9 @@ const CourseDetail = () => {
     instructor: false,
     reviews: false
   });
+  const [newComment, setNewComment] = useState("");
+  const [rating, setRating] = useState(0);
+  const [submittingComment, setSubmittingComment] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -269,7 +276,7 @@ const CourseDetail = () => {
         });
         
         await refreshUserData();
-        navigate('/learning');
+        navigate('/profile');
       } else {
         throw new Error(response.message || "Enrollment failed");
       }
@@ -290,8 +297,8 @@ const CourseDetail = () => {
   const applyDiscount = async () => {
     if (!discountCode.trim()) {
       toast({
-        title: "Error",
-        description: "Please enter a discount code",
+        title: "خطأ",
+        description: "الرجاء إدخال كود الخصم",
         variant: "destructive",
       });
       return;
@@ -300,22 +307,32 @@ const CourseDetail = () => {
     try {
       setApplyingDiscount(true);
       
-      const discountPercentage = 10;
-      const currentPrice = parseFloat(course?.price || "0");
-      const discountedPrice = currentPrice * (1 - discountPercentage / 100);
-      
-      setFinalPrice(discountedPrice);
-      setDiscountApplied(true);
-      
-      toast({
-        title: "Discount Applied!",
-        description: `You saved ${discountPercentage}% on this course`,
-        variant: "default",
+      const response = await apiFetch<any>('/apply-coupon', {
+        method: 'POST',
+        body: {
+          code: discountCode,
+          amount: parseFloat(course?.original_price || course?.price || "0")
+        }
       });
-    } catch (error) {
+
+      if (response.result === "Success") {
+        const discountedPrice = response.data.discounted_price || response.data.new_price;
+        
+        setFinalPrice(discountedPrice);
+        setDiscountApplied(true);
+        
+        toast({
+          title: "تم تطبيق الخصم!",
+          description: `وفرت ${response.data.discount_percentage || 10}% على هذه الدورة`,
+          variant: "default",
+        });
+      } else {
+        throw new Error(response.message || "كود الخصم غير صالح");
+      }
+    } catch (error: any) {
       toast({
-        title: "Invalid Discount Code",
-        description: "The discount code you entered is invalid or expired",
+        title: "كود الخصم غير صالح",
+        description: error.message || "كود الخصم الذي أدخلته غير صالح أو منتهي الصلاحية",
         variant: "destructive",
       });
     } finally {
@@ -323,114 +340,51 @@ const CourseDetail = () => {
     }
   };
 
-  // ✅ Render Hero Section مثل Udemy
-  const renderUdemyHero = () => {
-    if (!course) return null;
+  // ✅ دالة إضافة تعليق وتقييم للكورس
+  const handleAddComment = async () => {
+    if (!newComment.trim() || rating === 0) {
+      toast({
+        title: "خطأ",
+        description: "الرجاء إدخال تعليق وتقييم",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    // حساب إجمالي مدة المشاهدة من البيانات الفعلية
-    const totalWatchedDuration = course.details?.reduce((total, detail) => {
-      if (detail.students) {
-        return total + detail.students.reduce((studentTotal, student) => {
-          return studentTotal + (student.pivot?.watched_duration || 0);
-        }, 0);
+    try {
+      setSubmittingComment(true);
+      
+      const response = await apiFetch(`/courses/${id}/comments`, {
+        method: 'POST',
+        body: {
+          comment: newComment,
+          rating: rating
+        }
+      });
+
+      if (response.result === "Success") {
+        toast({
+          title: "تمت الإضافة!",
+          description: "تم إضافة تعليقك بنجاح",
+          variant: "default",
+        });
+        
+        fetchCourseDetail();
+        setNewComment("");
+        setRating(0);
+      } else {
+        throw new Error(response.message || 'Failed to add comment');
       }
-      return total;
-    }, 0) || 0;
-
-    const totalLessons = course.details?.length || 0;
-    const videoLessons = course.details?.filter(d => d.content_type === 'video') || [];
-    const totalVideoDuration = videoLessons.length * 10; // تقدير 10 دقائق لكل فيديو
-
-    return (
-      <div 
-        className="bg-cover bg-center bg-no-repeat text-white"
-        style={{
-          backgroundImage: `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url(${course.image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&h=600&fit=crop"})`
-        }}
-      >
-        <div className="container mx-auto px-4 py-12">
-          <div className="max-w-6xl mx-auto">
-            {/* Breadcrumb */}
-            <nav className="text-sm text-gray-300 mb-4">
-              <span>{course.country?.name || "Global"}</span>
-              <span className="mx-2">›</span>
-              <span>{course.stage?.name}</span>
-              <span className="mx-2">›</span>
-              <span className="text-white">{course.subject?.name}</span>
-            </nav>
-
-            <h1 className="text-4xl font-bold mb-4">{course.title}</h1>
-            
-         
-
-            {/* Ratings and Students - من البيانات الفعلية */}
-            <div className="flex items-center gap-4 mb-4 flex-wrap">
-              <div className="flex items-center gap-1">
-                <span className="text-orange-400 font-bold text-lg">{course.teacher?.total_rate || 5}</span>
-                <div className="flex">
-                  {[...Array(5)].map((_, i) => (
-                    <Star 
-                      key={i} 
-                      className={`w-4 h-4 ${
-                        i < Math.floor(course.teacher?.total_rate || 5) 
-                          ? "fill-orange-400 text-orange-400" 
-                          : "text-gray-400"
-                      }`} 
-                    />
-                  ))}
-                </div>
-                <span className="text-blue-300 underline ml-1 text-sm cursor-pointer">
-                  ({mockReviews.length} تقييمات)
-                </span>
-              </div>
-              <span className="text-gray-400">•</span>
-              <span className="text-gray-200">{(course.count_student || 0).toLocaleString()} طالب</span>
-              <span className="text-gray-400">•</span>
-              <span className="text-gray-200">{totalLessons} درس</span>
-              <span className="text-gray-400">•</span>
-              <span className="text-gray-200">
-                {Math.floor(totalVideoDuration / 60)}س {totalVideoDuration % 60}د
-              </span>
-            </div>
-
-            {/* Created By */}
-            <div className="flex items-center gap-2 mb-6">
-              <span className="text-gray-300">تم الإنشاء بواسطة</span>
-              <span className="text-white underline cursor-pointer">{course.teacher?.name}</span>
-            </div>
-
-            {/* Course Highlights */}
-            <div className="flex items-center gap-6 text-sm mb-6 flex-wrap">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-400" />
-                <span>آخر تحديث {new Date(course.created_at).toLocaleDateString('ar-SA', { month: 'short', year: 'numeric' })}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Globe className="w-4 h-4 text-green-400" />
-                <span>العربية</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Captions className="w-4 h-4 text-green-400" />
-                <span>ترجمة [تلقائية]</span>
-              </div>
-            </div>
-
-            {/* What You'll Learn - من البيانات الفعلية */}
-            <div className="mb-6">
-              <h3 className="text-lg font-bold mb-3">ما الذي ستتعلمه</h3>
-              <div className="grid md:grid-cols-2 gap-3">
-                {course.what_you_will_learn.split(',').map((point, index) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-gray-200">{point.trim()}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    } catch (error: any) {
+      console.error('Error adding comment:', error);
+      toast({
+        title: "خطأ",
+        description: error.message || "فشل في إضافة التعليق",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmittingComment(false);
+    }
   };
 
   // ✅ Render Course Curriculum
@@ -542,7 +496,9 @@ const CourseDetail = () => {
           </Avatar>
           
           <div className="flex-1">
-            <h3 className="text-xl font-bold mb-2">{course?.teacher?.name}</h3>
+            <Link to={`/profileTeacher/${course?.teacher?.id}`}>
+              <h3 className="text-xl font-bold mb-2">{course?.teacher?.name}</h3>
+            </Link>
             <p className="text-gray-600 mb-4">
               مدرس {course?.teacher?.subject?.name} متمرس مع سنوات من الخبرة في التدريس في {course?.teacher?.country?.name}.
             </p>
@@ -551,7 +507,7 @@ const CourseDetail = () => {
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <Star className="w-4 h-4 fill-orange-400 text-orange-400" />
-                  <span className="font-bold text-lg">{course?.teacher?.total_rate || 5}</span>
+                  <span className="font-bold text-lg">{course?.teacher?.total_rate }</span>
                 </div>
                 <span className="text-sm text-gray-600">تقييم المدرس</span>
               </div>
@@ -562,7 +518,7 @@ const CourseDetail = () => {
               </div>
               
               <div className="text-center">
-                <div className="font-bold text-lg mb-1">{(course?.teacher?.subscribers_count || 0).toLocaleString()}</div>
+                <div className="font-bold text-lg mb-1">{(course?.teacher?.students_count || 0).toLocaleString()}</div>
                 <span className="text-sm text-gray-600">طالب</span>
               </div>
               
@@ -572,7 +528,6 @@ const CourseDetail = () => {
               </div>
             </div>
 
-            {/* Instructor Details */}
             <div className="grid md:grid-cols-2 gap-6 mt-6">
               <div>
                 <h4 className="font-semibold mb-3">عن المدرس</h4>
@@ -669,12 +624,11 @@ const CourseDetail = () => {
     </div>
   );
 
-  // ✅ Render Reviews Section
+  // ✅ Render Reviews Section (القديم)
   const renderReviews = () => {
     const totalReviews = mockReviews.length;
     const averageRating = mockReviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews;
     
-    // حساب التوزيع
     const ratingDistribution = {
       5: mockReviews.filter(r => r.rating === 5).length,
       4: mockReviews.filter(r => r.rating === 4).length,
@@ -687,7 +641,6 @@ const CourseDetail = () => {
       <div className="mb-8">
         <h2 className="text-2xl font-bold mb-6">تقييمات الطلاب</h2>
         
-        {/* Rating Summary */}
         <div className="border border-gray-200 rounded-lg p-6 mb-6">
           <div className="flex items-center gap-8">
             <div className="text-center">
@@ -730,7 +683,6 @@ const CourseDetail = () => {
           </div>
         </div>
 
-        {/* Reviews List */}
         <div className="space-y-4">
           {mockReviews.map((review) => (
             <div key={review.id} className="border border-gray-200 rounded-lg p-6">
@@ -775,11 +727,327 @@ const CourseDetail = () => {
           ))}
         </div>
 
-        {/* Load More Reviews */}
         <div className="text-center mt-6">
           <Button variant="outline">
             تحميل المزيد من التقييمات
           </Button>
+        </div>
+      </div>
+    );
+  };
+
+  // ✅ Render Course Reviews Tab - الجديد
+  const renderCourseReviews = () => {
+    if (!course) return null;
+
+    const comments = course.comments || [];
+    const averageRating = course.average_rating || 0;
+
+    const ratingDistribution = {
+      5: comments.filter(c => c.rating === 5).length,
+      4: comments.filter(c => c.rating === 4).length,
+      3: comments.filter(c => c.rating === 3).length,
+      2: comments.filter(c => c.rating === 2).length,
+      1: comments.filter(c => c.rating === 1).length
+    };
+
+    return (
+      <div className="mb-8">
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Left Column - Rating Summary and Add Comment */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Rating Summary */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="text-center mb-6">
+                  <div className="text-5xl font-bold text-orange-500 mb-2">
+                    {averageRating.toFixed(1)}
+                  </div>
+                  <div className="flex justify-center mb-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`w-5 h-5 ${
+                          star <= Math.floor(averageRating)
+                            ? "fill-orange-500 text-orange-500"
+                            : "text-gray-300"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-gray-600">
+                    بناءً على {comments.length} تقييم
+                  </p>
+                </div>
+
+                {/* Rating Distribution */}
+                <div className="space-y-2">
+                  {[5, 4, 3, 2, 1].map((stars) => (
+                    <div key={stars} className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 w-12">
+                        <span className="text-sm text-gray-600">{stars}</span>
+                        <Star className="w-4 h-4 fill-orange-500 text-orange-500" />
+                      </div>
+                      <div className="flex-1 bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-orange-500 h-2 rounded-full"
+                          style={{
+                            width: `${comments.length > 0 ? (ratingDistribution[stars as keyof typeof ratingDistribution] / comments.length) * 100 : 0}%`
+                          }}
+                        ></div>
+                      </div>
+                      <span className="text-sm text-gray-600 w-8 text-left">
+                        {ratingDistribution[stars as keyof typeof ratingDistribution]}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Add Comment Form */}
+            <Card>
+              <CardContent className="p-6 space-y-4">
+                <h3 className="text-lg font-semibold">أضف تقييمك</h3>
+                
+                {/* Star Rating */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    تقييمك
+                  </label>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setRating(star)}
+                        className="transition-transform hover:scale-110"
+                      >
+                        <Star
+                          className={`w-8 h-8 ${
+                            star <= rating
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "text-gray-300"
+                          }`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Comment Textarea */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    تعليقك
+                  </label>
+                  <Textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="شاركنا تجربتك مع هذه الدورة..."
+                    rows={4}
+                    className="resize-none"
+                  />
+                </div>
+
+                {/* Submit Button */}
+                <Button
+                  onClick={handleAddComment}
+                  disabled={submittingComment || !newComment.trim() || rating === 0}
+                  className="w-full"
+                >
+                  {submittingComment ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      جاري الإرسال...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 ml-2" />
+                      إرسال التقييم
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column - Comments List */}
+          <div className="lg:col-span-2">
+            <h2 className="text-2xl font-bold mb-6">تقييمات الطلاب</h2>
+            
+            {comments.length > 0 ? (
+              <div className="space-y-6">
+                {comments.map((comment) => (
+                  <Card key={comment.id} className="hover:shadow-md transition-shadow duration-300">
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-4">
+                        {/* Student Avatar */}
+                        <Avatar className="w-12 h-12 border-2 border-gray-200">
+                          <AvatarImage src={comment.student.image} alt={comment.student.name} />
+                          <AvatarFallback className="bg-blue-500 text-white">
+                            {comment.student.name.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        {/* Comment Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h4 className="font-semibold text-gray-900">
+                                {comment.student.name}
+                              </h4>
+                              <div className="flex items-center gap-1 mt-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star
+                                    key={star}
+                                    className={`w-4 h-4 ${
+                                      star <= comment.rating
+                                        ? "fill-yellow-400 text-yellow-400"
+                                        : "text-gray-300"
+                                    }`}
+                                  />
+                                ))}
+                                <span className="text-sm text-gray-500 mr-2">
+                                  {new Date(comment.created_at).toLocaleDateString('ar-SA')}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <p className="text-gray-700 leading-relaxed">
+                            {comment.comment}
+                          </p>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                            <button className="flex items-center gap-1 hover:text-gray-700 transition-colors">
+                              <ThumbsUp className="w-4 h-4" />
+                              <span>مفيد</span>
+                            </button>
+                            <button className="hover:text-gray-700 transition-colors">
+                              رد
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <Star className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    لا توجد تقييمات بعد
+                  </h3>
+                  <p className="text-gray-600">
+                    كن أول من يقيم هذه الدورة
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ✅ Render Hero Section
+  const renderUdemyHero = () => {
+    if (!course) return null;
+
+    const totalLessons = course.details?.length || 0;
+    const videoLessons = course.details?.filter(d => d.content_type === 'video') || [];
+    const totalVideoDuration = videoLessons.length * 10;
+
+    return (
+      <div 
+        className="bg-cover bg-center bg-no-repeat text-white"
+        style={{
+          backgroundImage: `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url(${course.image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&h=600&fit=crop"})`
+        }}
+      >
+        <div className="container mx-auto px-4 py-12">
+          <div className="max-w-6xl mx-auto">
+            {/* Breadcrumb */}
+            <nav className="text-sm text-gray-300 mb-4">
+              <span>{course.country?.name || "Global"}</span>
+              <span className="mx-2">›</span>
+              <span>{course.stage?.name}</span>
+              <span className="mx-2">›</span>
+              <span className="text-white">{course.subject?.name}</span>
+            </nav>
+
+            <h1 className="text-4xl font-bold mb-4">{course.title}</h1>
+            
+            {/* Ratings and Students */}
+            <div className="flex items-center gap-4 mb-4 flex-wrap">
+              <div className="flex items-center gap-1">
+                <span className="text-orange-400 font-bold text-lg">{course.average_rating || 5}</span>
+                <div className="flex">
+                  {[...Array(5)].map((_, i) => (
+                    <Star 
+                      key={i} 
+                      className={`w-4 h-4 ${
+                        i < Math.floor(course.average_rating || 5) 
+                          ? "fill-orange-400 text-orange-400" 
+                          : "text-gray-400"
+                      }`} 
+                    />
+                  ))}
+                </div>
+                <span className="text-blue-300 underline ml-1 text-sm cursor-pointer">
+                  ({course.comments?.length || 0} تقييمات)
+                </span>
+              </div>
+              <span className="text-gray-400">•</span>
+              <span className="text-gray-200">{(course.count_student || 0).toLocaleString()} طالب</span>
+              <span className="text-gray-400">•</span>
+              <span className="text-gray-200">{totalLessons} درس</span>
+              <span className="text-gray-400">•</span>
+              <span className="text-gray-200">
+                {Math.floor(totalVideoDuration / 60)}س {totalVideoDuration % 60}د
+              </span>
+            </div>
+
+            {/* Created By */}
+            <div className="flex items-center gap-2 mb-6">
+              <span className="text-gray-300">تم الإنشاء بواسطة</span>
+              <Link to={`/profileTeacher/${course?.teacher?.id}`} className="text-white underline cursor-pointer">
+                {course.teacher?.name}
+              </Link>
+            </div>
+
+            {/* Course Highlights */}
+            <div className="flex items-center gap-6 text-sm mb-6 flex-wrap">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-400" />
+                <span>آخر تحديث {new Date(course.created_at).toLocaleDateString('ar-SA', { month: 'short', year: 'numeric' })}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Globe className="w-4 h-4 text-green-400" />
+                <span>العربية</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Captions className="w-4 h-4 text-green-400" />
+                <span>ترجمة [تلقائية]</span>
+              </div>
+            </div>
+
+            {/* What You'll Learn */}
+            <div className="mb-6">
+              <h3 className="text-lg font-bold mb-3">ما الذي ستتعلمه</h3>
+              <div className="grid md:grid-cols-2 gap-3">
+                {course.what_you_will_learn.split(',').map((point, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-200">{point.trim()}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -792,12 +1060,15 @@ const CourseDetail = () => {
     const token = Cookies.get("token");
     const isLoggedIn = !!token;
     
-    const originalPrice = parseFloat(course.original_price || "0");
+    const originalPrice = parseFloat(course.original_price || course.price || "0");
     const currentPrice = parseFloat(course.price || "0");
-    const hasDiscount = originalPrice > currentPrice;
-    const discountPercentage = hasDiscount ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100) : 0;
+    
     const displayPrice = discountApplied ? finalPrice : currentPrice;
     const currency = course.currency || "USD";
+
+    const discountPercentage = discountApplied 
+      ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100)
+      : 0;
 
     const features = [
       { icon: PlayCircle, text: `${course.details?.filter(d => d.content_type === 'video').length || 0} درس فيديو` },
@@ -835,22 +1106,21 @@ const CourseDetail = () => {
         {/* Pricing Section */}
         <div className="p-6">
           <div className="space-y-4">
-            {/* Price - مع العملة الفعلية */}
+            {/* Price */}
             <div className="space-y-2">
-              {hasDiscount ? (
+              {discountApplied ? (
                 <>
                   <div className="flex items-center gap-2">
-                    <span className="text-3xl font-bold">{currency} {displayPrice.toFixed(2)}</span>
-                    <span className="text-lg text-gray-500 line-through">{currency} {originalPrice}</span>
-                    <Badge variant="destructive" className="text-sm">
-                      خصم {discountPercentage}%
+                    <span className="text-3xl font-bold text-green-600">
+                      {currency} {displayPrice.toFixed(2)}
+                    </span>
+                    <Badge className="bg-green-100 text-green-800 border-green-200 text-sm">
+                      وفرت {discountPercentage}%
                     </Badge>
                   </div>
-                  {discountApplied && (
-                    <Badge className="bg-green-100 text-green-800 border-green-200">
-                      تم تطبيق الخصم!
-                    </Badge>
-                  )}
+                  <div className="text-sm text-gray-500 line-through">
+                    كان: {currency} {originalPrice.toFixed(2)}
+                  </div>
                 </>
               ) : (
                 <span className="text-3xl font-bold">
@@ -938,13 +1208,13 @@ const CourseDetail = () => {
             <div className="border-t pt-4 mt-4">
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1 mb-2">
-                  <span className="text-2xl font-bold text-orange-400">{course.teacher?.total_rate || 5}</span>
+                  <span className="text-2xl font-bold text-orange-400">{course.average_rating || 5}</span>
                   <div className="flex">
                     {[...Array(5)].map((_, i) => (
                       <Star 
                         key={i} 
                         className={`w-4 h-4 ${
-                          i < Math.floor(course.teacher?.total_rate || 5) 
+                          i < Math.floor(course.average_rating || 5) 
                             ? "fill-orange-400 text-orange-400" 
                             : "text-gray-300"
                         }`} 
@@ -952,7 +1222,7 @@ const CourseDetail = () => {
                     ))}
                   </div>
                 </div>
-                <p className="text-sm text-gray-600">{mockReviews.length} تقييم</p>
+                <p className="text-sm text-gray-600">{course.comments?.length || 0} تقييم</p>
               </div>
             </div>
 
@@ -962,7 +1232,6 @@ const CourseDetail = () => {
                 <Share2 className="w-4 h-4 mr-2" />
                 مشاركة
               </Button>
-             
             </div>
           </div>
         </div>
@@ -1015,7 +1284,7 @@ const CourseDetail = () => {
                   { id: "overview", label: "نظرة عامة" },
                   { id: "curriculum", label: "المحتوى" },
                   { id: "instructor", label: "المدرس" },
-                  { id: "reviews", label: "التقييمات" },
+                  { id: "reviews", label: "التقييمات", count: course?.comments?.length || 0 },
                   { id: "exams", label: "الاختبارات" },
                 ].map((tab) => (
                   <button
@@ -1028,6 +1297,11 @@ const CourseDetail = () => {
                     onClick={() => setActiveTab(tab.id)}
                   >
                     {tab.label}
+                    {tab.count && (
+                      <span className="ml-2 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs">
+                        {tab.count}
+                      </span>
+                    )}
                   </button>
                 ))}
               </nav>
@@ -1037,7 +1311,7 @@ const CourseDetail = () => {
             <div className="mb-8">
               {activeTab === "overview" && (
                 <>
-                  {/* What You'll Learn - كاملة */}
+                  {/* What You'll Learn */}
                   <div className="mb-8">
                     <h2 className="text-2xl font-bold mb-6">ما الذي ستتعلمه</h2>
                     <div className="grid md:grid-cols-2 gap-4">
@@ -1051,7 +1325,7 @@ const CourseDetail = () => {
                   </div>
 
                   {/* Requirements */}
-                  <div className="mb-8">
+                  {/* <div className="mb-8">
                     <h2 className="text-2xl font-bold mb-4">المتطلبات</h2>
                     <ul className="space-y-2 text-gray-700">
                       <li className="flex items-start gap-3">
@@ -1067,7 +1341,7 @@ const CourseDetail = () => {
                         <span>الرغبة في التعلم والممارسة</span>
                       </li>
                     </ul>
-                  </div>
+                  </div> */}
 
                   {/* Description */}
                   <div className="mb-8">
@@ -1098,7 +1372,7 @@ const CourseDetail = () => {
                     </div>
                     <div className="text-center p-4 border border-gray-200 rounded-lg">
                       <BarChart3 className="w-8 h-8 text-purple-500 mx-auto mb-2" />
-                      <div className="text-2xl font-bold">{course.teacher?.total_rate || 0}</div>
+                      <div className="text-2xl font-bold">{course.average_rating || 0}</div>
                       <div className="text-sm text-gray-600">التقييم</div>
                     </div>
                   </div>
@@ -1117,7 +1391,7 @@ const CourseDetail = () => {
 
               {activeTab === "curriculum" && renderCurriculum()}
               {activeTab === "instructor" && renderInstructor()}
-              {activeTab === "reviews" && renderReviews()}
+              {activeTab === "reviews" && renderCourseReviews()} {/* ✅ استخدم renderCourseReviews الجديد */}
               {activeTab === "exams" && renderExams()}
             </div>
           </div>

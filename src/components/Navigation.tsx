@@ -37,6 +37,8 @@ const Navigation = () => {
     { name: t('nav.honorBoard'), path: "/honor-board" },
     { name: t('nav.Board'), path: "/HonerBoard" },
     { name: t('nav.contact'), path: "/contact" },
+    { name: t('nav.library_student'), path: "/library_student" },
+    { name: t('nav.library_teacher'), path: "/library_teacher" },
   ];
 
   const handleLogout = () => {
@@ -100,25 +102,49 @@ const Navigation = () => {
           </Link>
 
           {/* Desktop Navigation with hover animations */}
-          <div className="hidden md:flex items-center space-x-1">
-            {navItems.map((item, index) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`relative px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 ${
-                  isActive(item.path) 
-                    ? "text-primary font-semibold bg-primary/10 shadow-inner" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                } animate-fade-in-up`}
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                {item.name}
-                {isActive(item.path) && (
-                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1/2 h-0.5 bg-primary rounded-full animate-pulse"></div>
-                )}
-              </Link>
-            ))}
-          </div>
+         <div 
+  className="hidden md:flex items-center space-x-1"
+  style={{ 
+    flex: 1, 
+    justifyContent: 'center',
+    position: 'relative',
+    right: isArabic ? '4%' : '6%' // تعديل النسبة حسب اللغة
+  }}
+>
+  {navItems.map((item, index) => (
+    <Link
+      key={item.path}
+      to={item.path}
+      className={`
+        relative px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-105
+        text-sm font-medium
+        ${isActive(item.path) 
+          ? "text-primary bg-primary/10 shadow-inner" 
+          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+        }
+        ${isArabic ? 'text-right' : 'text-left'}
+        animate-fade-in-up
+      `}
+      style={{ animationDelay: `${index * 100}ms` }}
+    >
+      {/* النص */}
+      <span className={`${isArabic ? 'font-arabic' : 'font-sans'}`}>
+        {item.name}
+      </span>
+      
+      {/* الخط السفلي للنشط - متمركز بشكل صحيح للعربية */}
+      {isActive(item.path) && (
+        <div 
+          className={`
+            absolute bottom-0 h-0.5 bg-primary rounded-full animate-pulse
+            ${isArabic ? 'right-1/2 translate-x-1/2' : 'left-1/2 -translate-x-1/2'}
+          `}
+          style={{ width: '70%' }} // عرض أقل للشكل الأجمل
+        ></div>
+      )}
+    </Link>
+  ))}
+</div>
 
         
 

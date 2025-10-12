@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Trophy, Award, Star, Medal, Crown, Users, BookOpen, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
+import Hero from '@/components/home/hero';
 
 interface Teacher {
   id: number;
@@ -339,8 +340,9 @@ const HonorBoard = () => {
   }
 
   return (
-    <div ref={sectionRef} className="min-h-[500px] bg-gradient-to-b from-background to-muted/30 py-16">
-      <div className="container mx-auto px-4">
+    <div ref={sectionRef} className="min-h-[500px] bg-gradient-to-b from-background to-muted/30 ">
+      <Hero />
+      <div className="container mx-auto px-4 mt-12">
         {/* Header مع أنيميشن */}
         <div className={`text-center mb-12 transition-all duration-700 ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'

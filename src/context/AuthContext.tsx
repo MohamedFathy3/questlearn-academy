@@ -55,6 +55,7 @@ interface User {
   total_rate?: number;
   children?: any[];
   phone?: string;
+  birth_day?: string;
 }
 
 interface AuthContextType {
@@ -66,6 +67,7 @@ interface AuthContextType {
   register: (formData: Record<string, any>) => Promise<void>;
   checkAuth: () => Promise<void>;
   refreshUserData: () => Promise<void>;
+  updateProfile: (formData: FormData) => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -273,6 +275,102 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
+async function updateProfile(formData: FormData) {
+  setLoading(true);
+  setError(null);
+  
+  try {
+    console.log("📝 Updating profile...");
+    
+    const endpoint = userType === 'student' ? "/student/update-profile" : "/parent/update-profile";
+    const token = Cookies.get("token");
+    
+    console.log("🔑 Token exists:", !!token);
+    console.log("👤 User type:", userType);
+    
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    // استخدام fetch مباشرة مع التحقق من البيانات
+    console.log("📦 FormData contents before sending:");
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}:`, value, typeof value);
+    }
+
+    const response = await fetch(`http://localhost:7000/api${endpoint}`, {
+      method: "POST",
+      body: formData,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        // لا تضيف Content-Type هنا - FormData يضيفه تلقائياً
+      },
+    });
+    
+    console.log("📡 Response status:", response.status);
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.log("❌ Error response data:", errorData);
+      
+      if (response.status === 422) {
+        // خطأ في التحقق من البيانات
+        const errorMessage = errorData.message || 'بيانات غير صالحة';
+        const fieldErrors = errorData.errors ? Object.values(errorData.errors).flat().join(', ') : '';
+        throw new Error(`${errorMessage} ${fieldErrors}`);
+      }
+      
+      if (response.status === 401) {
+        // Token غير صالح
+        console.log("❌ Token is invalid, logging out...");
+        Cookies.remove("token");
+        Cookies.remove("userType");
+        setUser(null);
+        setUserType(null);
+        throw new Error("Session expired. Please login again.");
+      }
+      
+      throw new Error(`Update failed: ${response.status}`);
+    }
+
+    const responseData = await response.json();
+    console.log("✅ Profile update response:", responseData);
+    
+    // تحديث بيانات المستخدم
+    let updatedUserData;
+    
+    if (userType === 'student') {
+      if (responseData.message && responseData.message.student) {
+        updatedUserData = responseData.message.student;
+      } else if (responseData.student) {
+        updatedUserData = responseData.student;
+      } else {
+        updatedUserData = responseData;
+      }
+    }
+    
+    if (updatedUserData) {
+      setUser(prevUser => ({
+        ...prevUser,
+        ...updatedUserData,
+        id: prevUser?.id || updatedUserData.id,
+        type: prevUser?.type || userType || 'student'
+      }));
+    }
+    
+    setError(null);
+    console.log("✅ Profile updated successfully");
+    
+  } catch (err) {
+    console.error("❌ Profile update failed:", err);
+    if (err instanceof Error) {
+      setError(err.message);
+    }
+    throw err;
+  } finally {
+    setLoading(false);
+  }
+}
   function logout() {
     console.log("🚪 Logging out...");
     
@@ -309,6 +407,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     register,
     checkAuth,
     refreshUserData,
+    updateProfile, // تمت الإضافة هنا
     isAuthenticated: !!user,
   };
 

@@ -16,7 +16,9 @@ const resources = {
         signIn: 'Sign In',
         signUp: 'Sign Up',
         contact: 'Contact',
-        logout: 'Logout'
+        logout: 'Logout',
+        library_teacher: 'Teacher Library',
+        library_student: 'Student Library'
       },
  
   profile: {
@@ -240,9 +242,41 @@ basedOnOverallRating :  "Based on Overall Rating",
         signIn: 'تسجيل الدخول',
         signUp: 'إنشاء حساب',
         contact: 'اتصل بنا',
-        logout: 'تسجيل الخروج'
+        logout: 'تسجيل الخروج',
+        library_teacher: 'مكتبة المعلم',
+        library_student: 'مكتبة الطالب'
       },
-      
+  "editProfile": {
+    "title": "تعديل الملف الشخصي",
+    "description": "قم بتحديث معلوماتك الشخصية",
+    "profileInfo": "المعلومات الشخصية",
+    "updateYourInfo": "قم بتحديث معلوماتك الشخصية",
+    "clickToChange": "انقر على الكاميرا لتغيير الصورة",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "phone": "رقم الهاتف",
+    "birthDate": "تاريخ الميلاد",
+    "enterName": "أدخل اسمك",
+    "enterEmail": "أدخل بريدك الإلكتروني",
+    "enterPhone": "أدخل رقم هاتفك",
+    "student": "طالب",
+    "parent": "ولي أمر",
+    "cancel": "إلغاء",
+    "save": "حفظ التغييرات",
+    "saving": "جاري الحفظ...",
+    "nameRequired": "حقل الاسم مطلوب",
+    "emailRequired": "حقل البريد الإلكتروني مطلوب",
+    "updateError": "فشل تحديث الملف الشخصي",
+    "deleteError": "فشل حذف الحساب",
+    "dangerZone": "منطقة الخطر",
+    "deleteWarning": "الإجراءات في هذه المنطقة لا يمكن التراجع عنها",
+    "deleteAccount": "حذف الحساب",
+    "deleteDescription": "سيتم حذف حسابك نهائياً ولا يمكن استعادته",
+    "confirmDelete": "تأكيد الحذف",
+    "deleteConfirmText": "هل أنت متأكد من رغبتك في حذف حسابك؟ هذا الإجراء لا يمكن التراجع عنه وسيتم حذف جميع بياناتك بشكل نهائي.",
+    "deleting": "جاري الحذف..."
+  }
+,
   profile: {
     "learningStats": "إحصائيات التعلم",
     "yourLearningProgress": "تقدمك في التعلم وإنجازاتك",
@@ -274,6 +308,7 @@ courses :  "Courses",
 joined :  "Joined",
 performance :  "Performance",
 basedOnOverallRating :  "Based on Overall Rating",
+editProfile:'تعديل الملف الشخصي '
   }
   ,
 

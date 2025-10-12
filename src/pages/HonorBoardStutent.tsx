@@ -8,6 +8,7 @@ import { Trophy, Award, Star, Medal, Crown, Users, BookOpen, CheckCircle, Chevro
 import { apiFetch } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
 import Cookies from 'js-cookie';
+import Hero from '@/components/home/hero';
 
 interface Student {
   id: number;
@@ -335,15 +336,8 @@ const StudentsHonorBoard = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header Section */}
-      <div className="gradient-hero text-white py-20">
-        <div className="container mx-auto px-6 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4">
-            {t('studentsHonorBoard.title', 'Students Honor Board')}
-          </h1>
-          <p className="text-xl md:text-2xl opacity-90">
-            {t('studentsHonorBoard.subtitle', 'Celebrating Student Achievements')}
-          </p>
-        </div>
+      <div className="">
+        <Hero />
       </div>
 
       <div className="container mx-auto px-6 py-12">

@@ -17,7 +17,11 @@ import Exam from "@/pages/exam";
 import Detailscourse from "@/pages/CourseDatailstatunt";
 import HonerBoard from "@/pages/HonorBoardStutent";
 import ContactUs from "@/pages/Contact";
+import EditProfile from '@/pages/EditProfile';
 import ParentDetils from "@/pages/parentDetials";
+import LIbraryStudent from "@/pages/library_student";
+import LibraryTeacher from "@/pages/library_teacher";
+import TeacherDetils from "@/pages/teacherDatails";
 import { useAuth } from "@/context/AuthContext";
 
 const queryClient = new QueryClient();
@@ -36,7 +40,10 @@ const App = () => {
               <Route path="/" element={<Home />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/contact" element={<ContactUs />} />
+              <Route path="/library_student" element={<LIbraryStudent />} />
+              <Route path="/library_teacher" element={<LibraryTeacher />} />
               <Route path="/profileParent" element={<Profileparent />} />
+              <Route path="/profileTeacher/:id" element={<TeacherDetils />} />
               <Route path="/HonerBoard" element={<HonerBoard />} />
               <Route path="/courses" element={<Courses />} />
               <Route path="/course/:id" element={<CourseDetail />} />
@@ -45,6 +52,8 @@ const App = () => {
               <Route path="/course/:id" element={<CourseDetail />} />
               <Route path="/Detailscourse/:id" element={<Detailscourse />} />
               <Route path="/honor-board" element={<HonorBoard />} />
+              <Route path="/edit-profile" element={<EditProfile />} />
+
               <Route
                 path="/categories"
                 element={
@@ -53,6 +62,7 @@ const App = () => {
                   </div>
                 }
               />
+              
               <Route
                 path="/about"
                 element={

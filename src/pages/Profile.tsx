@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { 
-  User, 
+  Edit, 
   BookOpen, 
   Award, 
   Clock, 
@@ -282,7 +282,21 @@ const Profile = () => {
                     </div>
                   </div>
                 )}
+{/* في قسم Action Buttons في Profile.tsx */}
+<div className="pt-6 border-t border-gray-200 dark:border-gray-700 space-y-3">
+  <Button 
+    asChild
+    variant="outline"
+    className="w-full border-tan/50 text-tan hover:bg-tan/10 hover:border-tan"
+  >
+    <Link to="/edit-profile">
+      <Edit className="w-4 h-4 mr-2" />
+      {t('profile.editProfile')}
+    </Link>
+  </Button>
+  
 
+</div>
                 <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
                   <Button 
                     className="w-full bg-gradient-to-r from-tan to-amber-600 hover:from-amber-600 hover:to-tan text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
