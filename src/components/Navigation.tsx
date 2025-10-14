@@ -3,7 +3,15 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { BookOpen, Search, Menu, X, User, ShoppingCart, LogOut, ChevronDown, Bell } from "lucide-react";
+import {
+  BookOpen,
+  Search,
+  Menu,
+  X,
+  User,
+  LogOut,
+  ChevronDown,
+} from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { LanguageToggle } from "./LanguageToggle";
 import { useAuth } from "@/context/AuthContext";
@@ -16,29 +24,26 @@ const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const isArabic = i18n.language === 'ar';
-  
+  const isArabic = i18n.language === "ar";
+
   const { user, logout, isAuthenticated } = useAuth();
 
-  // Animation for scroll effect
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const isActive = (path: string) => location.pathname === path;
 
   const navItems = [
-    { name: t('nav.home'), path: "/" },
-    { name: t('nav.courses'), path: "/courses" },
-    { name: t('nav.honorBoard'), path: "/honor-board" },
-    { name: t('nav.Board'), path: "/HonerBoard" },
-    { name: t('nav.contact'), path: "/contact" },
-    { name: t('nav.library_student'), path: "/library_student" },
-    { name: t('nav.library_teacher'), path: "/library_teacher" },
+    { name: t("nav.home"), path: "/" },
+    { name: t("nav.courses"), path: "/courses" },
+    { name: t("nav.honorBoard"), path: "/honor-board" },
+    { name: t("nav.Board"), path: "/HonerBoard" },
+    { name: t("nav.contact"), path: "/contact" },
+    { name: t("nav.library_student"), path: "/library_student" },
+    { name: t("nav.library_teacher"), path: "/library_teacher" },
   ];
 
   const handleLogout = () => {
@@ -49,15 +54,15 @@ const Navigation = () => {
   };
 
   const handleProfile = () => {
-  // التوجيه بناءً على نوع المستخدم مع معالجة الخطأ الإملائي
-  if (user?.type === 'parent' || user?.type === 'Perant') {
-    navigate("/profileParent");
-  } else {
-    navigate("/profile"); // للطالب أو الأنواع الأخرى
-  }
-  setIsMenuOpen(false);
-  setIsProfileOpen(false);
-};
+    if (user?.type === "parent" || user?.type === "Perant") {
+      navigate("/profileParent");
+    } else {
+      navigate("/profile");
+    }
+    setIsMenuOpen(false);
+    setIsProfileOpen(false);
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -68,125 +73,99 @@ const Navigation = () => {
   };
 
   return (
-    <nav className={`sticky top-0 z-50 w-full transition-all duration-500 ${
-      isScrolled 
-        ? 'bg-background/95 backdrop-blur-xl shadow-lg border-b border-border/50' 
-        : 'bg-background/80 backdrop-blur-md shadow-soft border-b border-transparent'
-    }`}>
+    <nav
+      className={`sticky top-0 z-50 w-full transition-all duration-500 ${
+        isScrolled
+          ? "bg-background/95 backdrop-blur-xl shadow-lg border-b border-border/50"
+          : "bg-background/80 backdrop-blur-md border-b border-transparent"
+      }`}
+      dir={isArabic ? "rtl" : "ltr"}
+    >
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-22">
-          {/* Logo with animation */}
-          <Link 
-            to="/" 
-            className="flex items-center space-x-3 transition-all duration-500 hover:scale-105 active:scale-95 flex-1 max-w-xs"
+        {/* Header Row */}
+        <div className="flex items-center justify-between h-20 gap-4">
+          {/* Logo */}
+          <Link
+            to="/"
+            className="flex items-center gap-2 transition-all duration-500 hover:scale-105 active:scale-95"
           >
-            <img 
+            <img
               src="/logo.png"
               alt="LearnHub Logo"
-              className="w-20 h-13 md:w-32 md:h-20 lg:w-40 lg:h-24 object-contain transition-all duration-500"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                if (fallback) {
-                  fallback.style.display = 'flex';
-                }
-              }}
+              className="w-24 h-20 md:w-32 lg:w-36 object-contain"
             />
-            {/* Fallback */}
-            <div 
-              className="w-24 h-16 md:w-32 md:h-20 lg:w-40 lg:h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center hidden px-4 shadow-lg animate-pulse"
-              style={{ display: 'none' }}
-            >
-              <BookOpen className="w-8 h-8 md:w-10 md:h-10 text-white" />
-            </div>
           </Link>
 
-          {/* Desktop Navigation with hover animations */}
-         <div 
-  className="hidden md:flex items-center space-x-1"
-  style={{ 
-    flex: 1, 
-    justifyContent: 'center',
-    position: 'relative',
-    right: isArabic ? '4%' : '6%' // تعديل النسبة حسب اللغة
-  }}
->
-  {navItems.map((item, index) => (
-    <Link
-      key={item.path}
-      to={item.path}
-      className={`
-        relative px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-105
-        text-sm font-medium
-        ${isActive(item.path) 
-          ? "text-primary bg-primary/10 shadow-inner" 
-          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-        }
-        ${isArabic ? 'text-right' : 'text-left'}
-        animate-fade-in-up
-      `}
-      style={{ animationDelay: `${index * 100}ms` }}
-    >
-      {/* النص */}
-      <span className={`${isArabic ? 'font-arabic' : 'font-sans'}`}>
-        {item.name}
-      </span>
-      
-      {/* الخط السفلي للنشط - متمركز بشكل صحيح للعربية */}
-      {isActive(item.path) && (
-        <div 
-          className={`
-            absolute bottom-0 h-0.5 bg-primary rounded-full animate-pulse
-            ${isArabic ? 'right-1/2 translate-x-1/2' : 'left-1/2 -translate-x-1/2'}
-          `}
-          style={{ width: '70%' }} // عرض أقل للشكل الأجمل
-        ></div>
-      )}
-    </Link>
-  ))}
-</div>
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex flex-1 justify-center items-center gap-2">
+            {navItems.map((item, index) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`relative px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  isActive(item.path)
+                    ? "text-primary bg-primary/10 shadow-inner"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                }`}
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                {item.name}
+                {isActive(item.path) && (
+                  <div
+                    className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-0.5 bg-primary rounded-full animate-pulse"
+                  ></div>
+                )}
+              </Link>
+            ))}
+          </div>
 
-        
+          {/* Right Section */}
+          <div className="flex items-center gap-3">
+            {/* Toggles */}
+            <div className="flex items-center gap-2">
+              <LanguageToggle />
+              <ThemeToggle />
+            </div>
 
-          {/* Right Actions with enhanced animations */}
-          <div className="flex items-center space-x-2">
-            <LanguageToggle />
-            <ThemeToggle />
-            
-            {/* Notification Bell */}
-           
-
-            {/* User Section */}
+            {/* Auth Section */}
             {isAuthenticated ? (
               <div className="relative">
-                {/* Profile Dropdown Trigger */}
                 <Button
                   variant="ghost"
-                  className="flex items-center space-x-2 p-2 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg hover:bg-muted/50"
+                  className="flex items-center gap-2 p-2 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg hover:bg-muted/50"
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
                 >
                   {user?.image ? (
-                    <img 
-                      src={user.image} 
+                    <img
+                      src={user.image}
                       alt={user.name}
-                      className="w-8 h-8 rounded-full object-cover border-2 border-primary/20 transition-all duration-300 hover:border-primary"
+                      className="w-8 h-8 rounded-full object-cover border-2 border-primary/20"
                     />
                   ) : (
                     <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold shadow-lg">
-                      {user?.name?.charAt(0).toUpperCase() || <User className="w-4 h-4" />}
+                      {user?.name?.charAt(0).toUpperCase() || (
+                        <User className="w-4 h-4" />
+                      )}
                     </div>
                   )}
-                  <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isProfileOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform duration-300 ${
+                      isProfileOpen ? "rotate-180" : ""
+                    }`}
+                  />
                 </Button>
 
-                {/* Profile Dropdown */}
                 {isProfileOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-64 bg-background/95 backdrop-blur-xl rounded-xl shadow-2xl border border-border/50 animate-slide-in-fade">
+                  <div
+                    className={`absolute ${
+                      isArabic ? "left-0" : "right-0"
+                    } top-full mt-2 w-60 bg-background/95 backdrop-blur-xl rounded-xl shadow-2xl border border-border/50 animate-slide-in-fade`}
+                  >
                     <div className="p-4 border-b border-border/50">
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center gap-3">
                         {user?.image ? (
-                          <img 
-                            src={user.image} 
+                          <img
+                            src={user.image}
                             alt={user.name}
                             className="w-12 h-12 rounded-full object-cover border-2 border-primary/30"
                           />
@@ -196,171 +175,102 @@ const Navigation = () => {
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-foreground truncate">{user?.name}</p>
-                          <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
+                          <p className="font-semibold text-foreground truncate">
+                            {user?.name}
+                          </p>
+                          <p className="text-sm text-muted-foreground truncate">
+                            {user?.email}
+                          </p>
                         </div>
                       </div>
                     </div>
-                    
-                    <div className="p-2">
-                      <Button 
-                        variant="ghost" 
-                        className="w-full justify-start px-3 py-2 rounded-lg transition-all duration-300 hover:bg-muted hover:scale-105"
+
+                    <div className="p-2 space-y-1">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-all duration-300"
                         onClick={handleProfile}
                       >
-                        <User className="w-4 h-4 mr-3" />
-                        {t('nav.profile')}
+                        <User className="w-4 h-4" />
+                        {t("nav.profile")}
                       </Button>
-                      
-                      <Button 
-                        variant="ghost" 
-                        className="w-full justify-start px-3 py-2 rounded-lg text-red-600 transition-all duration-300 hover:bg-red-50 hover:scale-105 hover:text-red-700"
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start gap-2 px-3 py-2 text-red-600 rounded-lg hover:bg-red-50 hover:text-red-700 transition-all duration-300"
                         onClick={handleLogout}
                       >
-                        <LogOut className="w-4 h-4 mr-3" />
-                        {t('nav.logout')}
+                        <LogOut className="w-4 h-4" />
+                        {t("nav.logout")}
                       </Button>
                     </div>
                   </div>
                 )}
               </div>
             ) : (
-              /* Login/Signup Buttons */
-              <div className="flex items-center space-x-2">
+              <div className="hidden md:flex items-center gap-2">
                 <Link to="/login">
-                  <Button 
-                    variant="ghost" 
-                    className="hidden md:flex transition-all duration-300 hover:scale-105 hover:shadow-lg"
-                  >
-                    {t('nav.signIn')}
+                  <Button variant="ghost" className="hover:scale-105">
+                    {t("nav.signIn")}
                   </Button>
                 </Link>
                 <Link to="/register">
-                  <Button 
-                    className="hidden md:flex bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl hover:from-blue-600 hover:to-purple-700"
-                  >
-                    {t('nav.signUp')}
+                  <Button className="bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md hover:scale-105">
+                    {t("nav.signUp")}
                   </Button>
                 </Link>
               </div>
             )}
 
-            {/* Mobile Menu Toggle with animation */}
+            {/* Mobile Menu Button */}
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden transition-all duration-300 hover:scale-110 hover:bg-muted/50"
+              className="md:hidden hover:bg-muted/50 hover:scale-110 transition-all duration-300"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? (
-                <X className="w-5 h-5 animate-spin-in" />
+                <X className="w-5 h-5" />
               ) : (
-                <Menu className="w-5 h-5 animate-pulse" />
+                <Menu className="w-5 h-5" />
               )}
             </Button>
           </div>
         </div>
 
-        {/* Mobile Menu with enhanced animations */}
+        {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-border/50 animate-slide-in-down">
-            {/* Search in Mobile */}
             <form onSubmit={handleSearch} className="relative mb-4 px-4">
-              <Search className={`absolute ${isArabic ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
+              <Search
+                className={`absolute ${
+                  isArabic ? "right-3" : "left-3"
+                } top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground`}
+              />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t('common.search')}
-                className={`${isArabic ? 'pr-10 text-right' : 'pl-10'} bg-muted/50 border-transparent transition-all duration-300`}
+                placeholder={t("common.search")}
+                className={`${
+                  isArabic ? "pr-10 text-right" : "pl-10"
+                } bg-muted/50 border-transparent`}
               />
             </form>
 
-            {/* Mobile Navigation Items */}
             <div className="space-y-2 px-4">
               {navItems.map((item, index) => (
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center px-4 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg ${
-                    isActive(item.path) 
-                      ? "bg-primary/10 text-primary font-semibold shadow-inner" 
+                  className={`block px-4 py-3 rounded-xl transition-all duration-300 hover:scale-105 ${
+                    isActive(item.path)
+                      ? "bg-primary/10 text-primary font-semibold"
                       : "hover:bg-muted/50"
-                  } animate-fade-in-up`}
-                  style={{ animationDelay: `${index * 50}ms` }}
+                  } ${isArabic ? "text-right" : "text-left"}`}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {item.name}
                 </Link>
               ))}
-            </div>
-
-            {/* Mobile User Section */}
-            <div className="mt-6 pt-4 border-t border-border/50">
-              {isAuthenticated ? (
-                <div className="space-y-3 px-4">
-                  {/* User Info */}
-                  <div className="flex items-center space-x-3 p-3 bg-muted/30 rounded-xl transition-all duration-300 hover:scale-105">
-                    {user?.image ? (
-                      <img 
-                        src={user.image} 
-                        alt={user.name}
-                        className="w-10 h-10 rounded-full object-cover border-2 border-primary/20"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-                        {user?.name?.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <p className="font-medium text-foreground">{user?.name}</p>
-                      <p className="text-sm text-muted-foreground">{user?.email}</p>
-                    </div>
-                  </div>
-
-                  {/* Mobile Action Buttons */}
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-center py-3 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg"
-                    onClick={handleProfile}
-                  >
-                    <User className="w-4 h-4 mr-2" />
-                    {t('nav.profile')}
-                  </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-center py-3 rounded-xl text-red-600 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:bg-red-50 hover:text-red-700"
-                    onClick={handleLogout}
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    {t('nav.logout')}
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-3 px-4">
-                  <Link to="/login" className="block" onClick={() => setIsMenuOpen(false)}>
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-center py-3 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg"
-                    >
-                      {t('nav.signIn')}
-                    </Button>
-                  </Link>
-                  <Link to="/register" className="block" onClick={() => setIsMenuOpen(false)}>
-                    <Button 
-                      className="w-full justify-center py-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl"
-                    >
-                      {t('nav.signUp')}
-                    </Button>
-                  </Link>
-                </div>
-              )}
-
-              {/* Mobile Settings */}
-              <div className="flex justify-center gap-4 px-4 mt-4 pt-4 border-t border-border/50">
-                <LanguageToggle />
-                <ThemeToggle />
-              </div>
             </div>
           </div>
         )}

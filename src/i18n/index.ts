@@ -107,34 +107,7 @@ const resources: Record<string, any> = {
         noExamsAvailable: 'No exams available at the moment',
         studentNotFound: 'Student not found'
       },
-      home: {
-        title: 'Welcome to Professional Academy',
-        subtitle: 'Your Gateway to Knowledge',
-        description: 'Discover thousands of courses from expert instructors and advance your skills',
-        startLearning: 'Start Learning Today',
-        featuredCourses: 'Featured Courses',
-        topCategories: {
-          title: 'Explore Popular',
-          highlight: 'Categories',
-          description: 'Discover courses across diverse fields and start your learning journey today'
-        },
-        categories: {
-          webDevelopment: 'Web Development',
-          business: 'Business',
-          design: 'Design',
-          photography: 'Photography',
-          music: 'Music',
-          marketing: 'Marketing',
-          courses: 'courses'
-        },
-        joinNow: 'Join Now',
-        stats: {
-          students: 'Students',
-          courses: 'Courses',
-          instructors: 'Instructors',
-          satisfaction: 'Satisfaction Rate'
-        }
-      },
+    
       teacherProfile: {
         hero: {
           professionalTeacher: 'Professional Teacher',
@@ -289,6 +262,7 @@ const resources: Record<string, any> = {
         loading: 'Loading...',
         view: 'View',
         share: 'Share',
+        sortedBy:'sortedBy',
         contact: 'Contact',
         rating: 'Rating',
         reviews: 'Reviews',
@@ -397,6 +371,7 @@ const resources: Record<string, any> = {
         signingIn: 'Signing in...',
         signIn: 'Sign In',
         or: 'or',
+        signInToEnroll:'signInToEnroll',
         noAccount: 'Don\'t have an account?',
         signUpNow: 'Sign up now',
         details: 'Sign in to your student account to access courses',
@@ -798,7 +773,68 @@ const resources: Record<string, any> = {
         cookies: 'Cookie Policy',
         rights: 'All rights reserved.',
         followUs: 'Follow Us'
-      }
+      },
+    home: {
+        title: 'Welcome to Professional Academy',
+        subtitle: 'Your Gateway to Knowledge',
+        description: 'Discover thousands of courses from expert instructors and advance your skills',
+        startLearning: 'Start Learning Today',
+        featuredCourses: 'Featured Courses',
+        topCategories: {
+             badge:'badge',
+        
+          title: 'Explore Popular',
+          highlight: 'Categories',
+          description: 'Discover courses across diverse fields and start your learning journey today'
+        },
+        categories: {
+          webDevelopment: 'Web Development',
+          business: 'Business',
+          design: 'Design',
+          photography: 'Photography',
+          music: 'Music',
+          marketing: 'Marketing',
+          courses: 'courses'
+        },
+        joinNow: 'Join Now',
+        stats: {
+          students: 'Students',
+          courses: 'Courses',
+          instructors: 'Instructors',
+          satisfaction: 'Satisfaction Rate'
+        },
+    
+      },
+      courses: {
+        title: 'All Courses',
+        filterBy: 'Filter by',
+        category: 'Category',
+        price: 'Price',
+        level: 'Level',
+        rating: 'Rating',
+        free: 'Free',
+        paid: 'Paid',
+        beginner: 'Beginner',
+        intermediate: 'Intermediate',
+        expert: 'Expert',
+        freshContent: 'Fresh Content',
+        newlyAdded: 'Newly Added Courses',
+        newlyAddedDesc: 'Discover our latest courses added to the platform.',
+        viewAllCourses: 'View All Courses',
+        bookNow: 'Book Now',
+        readyToStart: 'Ready to start learning?',
+        joinStudents: 'Join thousands of students already learning with us',
+        exploreAllCourses: 'Explore All Courses',
+        new: 'New',
+        recorded: 'Recorded',
+        hours: 'hours',
+        basicMathematics: 'Basic Mathematics',
+        instructor: 'Instructor',
+        popular:'popular'
+      },
+        honers:{
+        top:'Top Performing Students'
+      },
     }
   },
   ar: {
@@ -954,7 +990,8 @@ const resources: Record<string, any> = {
           courseIncome: 'دخل الدورة',
           teacherShare: 'حصة المعلم',
           viewCourse: 'عرض الدورة',
-          noCourses: 'لا توجد دورات متاحة حالياً'
+          noCourses: 'لا توجد دورات متاحة حالياً',
+          newlyAddedDesc:'اكتشف أحدث الدورات التدريبية التي تمت إضافتها إلى المنصة.',
         },
         reviews: {
           title: 'التقييمات والتعليقات',
@@ -1002,6 +1039,7 @@ const resources: Record<string, any> = {
           description: 'تم نسخ رابط الملف الشخصي إلى الحافظة'
         }
       },
+ 
       course: {
         curriculum: 'المحتوى التعليمي',
         sections: 'قسم',
@@ -1022,6 +1060,9 @@ const resources: Record<string, any> = {
         certifiedIn: 'معتمد في تدريس {{subject}}',
         experienceVerified: 'خبرة تدريس موثقة',
         exams: 'الاختبارات',
+         readyToStart: 'مستعد لبدء التعلم؟',
+        joinStudents: 'Join thousands of students already learning with us',
+        exploreAllCourses: 'Explore All Courses',
         questions: 'سؤال',
         createdAt: 'أنشئ في',
         startExam: 'ابدأ الاختبار',
@@ -1092,6 +1133,7 @@ const resources: Record<string, any> = {
         rating: 'التقييم',
         reviews: 'التقييمات',
         comments: 'تعليقات',
+        sortedBy:'ترتيب',
         students: 'طلاب',
         courses: 'دورات',
         country: 'البلد',
@@ -1184,10 +1226,14 @@ const resources: Record<string, any> = {
         notSpecified: 'غير محدد',
         note: 'ملاحظة'
       },
+      honers:{
+        top:'الطلاب المتميزين'
+      },
       login: {
         welcomeBack: 'مرحباً بعودتك',
         accessAccount: 'سجل الدخول للوصول إلى حسابك',
         chooseAccountType: 'اختر نوع الحساب للمتابعة',
+        signInToEnroll:'تسجيل',
         email: 'البريد الإلكتروني',
         emailPlaceholder: 'example@example.com',
         password: 'كلمة المرور',
@@ -1597,7 +1643,9 @@ const resources: Record<string, any> = {
         cookies: 'سياسة الكوكيز',
         rights: 'جميع الحقوق محفوظة.',
         followUs: 'تابعنا'
-      }
+      },
+    
+      
     }
   }
 };

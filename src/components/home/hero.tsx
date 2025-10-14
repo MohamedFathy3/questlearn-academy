@@ -138,19 +138,7 @@ export default function Hero() {
       </div>
 
       {/* Scroll Indicator */}
-      <div className={`absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10 transition-all duration-1000 delay-700 ${
-        isVisible ? 'opacity-100' : 'opacity-0'
-      }`}>
-        <div className="flex flex-col items-center gap-2">
-          <span className="text-white/70 text-sm">
-            {t('hero.scrollDown')}
-          </span>
-          <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center p-1">
-            <div className="w-1 h-3 bg-white rounded-full animate-bounce"></div>
-          </div>
-        </div>
-      </div>
-
+     
       {/* Wave Effect في الأسفل */}
       <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-white to-transparent dark:from-gray-900"></div>
 

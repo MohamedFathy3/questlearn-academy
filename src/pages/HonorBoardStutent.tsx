@@ -351,7 +351,7 @@ const StudentsHonorBoard = () => {
         {/* Top Students Section */}
         <section className="mb-16">
           <h2 className="text-3xl font-bold text-center mb-12 text-tan">
-            {t('studentsHonorBoard.topStudents', 'Top Performing Students')}
+            {t('honers.top', 'Top Performing Students')}
           </h2>
           
           {students.length === 0 ? (
