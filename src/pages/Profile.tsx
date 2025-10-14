@@ -365,18 +365,7 @@ const Profile = () => {
               </div>
 
               {/* Progress Overview */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold text-gray-900 dark:text-white">{t('profile.learningProgress')}</span>
-                  <span className="text-tan font-bold text-lg">
-                    {stats?.overall_progress || 0}%
-                  </span>
-                </div>
-                <Progress 
-                  value={stats?.overall_progress || 0} 
-                  className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden"
-                />
-              </div>
+            
             </CardContent>
           </Card>
         </div>
@@ -473,10 +462,10 @@ const Profile = () => {
                                     {course.progress}%
                                   </span>
                                 </div>
-                                <Progress 
+                                {/* <Progress 
                                   value={course.progress} 
                                   className={`h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden ${getProgressColor(course.progress)}`}
-                                />
+                                /> */}
                               </div>
                             </div>
                             <div className="text-xs text-gray-500 dark:text-gray-400">
@@ -526,12 +515,7 @@ const Profile = () => {
                   <p className="text-gray-600 dark:text-gray-400 text-lg mb-8 max-w-md mx-auto leading-relaxed">
                     {t('profile.enrollInCoursesToSeeThemHere')}
                   </p>
-                  <Button 
-                    size="lg" 
-                    className="bg-gradient-to-r from-tan to-amber-600 hover:from-amber-600 hover:to-tan text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 px-8"
-                  >
-                    {t('profile.browseCourses')}
-                  </Button>
+            
                 </div>
               )}
             </div>

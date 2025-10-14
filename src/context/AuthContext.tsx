@@ -298,7 +298,7 @@ async function updateProfile(formData: FormData) {
       console.log(`${key}:`, value, typeof value);
     }
 
-    const response = await fetch(`http://localhost:7000/api${endpoint}`, {
+    const response = await fetch(`/api${endpoint}`, {
       method: "POST",
       body: formData,
       headers: {
