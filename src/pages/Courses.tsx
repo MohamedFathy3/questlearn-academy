@@ -257,8 +257,6 @@ const Courses = () => {
     setFilteredCourses(filtered);
   };
 
-  // ✅ دورة تحويل البيانات - بيانات حقيقية فقط
-// ✅ دورة تحويل البيانات - بيانات حقيقية فقط
 const transformCourseData = (course: Course) => {
   const originalPrice = parseFloat(course.original_price || "0");
   const currentPrice = parseFloat(course.price || "0");
@@ -283,10 +281,9 @@ const transformCourseData = (course: Course) => {
     const totalLessons = videoLessons.length + pdfLessons.length + liveSessions.length;
     if (totalLessons === 0) return t('courses.flexible', 'Flexible');
     
-    // تقدير المدة بناءً على نوع المحتوى
-    const videoMinutes = videoLessons.length * 45; // 45 دقيقة لكل فيديو
-    const pdfMinutes = pdfLessons.length * 30; // 30 دقيقة لكل PDF
-    const liveMinutes = liveSessions.length * 60; // 60 دقيقة لكل جلسة مباشرة
+    const videoMinutes = videoLessons.length * 45;
+    const pdfMinutes = pdfLessons.length * 30;
+    const liveMinutes = liveSessions.length * 60;
     
     const totalMinutes = videoMinutes + pdfMinutes + liveMinutes;
     const totalHours = Math.ceil(totalMinutes / 60);
@@ -314,18 +311,18 @@ const transformCourseData = (course: Course) => {
     return t('courses.allLevels', 'All Levels');
   };
 
-  // ✅ حساب التقدم الحقيقي - إرجاع رقم فقط بدلاً من كائن
+  // ✅ إصلاح نهائي لـ enrollmentProgress
   const getEnrollmentProgress = () => {
-    const maxStudents = 100; // يمكن جعل هذا ديناميكي إذا كان متوفراً في الـ API
+    const maxStudents = 100;
     const currentStudents = course.count_student || course.subscribers_count || 0;
     const percentage = Math.min((currentStudents / maxStudents) * 100, 100);
-    return Math.round(percentage); // إرجاع رقم فقط
+    return Math.round(percentage);
   };
 
   const enrollmentProgress = getEnrollmentProgress();
 
   return {
-    // ✅ البيانات الأساسية الحقيقية
+    // ✅ البيانات الأساسية
     id: course.id.toString(),
     title: course.title || t('courses.untitled', 'Untitled Course'),
     description: course.description || '',
@@ -333,19 +330,19 @@ const transformCourseData = (course: Course) => {
     instructorImage: course.teacher?.image || null,
     thumbnail: course.image || '/images/placeholder-course.jpg',
     
-    // ✅ البيانات المالية الحقيقية
+    // ✅ البيانات المالية
     price: currentPrice,
     originalPrice: hasDiscount ? originalPrice : undefined,
     discount: hasDiscount ? discountValue : undefined,
     currency: course.currency || "EGP",
     isFree: currentPrice === 0,
     
-    // ✅ بيانات التقييم الحقيقية
+    // ✅ بيانات التقييم
     rating: course.teacher?.total_rate || 0,
     reviewsCount: course.views_count || 0,
     studentsCount: course.count_student || course.subscribers_count || 0,
     
-    // ✅ بيانات المحتوى الحقيقية
+    // ✅ بيانات المحتوى
     duration: getEstimatedDuration(),
     level: getCourseLevel(),
     category: course.subject?.name || course.stage?.name || t('courses.general', 'General'),
@@ -356,22 +353,22 @@ const transformCourseData = (course: Course) => {
     resourcesCount: pdfLessons.length,
     liveSessionsCount: liveSessions.length,
     
-    // ✅ بيانات التقدم الحقيقية - تمرير رقم فقط
-    enrollmentProgress: enrollmentProgress, // الآن هذا رقم وليس كائن
+    // ✅ إصلاح نهائي - تمرير رقم فقط
+    enrollmentProgress: enrollmentProgress,
     
-    // ✅ بيانات الحالة الحقيقية
+    // ✅ بيانات الحالة
     isBestseller: course.views_count > 500 || (course.count_student || 0) > 50,
-    isNew: Date.now() - new Date(course.created_at).getTime() < 7 * 24 * 60 * 60 * 1000, // جديد إذا أقل من 7 أيام
+    isNew: Date.now() - new Date(course.created_at).getTime() < 7 * 24 * 60 * 60 * 1000,
     isTrending: course.views_count > 1000,
     
-    // ✅ بيانات المعلم الحقيقية
+    // ✅ بيانات المعلم
     teacherRating: course.teacher?.total_rate || 0,
     teacherExperience: course.teacher?.students_count || 0,
     teacherCoursesCount: course.teacher?.courses_count || 0,
     courseType: course.course_type || 'group',
     country: course.country?.name || 'International',
     
-    // ✅ مؤشرات المحتوى الحقيقية
+    // ✅ مؤشرات المحتوى
     hasVideoContent: videoLessons.length > 0,
     hasResources: pdfLessons.length > 0,
     hasLiveSessions: liveSessions.length > 0,
@@ -380,7 +377,7 @@ const transformCourseData = (course: Course) => {
       course.what_you_will_learn.split(',').filter(point => point.trim()) : 
       [],
     
-    // ✅ بيانات إضافية حقيقية
+    // ✅ بيانات إضافية
     createdAt: course.created_at,
     viewsCount: course.views_count || 0,
     active: course.active !== false

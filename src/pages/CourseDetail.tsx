@@ -269,51 +269,56 @@ const CourseDetail = () => {
     }
   };
 
-  const applyDiscount = async () => {
-    if (!discountCode.trim()) {
-      toast({
-        title: t('common.error'),
-        description: t('discount.enterCode'),
-        variant: "destructive",
-      });
-      return;
-    }
+ const applyDiscount = async () => {
+  if (!discountCode.trim()) {
+    toast({
+      title: t('common.error'),
+      description: t('discount.enterCode'),
+      variant: "destructive",
+    });
+    return;
+  }
 
-    try {
-      setApplyingDiscount(true);
-      
-      const response = await apiFetch<any>('/apply-coupon', {
-        method: 'POST',
-        body: {
-          code: discountCode,
-          amount: parseFloat(course?.original_price || course?.price || "0")
-        }
-      });
-
-      if (response.result === "Success") {
-        const discountedPrice = response.data.discounted_price || response.data.new_price;
-        
-        setFinalPrice(discountedPrice);
-        setDiscountApplied(true);
-        
-        toast({
-          title: t('discount.applied'),
-          description: t('discount.savedPercentage', { percentage: response.data.discount_percentage || 10 }),
-          variant: "default",
-        });
-      } else {
-        throw new Error(response.message || t('discount.invalid'));
+  try {
+    setApplyingDiscount(true);
+    
+    const response = await apiFetch<any>('/apply-coupon', {
+      method: 'POST',
+      body: {
+        code: discountCode,
+        amount: parseFloat(course?.original_price || course?.price || "0")
       }
-    } catch (error: any) {
+    });
+
+    if (response.message === "Coupon applied successfully") {
+      // استخدم البيانات من الresponse مباشرة
+      const discountedPrice = response.total_after_discount;
+      const discountAmount = response.discount;
+      
+      setFinalPrice(discountedPrice);
+      setDiscountApplied(true);
+      
       toast({
-        title: t('discount.invalid'),
-        description: error.message || t('discount.invalidDescription'),
-        variant: "destructive",
+        title: t('discount.applied'),
+        description: t('discount.savedAmount', { 
+          amount: discountAmount,
+          currency: course?.currency || "USD" 
+        }),
+        variant: "default",
       });
-    } finally {
-      setApplyingDiscount(false);
+    } else {
+      throw new Error(response.message || t('discount.invalid'));
     }
-  };
+  } catch (error: any) {
+    toast({
+      title: t('discount.invalid'),
+      description: error.message || t('discount.invalidDescription'),
+      variant: "destructive",
+    });
+  } finally {
+    setApplyingDiscount(false);
+  }
+};
 
   const handleAddComment = async () => {
     if (!newComment.trim() || rating === 0) {
