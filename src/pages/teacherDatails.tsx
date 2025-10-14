@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { apiFetch } from "@/lib/api";
+import { useTranslation } from 'react-i18next';
 import { 
   Star, 
   Users, 
@@ -109,6 +110,7 @@ interface ApiResponse {
 }
 
 const TeacherProfile = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -148,11 +150,11 @@ const TeacherProfile = () => {
       if (data.result === "Success" && data.data) {
         setTeacher(data.data);
       } else {
-        throw new Error(data.message || 'Failed to fetch teacher profile');
+        throw new Error(data.message || t('teacherProfile.actions.error'));
       }
     } catch (err: any) {
       console.error('Error fetching teacher profile:', err);
-      setError(err.message || 'Failed to load teacher profile');
+      setError(err.message || t('teacherProfile.actions.error'));
     } finally {
       setLoading(false);
     }
@@ -160,8 +162,8 @@ const TeacherProfile = () => {
 
   const handleContactTeacher = () => {
     toast({
-      title: "Contact Teacher",
-      description: "Contact feature will be implemented soon",
+      title: t('teacherProfile.contact.title'),
+      description: t('teacherProfile.contact.description'),
       variant: "default",
     });
   };
@@ -169,68 +171,66 @@ const TeacherProfile = () => {
   const handleShareProfile = () => {
     if (navigator.share) {
       navigator.share({
-        title: `Teacher Profile - ${teacher?.name}`,
+        title: `${t('teacherProfile.hero.professionalTeacher')} - ${teacher?.name}`,
         text: `Check out ${teacher?.name}'s profile on our platform`,
         url: window.location.href,
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
       toast({
-        title: "Link Copied!",
-        description: "Profile link copied to clipboard",
+        title: t('teacherProfile.share.title'),
+        description: t('teacherProfile.share.description'),
         variant: "default",
       });
     }
   };
 
-const handleAddComment = async () => {
-  if (!newComment.trim() || rating === 0) {
-    toast({
-      title: "خطأ",
-      description: "الرجاء إدخال تعليق وتقييم",
-      variant: "destructive",
-    });
-    return;
-  }
-
-  try {
-    setSubmitting(true);
-    
-    // ✅ التصحيح: استخدام apiFetch بشكل صحيح
-    const response = await apiFetch(`/teachers/${id}/comments`, {
-      method: 'POST',
-      body: {
-        comment: newComment,
-        rating: rating
-      }
-    });
-
-    // ✅ التصحيح: apiFetch يرجع البيانات مباشرة
-    if (response.result === "Success") {
+  const handleAddComment = async () => {
+    if (!newComment.trim() || rating === 0) {
       toast({
-        title: "تمت الإضافة!",
-        description: "تم إضافة تعليقك بنجاح",
-        variant: "default",
+        title: t('common.error'),
+        description: t('teacherProfile.reviews.enterCommentAndRating'),
+        variant: "destructive",
       });
-      
-      // إعادة تحميل البيانات
-      fetchTeacherProfile();
-      setNewComment("");
-      setRating(0);
-    } else {
-      throw new Error(response.message || 'Failed to add comment');
+      return;
     }
-  } catch (error: any) {
-    console.error('Error adding comment:', error);
-    toast({
-      title: "خطأ",
-      description: error.message || "فشل في إضافة التعليق",
-      variant: "destructive",
-    });
-  } finally {
-    setSubmitting(false);
-  }
-};
+
+    try {
+      setSubmitting(true);
+      
+      const response = await apiFetch(`/teachers/${id}/comments`, {
+        method: 'POST',
+        body: {
+          comment: newComment,
+          rating: rating
+        }
+      });
+
+      if (response.result === "Success") {
+        toast({
+          title: t('common.success'),
+          description: t('teacherProfile.reviews.commentAdded'),
+          variant: "default",
+        });
+        
+        fetchTeacherProfile();
+        setNewComment("");
+        setRating(0);
+      } else {
+        throw new Error(response.message || t('teacherProfile.reviews.addFailed'));
+      }
+    } catch (error: any) {
+      console.error('Error adding comment:', error);
+      toast({
+        title: t('common.error'),
+        description: error.message || t('teacherProfile.reviews.addFailed'),
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   // Render Hero Section
   const renderHeroSection = () => {
     if (!teacher) return null;
@@ -255,7 +255,7 @@ const handleAddComment = async () => {
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                   <div>
                     <h1 className="text-3xl font-bold mb-2">{teacher.name}</h1>
-                    <p className="text-purple-100 text-lg mb-4">مدرس محترف مع سنوات من الخبرة</p>
+                    <p className="text-purple-100 text-lg mb-4">{t('teacherProfile.hero.professionalTeacher')}</p>
                     
                     {/* Rating and Stats */}
                     <div className="flex items-center gap-6 flex-wrap">
@@ -264,19 +264,19 @@ const handleAddComment = async () => {
                           <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                           <span className="font-bold text-xl">{teacher.total_rate}</span>
                         </div>
-                        <span className="text-purple-100">تقييم المعلم</span>
+                        <span className="text-purple-100">{t('teacherProfile.hero.teacherRating')}</span>
                       </div>
                       
                       <div className="flex items-center gap-2">
                         <Users className="w-5 h-5" />
                         <span className="font-bold text-xl">{teacher.students_count.toLocaleString()}</span>
-                        <span className="text-purple-100">طالب</span>
+                        <span className="text-purple-100">{t('teacherProfile.hero.students')}</span>
                       </div>
                       
                       <div className="flex items-center gap-2">
                         <BookOpen className="w-5 h-5" />
                         <span className="font-bold text-xl">{teacher.courses_count}</span>
-                        <span className="text-purple-100">دورة</span>
+                        <span className="text-purple-100">{t('teacherProfile.hero.courses')}</span>
                       </div>
                     </div>
                   </div>
@@ -288,7 +288,7 @@ const handleAddComment = async () => {
                       onClick={handleContactTeacher}
                     >
                       <MessageCircle className="w-4 h-4 ml-2" />
-                      تواصل مع المعلم
+                      {t('teacherProfile.actions.contactTeacher')}
                     </Button>
                     <Button 
                       variant="outline" 
@@ -296,7 +296,7 @@ const handleAddComment = async () => {
                       onClick={handleShareProfile}
                     >
                       <Share2 className="w-4 h-4 ml-2" />
-                      مشاركة
+                      {t('teacherProfile.actions.shareProfile')}
                     </Button>
                   </div>
                 </div>
@@ -317,7 +317,7 @@ const handleAddComment = async () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span>معلم موثوق</span>
+                    <span>{t('teacherProfile.hero.verifiedTeacher')}</span>
                   </div>
                 </div>
               </div>
@@ -334,7 +334,7 @@ const handleAddComment = async () => {
 
     return (
       <div className="mb-8">
-        <h2 className="text-2xl font-bold mb-6">الدورات التعليمية</h2>
+        <h2 className="text-2xl font-bold mb-6">{t('teacherProfile.courses.title')}</h2>
         
         <div className="grid gap-6">
           {teacher.courses.map((course, index) => (
@@ -346,15 +346,15 @@ const handleAddComment = async () => {
                     <div className="flex items-center gap-6 text-sm text-gray-600 flex-wrap">
                       <div className="flex items-center gap-2">
                         <Users className="w-4 h-4" />
-                        <span>{course.students_count} طالب</span>
+                        <span>{course.students_count} {t('teacherProfile.courses.courseStudents')}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <DollarSign className="w-4 h-4" />
-                        <span>دخل الدورة: ${course.course_income}</span>
+                        <span>{t('teacherProfile.courses.courseIncome')}: ${course.course_income}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <TrendingUp className="w-4 h-4" />
-                        <span>حصة المعلم: ${course.teacher_share}</span>
+                        <span>{t('teacherProfile.courses.teacherShare')}: ${course.teacher_share}</span>
                       </div>
                     </div>
                   </div>
@@ -365,7 +365,7 @@ const handleAddComment = async () => {
                       onClick={() => navigate(`/course/${index + 1}`)}
                     >
                       <Eye className="w-4 h-4 ml-2" />
-                      عرض الدورة
+                      {t('teacherProfile.courses.viewCourse')}
                     </Button>
                   </div>
                 </div>
@@ -377,7 +377,7 @@ const handleAddComment = async () => {
         {teacher.courses.length === 0 && (
           <div className="text-center py-12 text-gray-500">
             <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <p className="text-lg">لا توجد دورات متاحة حالياً</p>
+            <p className="text-lg">{t('teacherProfile.courses.noCourses')}</p>
           </div>
         )}
       </div>
@@ -389,13 +389,10 @@ const handleAddComment = async () => {
     if (!teacher) return null;
 
     const comments = teacher.comments || [];
-
-    // حساب متوسط التقييمات
     const averageRating = comments.length > 0 
       ? comments.reduce((sum, comment) => sum + comment.rating, 0) / comments.length
       : 0;
 
-    // توزيع التقييمات
     const ratingDistribution = {
       5: comments.filter(c => c.rating === 5).length,
       4: comments.filter(c => c.rating === 4).length,
@@ -429,7 +426,7 @@ const handleAddComment = async () => {
                     ))}
                   </div>
                   <p className="text-gray-600">
-                    بناءً على {comments.length} تقييم
+                    {t('teacherProfile.reviews.basedOn', { count: comments.length })}
                   </p>
                 </div>
 
@@ -461,13 +458,13 @@ const handleAddComment = async () => {
             {/* Add Comment Form */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">أضف تقييمك</CardTitle>
+                <CardTitle className="text-lg">{t('teacherProfile.reviews.addReview')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Star Rating */}
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-2 block">
-                    تقييمك
+                    {t('teacherProfile.reviews.yourRating')}
                   </label>
                   <div className="flex gap-1">
                     {[1, 2, 3, 4, 5].map((star) => (
@@ -492,12 +489,12 @@ const handleAddComment = async () => {
                 {/* Comment Textarea */}
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-2 block">
-                    تعليقك
+                    {t('teacherProfile.reviews.yourComment')}
                   </label>
                   <Textarea
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="شاركنا تجربتك مع هذا المعلم..."
+                    placeholder={t('teacherProfile.reviews.commentPlaceholder')}
                     rows={4}
                     className="resize-none"
                   />
@@ -512,12 +509,12 @@ const handleAddComment = async () => {
                   {submitting ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      جاري الإرسال...
+                      {t('teacherProfile.reviews.sending')}
                     </>
                   ) : (
                     <>
                       <Send className="w-4 h-4 ml-2" />
-                      إرسال التقييم
+                      {t('teacherProfile.reviews.submitReview')}
                     </>
                   )}
                 </Button>
@@ -527,7 +524,7 @@ const handleAddComment = async () => {
 
           {/* Right Column - Comments List */}
           <div className="lg:col-span-2">
-            <h2 className="text-2xl font-bold mb-6">التقييمات والتعليقات</h2>
+            <h2 className="text-2xl font-bold mb-6">{t('teacherProfile.reviews.title')}</h2>
             
             {comments.length > 0 ? (
               <div className="space-y-6">
@@ -576,10 +573,10 @@ const handleAddComment = async () => {
                           <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
                             <button className="flex items-center gap-1 hover:text-gray-700 transition-colors">
                               <ThumbsUp className="w-4 h-4" />
-                              <span>مفيد</span>
+                              <span>{t('teacherProfile.reviews.helpful')}</span>
                             </button>
                             <button className="hover:text-gray-700 transition-colors">
-                              رد
+                              {t('teacherProfile.reviews.reply')}
                             </button>
                           </div>
                         </div>
@@ -593,118 +590,15 @@ const handleAddComment = async () => {
                 <CardContent className="p-12 text-center">
                   <Star className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    لا توجد تقييمات بعد
+                    {t('teacherProfile.reviews.noReviews')}
                   </h3>
                   <p className="text-gray-600">
-                    كن أول من يقيم هذا المعلم
+                    {t('teacherProfile.reviews.beFirst')}
                   </p>
                 </CardContent>
               </Card>
             )}
           </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Render Bank Information
-  const renderBankInfo = () => {
-    if (!teacher) return null;
-
-    return (
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold mb-6">معلومات التحويل البنكي</h2>
-        
-        <Card>
-          <CardContent className="p-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-600">اسم صاحب الحساب</label>
-                  <p className="font-semibold">{teacher.account_holder_name}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">رقم الحساب</label>
-                  <p className="font-semibold">{teacher.account_number}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">الفرع</label>
-                  <p className="font-semibold">{teacher.branch_name}</p>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-600">IBAN</label>
-                  <p className="font-semibold">{teacher.iban}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">SWIFT Code</label>
-                  <p className="font-semibold">{teacher.swift_code}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">المحفظة الإلكترونية</label>
-                  <p className="font-semibold">{teacher.wallets_name}: {teacher.wallets_number}</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  };
-
-  // Render Documents
-  const renderDocuments = () => {
-    if (!teacher) return null;
-
-    const documents = [
-      {
-        title: "صورة الشهادة",
-        image: teacher.certificate_image,
-        type: "certificate"
-      },
-      {
-        title: "صورة الخبرة",
-        image: teacher.experience_image,
-        type: "experience"
-      },
-      {
-        title: "صورة البطاقة الأمامية",
-        image: teacher.id_card_front,
-        type: "id_front"
-      },
-      {
-        title: "صورة البطاقة الخلفية",
-        image: teacher.id_card_back,
-        type: "id_back"
-      }
-    ].filter(doc => doc.image);
-
-    if (documents.length === 0) return null;
-
-    return (
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold mb-6">الوثائق والمستندات</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {documents.map((doc, index) => (
-            <Card key={index}>
-              <CardHeader>
-                <CardTitle className="text-lg">{doc.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
-                  <img 
-                    src={doc.image!} 
-                    alt={doc.title}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300 cursor-pointer"
-                    onClick={() => window.open(doc.image!, '_blank')}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
         </div>
       </div>
     );
@@ -716,7 +610,7 @@ const handleAddComment = async () => {
         <div className="container mx-auto px-4">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">جاري تحميل بيانات المعلم...</p>
+            <p className="mt-4 text-gray-600">{t('teacherProfile.actions.loading')}</p>
           </div>
         </div>
       </div>
@@ -728,9 +622,9 @@ const handleAddComment = async () => {
       <div className="min-h-screen py-8">
         <div className="container mx-auto px-4">
           <div className="text-center text-red-500">
-            <p>خطأ: {error || 'المعلم غير موجود'}</p>
+            <p>{t('common.error')}: {error || t('teacherProfile.actions.error')}</p>
             <Button onClick={fetchTeacherProfile} className="mt-4">
-              حاول مرة أخرى
+              {t('teacherProfile.actions.tryAgain')}
             </Button>
           </div>
         </div>
@@ -750,8 +644,8 @@ const handleAddComment = async () => {
           <div className="border-b border-gray-200 mb-8">
             <nav className="flex space-x-8">
               {[
-                { id: "courses", label: "الدورات", count: teacher.courses_count },
-                { id: "comments", label: "التقييمات", count: teacher.comments?.length || 0 },
+                { id: "courses", label: t('teacherProfile.tabs.courses'), count: teacher.courses_count },
+                { id: "comments", label: t('teacherProfile.tabs.reviews'), count: teacher.comments?.length || 0 },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -777,7 +671,6 @@ const handleAddComment = async () => {
           <div>
             {activeTab === "courses" && renderCourses()}
             {activeTab === "comments" && renderComments()}
-        
           </div>
         </div>
       </div>

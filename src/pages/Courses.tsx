@@ -36,6 +36,7 @@ interface Course {
     students_count: number;
     courses_count: number;
     total_income: number;
+    total_rate: number;
   };
   stage: {
     name: string;
@@ -58,6 +59,7 @@ interface Course {
     created_at: string;
   }[];
   created_at: string;
+  average_rating?: number;
 }
 
 interface ApiResponse {
@@ -125,13 +127,16 @@ const Courses = () => {
           'Accept': 'application/json',
         },
         body: JSON.stringify({
-          filters: {},
-          orderBy: "id",
-          orderByDirection: "asc",
-          perPage: 10,
+          filters: {
+            active: true // ✅ جلب الكورسات النشطة فقط
+          },
+          orderBy: filters.sort === 'newest' ? 'created_at' : 'id',
+          orderByDirection: filters.sort === 'price-low' ? 'asc' : 'desc',
+          perPage: 12, // ✅ زيادة العدد لتحسين تجربة المستخدم
           paginate: true,
           delete: false,
-          page: page
+          page: page,
+          include: ['teacher', 'subject', 'stage', 'country', 'details'] // ✅ تضمين العلاقات
         })
       });
 
@@ -142,10 +147,13 @@ const Courses = () => {
       }
 
       if (data.result === "Success" && data.data) {
+        // ✅ تصفية الكورسات النشطة فقط
+        const activeCourses = data.data.filter(course => course.active !== false);
+        
         if (loadMore) {
-          setCourses(prev => [...prev, ...data.data]);
+          setCourses(prev => [...prev, ...activeCourses]);
         } else {
-          setCourses(data.data);
+          setCourses(activeCourses);
         }
         
         setHasMore(data.meta.current_page < data.meta.last_page);
@@ -171,42 +179,41 @@ const Courses = () => {
     applyFilters();
   }, [filters, courses, searchTerm]);
 
+  // ✅ تطبيق الفلاتر بناءً على البيانات الحقيقية
   const applyFilters = () => {
     let filtered = [...courses];
 
     // Search filter
     if (searchTerm) {
-      filtered = filtered.filter(course =>
-        course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.teacher?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.subject?.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Category filter
-    if (filters.category) {
-      filtered = filtered.filter(course =>
-        course.subject?.name.toLowerCase() === filters.category.toLowerCase()
-      );
-    }
-
-    // Level filter
-    if (filters.level) {
       filtered = filtered.filter(course => {
-        const title = course.title.toLowerCase();
-        if (filters.level === 'beginner') {
-          return title.includes('basic') || title.includes('intro') || title.includes('beginner');
-        } else if (filters.level === 'intermediate') {
-          return title.includes('intermediate');
-        } else if (filters.level === 'advanced') {
-          return title.includes('advanced') || title.includes('expert');
-        }
-        return true;
+        const searchLower = searchTerm.toLowerCase();
+        return (
+          course.title?.toLowerCase().includes(searchLower) ||
+          course.description?.toLowerCase().includes(searchLower) ||
+          course.teacher?.name?.toLowerCase().includes(searchLower) ||
+          course.subject?.name?.toLowerCase().includes(searchLower) ||
+          course.stage?.name?.toLowerCase().includes(searchLower)
+        );
       });
     }
 
-    // Price filter
+    // Category filter - استخدام subject أو stage
+    if (filters.category) {
+      filtered = filtered.filter(course =>
+        course.subject?.name?.toLowerCase() === filters.category.toLowerCase() ||
+        course.stage?.name?.toLowerCase() === filters.category.toLowerCase()
+      );
+    }
+
+    // Level filter - استخدام البيانات الحقيقية
+    if (filters.level) {
+      filtered = filtered.filter(course => {
+        const transformed = transformCourseData(course);
+        return transformed.level.toLowerCase() === filters.level.toLowerCase();
+      });
+    }
+
+    // Price filter - استخدام الأسعار الحقيقية
     if (filters.price) {
       filtered = filtered.filter(course => {
         const price = parseFloat(course.price || "0");
@@ -221,22 +228,25 @@ const Courses = () => {
     // Teacher filter
     if (filters.teacher) {
       filtered = filtered.filter(course =>
-        course.teacher?.name.toLowerCase().includes(filters.teacher.toLowerCase())
+        course.teacher?.name?.toLowerCase().includes(filters.teacher.toLowerCase())
       );
     }
 
     // Sort filter
     if (filters.sort) {
       filtered.sort((a, b) => {
+        const aPrice = parseFloat(a.price || "0");
+        const bPrice = parseFloat(b.price || "0");
+        
         switch (filters.sort) {
           case 'newest':
             return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
           case 'rating':
-            return (b.views_count || 0) - (a.views_count || 0);
+            return (b.teacher?.total_rate || 0) - (a.teacher?.total_rate || 0);
           case 'price-low':
-            return parseFloat(a.price || "0") - parseFloat(b.price || "0");
+            return aPrice - bPrice;
           case 'price-high':
-            return parseFloat(b.price || "0") - parseFloat(a.price || "0");
+            return bPrice - aPrice;
           case 'popular':
           default:
             return (b.count_student || 0) - (a.count_student || 0);
@@ -247,84 +257,160 @@ const Courses = () => {
     setFilteredCourses(filtered);
   };
 
+  // ✅ دورة تحويل البيانات - بيانات حقيقية فقط
+// ✅ دورة تحويل البيانات - بيانات حقيقية فقط
+const transformCourseData = (course: Course) => {
+  const originalPrice = parseFloat(course.original_price || "0");
+  const currentPrice = parseFloat(course.price || "0");
+  const discountValue = parseFloat(course.discount || "0");
+  const hasDiscount = originalPrice > currentPrice && discountValue > 0;
+  
+  // ✅ بيانات المحتوى الحقيقي
+  const videoLessons = course.details?.filter(detail => 
+    detail.content_type === 'video' && detail.content_link
+  ) || [];
+  
+  const pdfLessons = course.details?.filter(detail => 
+    detail.content_type === 'pdf' && detail.file_path
+  ) || [];
+  
+  const liveSessions = course.details?.filter(detail => 
+    detail.content_type === 'live' && detail.session_date
+  ) || [];
+
+  // ✅ حساب المدة بناءً على المحتوى الحقيقي
+  const getEstimatedDuration = () => {
+    const totalLessons = videoLessons.length + pdfLessons.length + liveSessions.length;
+    if (totalLessons === 0) return t('courses.flexible', 'Flexible');
+    
+    // تقدير المدة بناءً على نوع المحتوى
+    const videoMinutes = videoLessons.length * 45; // 45 دقيقة لكل فيديو
+    const pdfMinutes = pdfLessons.length * 30; // 30 دقيقة لكل PDF
+    const liveMinutes = liveSessions.length * 60; // 60 دقيقة لكل جلسة مباشرة
+    
+    const totalMinutes = videoMinutes + pdfMinutes + liveMinutes;
+    const totalHours = Math.ceil(totalMinutes / 60);
+    
+    if (totalHours <= 2) return "1-2 " + t('courses.hours', 'hours');
+    if (totalHours <= 5) return "3-5 " + t('courses.hours', 'hours');
+    if (totalHours <= 10) return "6-10 " + t('courses.hours', 'hours');
+    return totalHours + "+ " + t('courses.hours', 'hours');
+  };
+
+  // ✅ تحديد المستوى بناءً على البيانات الحقيقية
+  const getCourseLevel = () => {
+    const title = course.title ? course.title.toLowerCase() : "";
+    const description = course.description ? course.description.toLowerCase() : "";
+    
+    if (title.includes('basic') || title.includes('intro') || title.includes('beginner') || 
+        description.includes('basic') || description.includes('intro') || description.includes('beginner')) {
+      return t('courses.beginner', 'Beginner');
+    } else if (title.includes('advanced') || title.includes('expert') || 
+               description.includes('advanced') || description.includes('expert')) {
+      return t('courses.advanced', 'Advanced');
+    } else if (title.includes('intermediate') || description.includes('intermediate')) {
+      return t('courses.intermediate', 'Intermediate');
+    }
+    return t('courses.allLevels', 'All Levels');
+  };
+
+  // ✅ حساب التقدم الحقيقي - إرجاع رقم فقط بدلاً من كائن
+  const getEnrollmentProgress = () => {
+    const maxStudents = 100; // يمكن جعل هذا ديناميكي إذا كان متوفراً في الـ API
+    const currentStudents = course.count_student || course.subscribers_count || 0;
+    const percentage = Math.min((currentStudents / maxStudents) * 100, 100);
+    return Math.round(percentage); // إرجاع رقم فقط
+  };
+
+  const enrollmentProgress = getEnrollmentProgress();
+
+  return {
+    // ✅ البيانات الأساسية الحقيقية
+    id: course.id.toString(),
+    title: course.title || t('courses.untitled', 'Untitled Course'),
+    description: course.description || '',
+    instructor: course.teacher?.name || t('courses.unknownInstructor', 'Unknown Instructor'),
+    instructorImage: course.teacher?.image || null,
+    thumbnail: course.image || '/images/placeholder-course.jpg',
+    
+    // ✅ البيانات المالية الحقيقية
+    price: currentPrice,
+    originalPrice: hasDiscount ? originalPrice : undefined,
+    discount: hasDiscount ? discountValue : undefined,
+    currency: course.currency || "EGP",
+    isFree: currentPrice === 0,
+    
+    // ✅ بيانات التقييم الحقيقية
+    rating: course.teacher?.total_rate || 0,
+    reviewsCount: course.views_count || 0,
+    studentsCount: course.count_student || course.subscribers_count || 0,
+    
+    // ✅ بيانات المحتوى الحقيقية
+    duration: getEstimatedDuration(),
+    level: getCourseLevel(),
+    category: course.subject?.name || course.stage?.name || t('courses.general', 'General'),
+    subject: course.subject?.name || '',
+    stage: course.stage?.name || '',
+    lessonsCount: course.details?.length || 0,
+    videoLessonsCount: videoLessons.length,
+    resourcesCount: pdfLessons.length,
+    liveSessionsCount: liveSessions.length,
+    
+    // ✅ بيانات التقدم الحقيقية - تمرير رقم فقط
+    enrollmentProgress: enrollmentProgress, // الآن هذا رقم وليس كائن
+    
+    // ✅ بيانات الحالة الحقيقية
+    isBestseller: course.views_count > 500 || (course.count_student || 0) > 50,
+    isNew: Date.now() - new Date(course.created_at).getTime() < 7 * 24 * 60 * 60 * 1000, // جديد إذا أقل من 7 أيام
+    isTrending: course.views_count > 1000,
+    
+    // ✅ بيانات المعلم الحقيقية
+    teacherRating: course.teacher?.total_rate || 0,
+    teacherExperience: course.teacher?.students_count || 0,
+    teacherCoursesCount: course.teacher?.courses_count || 0,
+    courseType: course.course_type || 'group',
+    country: course.country?.name || 'International',
+    
+    // ✅ مؤشرات المحتوى الحقيقية
+    hasVideoContent: videoLessons.length > 0,
+    hasResources: pdfLessons.length > 0,
+    hasLiveSessions: liveSessions.length > 0,
+    hasIntroVideo: !!course.intro_video_url,
+    learningPoints: course.what_you_will_learn ? 
+      course.what_you_will_learn.split(',').filter(point => point.trim()) : 
+      [],
+    
+    // ✅ بيانات إضافية حقيقية
+    createdAt: course.created_at,
+    viewsCount: course.views_count || 0,
+    active: course.active !== false
+  };
+};
+
   const loadMoreCourses = () => {
     if (hasMore && !loadingMore) {
       fetchCourses(currentPage + 1, true);
     }
   };
 
-  // ✅ تحسين دورة تحويل البيانات
-  const transformCourseData = (course: Course) => {
-    const originalPrice = parseFloat(course.original_price || "0");
-    const currentPrice = parseFloat(course.price || "0");
-    const hasDiscount = originalPrice > currentPrice && parseFloat(course.discount || "0") > 0;
-    
-    // ✅ حساب المدة المقدرة
-    const videoLessons = course.details?.filter(detail => detail.content_type === 'video') || [];
-    const getEstimatedDuration = () => {
-      const videoCount = videoLessons.length;
-      if (videoCount === 0) return t('courses.flexible', 'Flexible');
-      if (videoCount <= 3) return "1-2 " + t('courses.hours', 'hours');
-      if (videoCount <= 6) return "3-4 " + t('courses.hours', 'hours');
-      return "5+ " + t('courses.hours', 'hours');
-    };
-
-    // ✅ تحديد مستوى الكورس
-    const getCourseLevel = () => {
-      const title = course.title ? course.title.toLowerCase() : "";
-      if (title.includes('basic') || title.includes('intro') || title.includes('beginner')) {
-        return t('courses.beginner', 'Beginner');
-      } else if (title.includes('advanced') || title.includes('expert')) {
-        return t('courses.expert', 'Expert');
-      } else if (title.includes('intermediate')) {
-        return t('courses.intermediate', 'Intermediate');
-      }
-      return t('courses.allLevels', 'All Levels');
-    };
-
-    // ✅ حساب الحد الأقصى للطلاب ونسبة التقدم
-    const calculateMaxStudents = () => {
-      // يمكنك تعديل هذا المنطق بناءً على بياناتك
-      const baseStudents = course.count_student || course.subscribers_count || 0;
-      if (baseStudents < 10) return 20;
-      if (baseStudents < 50) return 100;
-      if (baseStudents < 100) return 200;
-      return 300;
-    };
-
-    const maxStudents = calculateMaxStudents();
-    const enrollmentProgress = Math.min(100, ((course.count_student || 0) / maxStudents) * 100);
-
-    return {
-      id: course.id.toString(),
-      title: course.title || t('courses.untitled', 'Untitled Course'),
-      instructor: course.teacher?.name || t('courses.unknownInstructor', 'Unknown Instructor'),
-      thumbnail: course.image || 'https://via.placeholder.com/400x300?text=Course+Image',
-      price: currentPrice,
-      originalPrice: hasDiscount ? originalPrice : undefined,
-      rating: 4.5,
-      studentsCount: course.count_student || course.subscribers_count || 0,
-      maxStudents: maxStudents, // ✅ إضافة العدد الأقصى
-      duration: getEstimatedDuration(),
-      level: getCourseLevel() as "Beginner" | "Intermediate" | "Advanced",
-      category: course.subject?.name || t('courses.general', 'General'),
-      isBestseller: course.views_count > 100,
-      isNew: Date.now() - new Date(course.created_at).getTime() < 7 * 24 * 60 * 60 * 1000,
-      currency: course.currency || "USD",
-      enrollmentProgress: enrollmentProgress // ✅ إضافة نسبة التقدم
-    };
-  };
-
   // Get unique categories from courses
   const getUniqueCategories = () => {
-    const categories = courses.map(course => course.subject?.name).filter(Boolean);
-    return ['All Categories', ...Array.from(new Set(categories))];
+    const categories = courses
+      .map(course => course.subject?.name || course.stage?.name)
+      .filter(Boolean)
+      .filter((name): name is string => typeof name === 'string');
+    
+    return [t('courses.allCategories', 'All Categories'), ...Array.from(new Set(categories))];
   };
 
   // Get unique teachers from courses
   const getUniqueTeachers = () => {
-    const teachers = courses.map(course => course.teacher?.name).filter(Boolean);
-    return ['All Teachers', ...Array.from(new Set(teachers))];
+    const teachers = courses
+      .map(course => course.teacher?.name)
+      .filter(Boolean)
+      .filter((name): name is string => typeof name === 'string');
+    
+    return [t('courses.allTeachers', 'All Teachers'), ...Array.from(new Set(teachers))];
   };
 
   const categories = getUniqueCategories();
@@ -334,7 +420,7 @@ const Courses = () => {
     t('courses.allLevels', 'All Levels'), 
     t('courses.beginner', 'Beginner'), 
     t('courses.intermediate', 'Intermediate'), 
-    t('courses.expert', 'Expert')
+    t('courses.advanced', 'Advanced')
   ];
   
   const priceRanges = [
@@ -444,7 +530,7 @@ const Courses = () => {
                 <label className="text-sm font-medium">{t('courses.category', 'Category')}</label>
                 <Select 
                   value={filters.category} 
-                  onValueChange={(value) => handleFilterChange('category', value === 'all categories' ? '' : value)}
+                  onValueChange={(value) => handleFilterChange('category', value === t('courses.allCategories', 'All Categories').toLowerCase() ? '' : value)}
                 >
                   <SelectTrigger className="bg-background">
                     <SelectValue placeholder={t('courses.allCategories', 'All Categories')} />
@@ -463,7 +549,7 @@ const Courses = () => {
                 <label className="text-sm font-medium">{t('courses.level', 'Level')}</label>
                 <Select 
                   value={filters.level} 
-                  onValueChange={(value) => handleFilterChange('level', value === 'all levels' ? '' : value)}
+                  onValueChange={(value) => handleFilterChange('level', value === t('courses.allLevels', 'All Levels').toLowerCase() ? '' : value)}
                 >
                   <SelectTrigger className="bg-background">
                     <SelectValue placeholder={t('courses.allLevels', 'All Levels')} />
@@ -482,7 +568,7 @@ const Courses = () => {
                 <label className="text-sm font-medium">{t('courses.price', 'Price')}</label>
                 <Select 
                   value={filters.price} 
-                  onValueChange={(value) => handleFilterChange('price', value === 'all prices' ? '' : value)}
+                  onValueChange={(value) => handleFilterChange('price', value === t('courses.allPrices', 'All Prices').toLowerCase() ? '' : value)}
                 >
                   <SelectTrigger className="bg-background">
                     <SelectValue placeholder={t('courses.allPrices', 'All Prices')} />
@@ -501,7 +587,7 @@ const Courses = () => {
                 <label className="text-sm font-medium">{t('courses.teacher', 'Teacher')}</label>
                 <Select 
                   value={filters.teacher} 
-                  onValueChange={(value) => handleFilterChange('teacher', value === 'all teachers' ? '' : value)}
+                  onValueChange={(value) => handleFilterChange('teacher', value === t('courses.allTeachers', 'All Teachers').toLowerCase() ? '' : value)}
                 >
                   <SelectTrigger className="bg-background">
                     <SelectValue placeholder={t('courses.allTeachers', 'All Teachers')} />

@@ -1,11 +1,13 @@
 // ContactUs.jsx
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { Send, Mail, Phone, User, MessageCircle, CheckCircle } from 'lucide-react';
 const API_BASE_URL = "/api";
 import Hero from '@/components/home/hero';
 
 const ContactUs = () => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -24,7 +26,7 @@ const ContactUs = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // إرسال فوري بدون انتظار
+    // Send immediately without waiting
     fetch(`${API_BASE_URL}/contact-us`, {
       method: 'POST',
       headers: {
@@ -33,16 +35,16 @@ const ContactUs = () => {
       body: JSON.stringify({
         name: formData.name,
         phone: formData.phone,
-        message: formData.email // حسب البيانات اللي في المثال
+        message: formData.email
       }),
     }).catch(error => {
       console.error('Error:', error);
     });
     
-    // عرض نجاح فوري
+    // Show immediate success
     setIsSubmitted(true);
     
-    // إعادة تعيين الفورم بعد ثانيتين
+    // Reset form after 2 seconds
     setTimeout(() => {
       setFormData({
         name: '',
@@ -96,14 +98,14 @@ const ContactUs = () => {
               >
                 <MessageCircle className="w-8 h-8 text-blue-600" />
                 <span className="bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded-full">
-                  تواصل معنا
+                  {t('contact.subtitle')}
                 </span>
               </motion.div>
               <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-                كلمنا <span className="text-blue-600">وقت ما تحب</span>
+                {t('contact.formTitle')} 
               </h2>
               <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                رسالتك هتوصلنا في ثانية ونرد عليك بأقصى سرعة
+                {t('contact.description')}
               </p>
             </motion.div>
 
@@ -121,8 +123,8 @@ const ContactUs = () => {
                   className="text-center py-8"
                 >
                   <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">تم الإرسال!</h3>
-                  <p className="text-gray-600">رسالتك وصلتنا وهنرد عليك قريب</p>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">{t('contact.submitted')}</h3>
+                  <p className="text-gray-600">{t('contact.submittedMessage')}</p>
                 </motion.div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -133,7 +135,7 @@ const ContactUs = () => {
                     transition={{ delay: 0.4 }}
                   >
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      الاسم الكامل
+                      {t('contact.form.name')}
                     </label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -144,7 +146,7 @@ const ContactUs = () => {
                         onChange={handleChange}
                         required
                         className="w-full pr-3 pl-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 bg-white/50 hover:bg-white/70"
-                        placeholder="أدخل اسمك الكامل"
+                        placeholder={t('contact.form.namePlaceholder')}
                       />
                     </div>
                   </motion.div>
@@ -156,7 +158,7 @@ const ContactUs = () => {
                     transition={{ delay: 0.5 }}
                   >
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      رقم التليفون
+                      {t('contact.form.phone')}
                     </label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -167,7 +169,7 @@ const ContactUs = () => {
                         onChange={handleChange}
                         required
                         className="w-full pr-3 pl-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 bg-white/50 hover:bg-white/70"
-                        placeholder="أدخل رقم التليفون"
+                        placeholder={t('contact.form.phonePlaceholder')}
                       />
                     </div>
                   </motion.div>
@@ -179,7 +181,7 @@ const ContactUs = () => {
                     transition={{ delay: 0.6 }}
                   >
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      البريد الإلكتروني
+                      {t('contact.form.email')}
                     </label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -190,7 +192,7 @@ const ContactUs = () => {
                         onChange={handleChange}
                         required
                         className="w-full pr-3 pl-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 bg-white/50 hover:bg-white/70"
-                        placeholder="أدخل بريدك الإلكتروني"
+                        placeholder={t('contact.form.emailPlaceholder')}
                       />
                     </div>
                   </motion.div>
@@ -202,7 +204,7 @@ const ContactUs = () => {
                     transition={{ delay: 0.7 }}
                   >
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      الرسالة
+                      {t('contact.form.message')}
                     </label>
                     <textarea
                       name="message"
@@ -211,7 +213,7 @@ const ContactUs = () => {
                       required
                       rows="5"
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 bg-white/50 hover:bg-white/70 resize-none"
-                      placeholder="اكتب رسالتك هنا..."
+                      placeholder={t('contact.form.messagePlaceholder')}
                     />
                   </motion.div>
 
@@ -226,7 +228,7 @@ const ContactUs = () => {
                     className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl"
                   >
                     <Send className="w-5 h-5" />
-                    إرسال الرسالة
+                    {t('contact.form.submit')}
                   </motion.button>
                 </form>
               )}
@@ -239,7 +241,7 @@ const ContactUs = () => {
               transition={{ delay: 0.9 }}
               className="text-center mt-8 text-lg text-gray-600"
             >
-              <p>الرد خلال ٢٤ ساعة ⚡</p>
+              <p>{t('contact.quickResponse')}</p>
             </motion.div>
           </div>
         </div>

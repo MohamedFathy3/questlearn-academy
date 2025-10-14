@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -58,7 +59,8 @@ interface LibrariesResponse {
   };
 }
 
-const StudentLibraries = () => {
+const TeacherLibraries = () => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [libraries, setLibraries] = useState<LibraryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,14 +88,14 @@ const StudentLibraries = () => {
       if (response.data) {
         setLibraries(response.data);
       } else {
-        throw new Error('Failed to fetch libraries');
+        throw new Error(t('teacherLibraries.failedToLoad'));
       }
     } catch (err: any) {
       console.error('Error fetching libraries:', err);
-      setError(err.message || 'Failed to load libraries');
+      setError(err.message || t('teacherLibraries.failedToLoad'));
       toast({
-        title: "Error",
-        description: "Failed to load libraries",
+        title: t('common.error'),
+        description: t('teacherLibraries.failedToLoad'),
         variant: "destructive",
       });
     } finally {
@@ -146,14 +148,14 @@ const StudentLibraries = () => {
       document.body.removeChild(link);
       
       toast({
-        title: "Download Started",
-        description: `Downloading ${item.title}`,
+        title: t('teacherLibraries.actions.downloadStarted'),
+        description: t('teacherLibraries.downloadingFile', { fileName: item.title }),
         variant: "default",
       });
     } catch (error) {
       toast({
-        title: "Download Failed",
-        description: "Failed to download file",
+        title: t('teacherLibraries.actions.downloadFailed'),
+        description: t('teacherLibraries.downloadFailed'),
         variant: "destructive",
       });
     }
@@ -178,8 +180,8 @@ const StudentLibraries = () => {
     } else {
       navigator.clipboard.writeText(item.file_url);
       toast({
-        title: "Link Copied!",
-        description: "File link copied to clipboard",
+        title: t('teacherLibraries.actions.linkCopied'),
+        description: t('teacherLibraries.actions.fileLinkCopied'),
         variant: "default",
       });
     }
@@ -236,7 +238,7 @@ const StudentLibraries = () => {
                     {fileType === 'image' && <Image className="w-3 h-3 mr-1" />}
                     {fileType === 'video' && <Video className="w-3 h-3 mr-1" />}
                     {fileType === 'document' && <FileText className="w-3 h-3 mr-1" />}
-                    {fileType}
+                    {t(`teacherLibraries.fileTypes.${fileType}`)}
                   </Badge>
                 </div>
               </div>
@@ -253,7 +255,7 @@ const StudentLibraries = () => {
                 <div className="flex items-center justify-between text-xs text-gray-500">
                   <div className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
-                    {new Date(item.created_at).toLocaleDateString('ar-SA')}
+                    {new Date(item.created_at).toLocaleDateString()}
                   </div>
                   <div className="flex items-center gap-1">
                     <button 
@@ -312,7 +314,7 @@ const StudentLibraries = () => {
                         {fileType === 'image' && <Image className="w-3 h-3 mr-1" />}
                         {fileType === 'video' && <Video className="w-3 h-3 mr-1" />}
                         {fileType === 'document' && <FileText className="w-3 h-3 mr-1" />}
-                        {fileType}
+                        {t(`teacherLibraries.fileTypes.${fileType}`)}
                       </Badge>
                     </div>
                   </div>
@@ -325,7 +327,7 @@ const StudentLibraries = () => {
                     <div className="flex items-center gap-4 text-sm text-gray-500">
                       <div className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        {new Date(item.created_at).toLocaleDateString('ar-SA')}
+                        {new Date(item.created_at).toLocaleDateString()}
                       </div>
                     </div>
                     
@@ -383,7 +385,7 @@ const StudentLibraries = () => {
               onClick={() => setShowPreview(false)}
               className="rounded-full w-10 h-10 p-0"
             >
-              ✕
+              {t('teacherLibraries.actions.close')}
             </Button>
           </div>
 
@@ -404,7 +406,7 @@ const StudentLibraries = () => {
                   controls 
                   className="w-full h-full rounded-lg"
                 >
-                  Your browser does not support the video tag.
+                  {t('teacherLibraries.videoNotSupported')}
                 </video>
               </div>
             )}
@@ -413,13 +415,13 @@ const StudentLibraries = () => {
               <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
                 <div className="text-center">
                   <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">Preview not available for this document</p>
+                  <p className="text-gray-600">{t('teacherLibraries.preview.previewNotAvailable')}</p>
                   <Button 
                     className="mt-4"
                     onClick={() => handleDownload(selectedItem)}
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    Download Document
+                    {t('teacherLibraries.preview.downloadDocument')}
                   </Button>
                 </div>
               </div>
@@ -429,11 +431,7 @@ const StudentLibraries = () => {
           {/* Footer */}
           <div className="flex items-center justify-between p-6 border-t bg-gray-50">
             <div className="text-sm text-gray-600">
-              Added on {new Date(selectedItem.created_at).toLocaleDateString('ar-SA', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })}
+              {t('teacherLibraries.preview.addedOn')} {new Date(selectedItem.created_at).toLocaleDateString()}
             </div>
             <div className="flex gap-2">
               <Button 
@@ -441,13 +439,13 @@ const StudentLibraries = () => {
                 onClick={() => handleShare(selectedItem)}
               >
                 <Share2 className="w-4 h-4 mr-2" />
-                Share
+                {t('teacherLibraries.actions.share')}
               </Button>
               <Button 
                 onClick={() => handleDownload(selectedItem)}
               >
                 <Download className="w-4 h-4 mr-2" />
-                Download
+                {t('teacherLibraries.actions.download')}
               </Button>
             </div>
           </div>
@@ -462,7 +460,7 @@ const StudentLibraries = () => {
         <div className="container mx-auto px-4">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">جاري تحميل المكتبة...</p>
+            <p className="mt-4 text-gray-600">{t('teacherLibraries.loading')}</p>
           </div>
         </div>
       </div>
@@ -474,9 +472,9 @@ const StudentLibraries = () => {
       <div className="min-h-screen py-8">
         <div className="container mx-auto px-4">
           <div className="text-center text-red-500">
-            <p>خطأ: {error}</p>
+            <p>{t('teacherLibraries.error', { error })}</p>
             <Button onClick={fetchLibraries} className="mt-4">
-              حاول مرة أخرى
+              {t('teacherLibraries.actions.tryAgain')}
             </Button>
           </div>
         </div>
@@ -485,14 +483,14 @@ const StudentLibraries = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 ">
-         <Hero />
-         <div className="container mx-auto px-4 py-8">
-           {/* Header */}
-           <div className="mb-8">
-             <h1 className="text-3xl font-bold text-gray-900 mb-2">مكتبتي</h1>
-             <p className="text-gray-600">إدارة وتنظيم ملفاتك التعليمية</p>
-           </div>
+    <div className="min-h-screen bg-gray-50">
+      <Hero />
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('teacherLibraries.title')}</h1>
+          <p className="text-gray-600">{t('teacherLibraries.description')}</p>
+        </div>
 
         {/* Controls */}
         <Card className="mb-6 border-0 shadow-sm">
@@ -503,7 +501,7 @@ const StudentLibraries = () => {
                 <div className="relative">
                   <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
-                    placeholder="ابحث في المكتبة..."
+                    placeholder={t('teacherLibraries.searchPlaceholder')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pr-10"
@@ -519,10 +517,10 @@ const StudentLibraries = () => {
                   onChange={(e) => setFilterType(e.target.value)}
                   className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="all">كل الأنواع</option>
-                  <option value="image">صور</option>
-                  <option value="video">فيديوهات</option>
-                  <option value="document">مستندات</option>
+                  <option value="all">{t('teacherLibraries.filters.allTypes')}</option>
+                  <option value="image">{t('teacherLibraries.filters.images')}</option>
+                  <option value="video">{t('teacherLibraries.filters.videos')}</option>
+                  <option value="document">{t('teacherLibraries.filters.documents')}</option>
                 </select>
 
                 {/* Sort */}
@@ -531,9 +529,9 @@ const StudentLibraries = () => {
                   onChange={(e) => setSortBy(e.target.value as any)}
                   className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="newest">الأحدث</option>
-                  <option value="oldest">الأقدم</option>
-                  <option value="name">بالاسم</option>
+                  <option value="newest">{t('teacherLibraries.filters.newest')}</option>
+                  <option value="oldest">{t('teacherLibraries.filters.oldest')}</option>
+                  <option value="name">{t('teacherLibraries.filters.byName')}</option>
                 </select>
 
                 {/* View Mode */}
@@ -563,7 +561,10 @@ const StudentLibraries = () => {
         {/* Results Count */}
         <div className="mb-4 flex items-center justify-between">
           <p className="text-gray-600">
-            عرض {filteredAndSortedLibraries.length} من أصل {libraries.length} عنصر
+            {t('teacherLibraries.resultsCount', { 
+              count: filteredAndSortedLibraries.length, 
+              total: libraries.length 
+            })}
           </p>
         </div>
 
@@ -572,9 +573,9 @@ const StudentLibraries = () => {
           <Card className="border-0 shadow-sm">
             <CardContent className="p-12 text-center">
               <File className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">لا توجد ملفات</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('teacherLibraries.noFiles')}</h3>
               <p className="text-gray-600">
-                {searchTerm ? "لم يتم العثور على ملفات تطابق بحثك" : "لا توجد ملفات في المكتبة بعد"}
+                {searchTerm ? t('teacherLibraries.noFilesDescription') : t('teacherLibraries.emptyLibrary')}
               </p>
             </CardContent>
           </Card>
@@ -589,4 +590,4 @@ const StudentLibraries = () => {
   );
 };
 
-export default StudentLibraries;
+export default TeacherLibraries;

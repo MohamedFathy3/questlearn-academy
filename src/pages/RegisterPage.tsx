@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FiMail, FiLock, FiUser, FiPhone, FiCreditCard, FiBook, FiFlag, FiCheck, FiX, FiUpload, FiEye, FiEyeOff, FiArrowRight, FiUserCheck, FiUsers, FiSearch, FiChevronDown, FiPlus, FiMinus } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 import 'react-toastify/dist/ReactToastify.css';
 
 interface Country {
@@ -24,6 +25,7 @@ interface Subject {
 type UserType = 'student' | 'teacher' | 'parent';
 
 const UnifiedRegisterPage: React.FC = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<UserType>('student');
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -72,13 +74,13 @@ const UnifiedRegisterPage: React.FC = () => {
         if (countriesData.status === 200) setCountries(countriesData.data);
         if (stagesData.status === 200) setStages(stagesData.data);
         if (subjectsData.status === 200) setSubjects(subjectsData.data);
-        toast.success('success onload page')
+        toast.success(t('register.messages.successOnLoad'));
       } catch (error) {
-        toast.error('حدث خطأ في تحميل البيانات');
+        toast.error(t('register.messages.errorLoading'));
       }
     };
     fetchData();
-  }, []);
+  }, [t]);
 
   // إغلاق dropdown
   useEffect(() => {
@@ -111,41 +113,40 @@ const UnifiedRegisterPage: React.FC = () => {
     const newErrors: any = {};
 
     if (step === 1) {
-      if (!formData.name.trim()) newErrors.name = 'الاسم مطلوب';
-      if (!formData.email.trim()) newErrors.email = 'البريد الإلكتروني مطلوب';
-      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'البريد الإلكتروني غير صالح';
-      if (!formData.phone.trim()) newErrors.phone = 'رقم الهاتف مطلوب';
+      if (!formData.name.trim()) newErrors.name = t('register.validation.nameRequired');
+      if (!formData.email.trim()) newErrors.email = t('register.validation.emailRequired');
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = t('register.validation.invalidEmail');
+      if (!formData.phone.trim()) newErrors.phone = t('register.validation.phoneRequired');
 
       const passwordValidation = validatePassword(formData.password);
-      if (!formData.password) newErrors.password = 'كلمة المرور مطلوبة';
-      else if (!passwordValidation.isValid) newErrors.password = 'كلمة المرور ضعيفة';
+      if (!formData.password) newErrors.password = t('register.validation.passwordRequired');
+      else if (!passwordValidation.isValid) newErrors.password = t('register.validation.weakPassword');
 
-      if (!formData.password_confirmation) newErrors.password_confirmation = 'تأكيد كلمة المرور مطلوب';
-      else if (formData.password !== formData.password_confirmation) newErrors.password_confirmation = 'كلمة المرور غير متطابقة';
+      if (!formData.password_confirmation) newErrors.password_confirmation = t('register.validation.confirmPasswordRequired');
+      else if (formData.password !== formData.password_confirmation) newErrors.password_confirmation = t('register.validation.passwordsMismatch');
 
       if (activeTab === 'teacher') {
-        if (!formData.teacher_type) newErrors.teacher_type = 'نوع المعلم مطلوب';
-        if (!formData.country_id) newErrors.country_id = 'البلد مطلوب';
+        if (!formData.teacher_type) newErrors.teacher_type = t('register.validation.teacherTypeRequired');
+        if (!formData.country_id) newErrors.country_id = t('register.validation.countryRequired');
         else {
           const selectedCountry = getSelectedCountry();
-          // التصحيح: استخدام الاسم العربي "مصر" بدلاً من "Egypt"
           if (selectedCountry?.name === 'مصر' || selectedCountry?.name === 'Egypt') {
-            if (!formData.national_id.trim()) newErrors.national_id = 'الرقم القومي مطلوب';
-            else if (!/^[0-9]{14}$/.test(formData.national_id)) newErrors.national_id = 'الرقم القومي يجب أن يكون 14 رقمًا';
+            if (!formData.national_id.trim()) newErrors.national_id = t('register.validation.nationalIdRequired');
+            else if (!/^[0-9]{14}$/.test(formData.national_id)) newErrors.national_id = t('register.validation.nationalIdInvalid');
           } else {
-            if (!formData.passport_number.trim()) newErrors.passport_number = 'رقم جواز السفر مطلوب';
+            if (!formData.passport_number.trim()) newErrors.passport_number = t('register.validation.passportRequired');
           }
         }
       }
-      if (activeTab === 'parent' && !formData.qr_code.trim()) newErrors.qr_code = 'رمز الاستجابة السريعة مطلوب';
+      if (activeTab === 'parent' && !formData.qr_code.trim()) newErrors.qr_code = t('register.validation.qrCodeRequired');
     }
 
     if (step === 2 && activeTab === 'teacher') {
-      if (!formData.stage_id.length && !formData.custom_stage) newErrors.stage_id = 'المرحلة مطلوبة';
-      if (!formData.subject_id.length && !formData.custom_subject) newErrors.subject_id = 'المادة مطلوبة';
-      if (!formData.certificate_image) newErrors.certificate_image = 'صورة الشهادة مطلوبة';
-      if (!formData.id_card_front) newErrors.id_card_front = 'صورة البطاقة (الوجه) مطلوبة';
-      if (!formData.id_card_back) newErrors.id_card_back = 'صورة البطاقة (الظهر) مطلوبة';
+      if (!formData.stage_id.length && !formData.custom_stage) newErrors.stage_id = t('register.validation.stagesRequired');
+      if (!formData.subject_id.length && !formData.custom_subject) newErrors.subject_id = t('register.validation.subjectsRequired');
+      if (!formData.certificate_image) newErrors.certificate_image = t('register.validation.certificateRequired');
+      if (!formData.id_card_front) newErrors.id_card_front = t('register.validation.idFrontRequired');
+      if (!formData.id_card_back) newErrors.id_card_back = t('register.validation.idBackRequired');
     }
 
     setErrors(newErrors);
@@ -181,11 +182,11 @@ const UnifiedRegisterPage: React.FC = () => {
     if (files && files[0]) {
       const file = files[0];
       if (!file.type.startsWith('image/')) {
-        setErrors((prev: any) => ({ ...prev, [name]: 'يجب أن يكون الملف صورة' }));
+        setErrors((prev: any) => ({ ...prev, [name]: t('register.messages.fileTypeError') }));
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
-        setErrors((prev: any) => ({ ...prev, [name]: 'حجم الملف يجب أن يكون أقل من 5MB' }));
+        setErrors((prev: any) => ({ ...prev, [name]: t('register.messages.fileSizeError') }));
         return;
       }
       
@@ -260,13 +261,13 @@ const UnifiedRegisterPage: React.FC = () => {
       const data = await res.json();
 
       if (data.success || data.status === 200) {
-        toast.success('تم التسجيل بنجاح!');
+        toast.success(t('register.messages.registrationSuccess'));
         setTimeout(() => navigate('/login'), 2000);
       } else {
-        toast.error(data.message || 'فشل في التسجيل');
+        toast.error(data.message || t('register.messages.registrationError'));
       }
     } catch (err) {
-      toast.error('حدث خطأ أثناء التسجيل');
+      toast.error(t('register.messages.generalError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -287,14 +288,13 @@ const UnifiedRegisterPage: React.FC = () => {
 
   const getTotalSteps = () => activeTab === 'teacher' ? 3 : 2;
   const getStepTitle = () => ({
-    student: ['المعلومات الشخصية', 'إكمال التسجيل'],
-    teacher: ['المعلومات الشخصية', 'المعلومات الأكاديمية', 'مراجعة البيانات'],
-    parent: ['المعلومات الشخصية', 'إكمال التسجيل'],
+    student: [t('register.steps.personalInfo'), t('register.steps.completeRegistration')],
+    teacher: [t('register.steps.personalInfo'), t('register.steps.academicInfo'), t('register.steps.reviewData')],
+    parent: [t('register.steps.personalInfo'), t('register.steps.completeRegistration')],
   }[activeTab][currentStep - 1]);
 
   const getSelectedCountry = () => countries.find(country => country.id.toString() === formData.country_id);
   
-  // التصحيح: التحقق من مصر باللغتين العربية والإنجليزية
   const isEgyptSelected = () => {
     const selectedCountry = getSelectedCountry();
     return selectedCountry?.name === 'مصر' || selectedCountry?.name === 'Egypt';
@@ -320,19 +320,19 @@ const UnifiedRegisterPage: React.FC = () => {
         
         <div className="text-center mb-8 animate-slide-down">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent animate-gradient">
-            انضم إلى منصتنا التعليمية
+            {t('register.title')}
           </h1>
           <p className="mt-3 text-lg text-gray-600 animate-slide-down animation-delay-200">
-            اختر نوع حسابك وابدأ رحلتك التعليمية
+            {t('register.subtitle')}
           </p>
         </div>
 
         {/* التبويبات */}
         <div className="flex justify-center gap-4 mb-8 animate-slide-up">
           {[
-            { id: 'student' as UserType, label: 'طالب', icon: FiUser, color: 'green' },
-            { id: 'teacher' as UserType, label: 'معلم', icon: FiUserCheck, color: 'blue' },
-            { id: 'parent' as UserType, label: 'ولي أمر', icon: FiUsers, color: 'purple' },
+            { id: 'student' as UserType, label: t('register.accountTypes.student'), icon: FiUser, color: 'green' },
+            { id: 'teacher' as UserType, label: t('register.accountTypes.teacher'), icon: FiUserCheck, color: 'blue' },
+            { id: 'parent' as UserType, label: t('register.accountTypes.parent'), icon: FiUsers, color: 'purple' },
           ].map((tab, index) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -391,48 +391,49 @@ const UnifiedRegisterPage: React.FC = () => {
           {currentStep === 1 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in-up">
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold mb-2 text-blue-600">الاسم بالكامل</label>
+                <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.fullName')}</label>
                 <div className="relative">
                   <FiUser className="absolute right-3 top-3 text-blue-500" />
                   <input type="text" name="name" value={formData.name} onChange={handleInputChange} required
                     className={`w-full p-4 pr-12 rounded-xl border-2 focus:outline-none focus:ring-2 transition-all duration-300 ${
                       errors.name ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-blue-400 focus:ring-blue-400'
-                    }`} placeholder="أدخل اسمك بالكامل" />
+                    }`} placeholder={t('register.form.fullNamePlaceholder')} />
                 </div>
                 {errors.name && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.name}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-blue-600">البريد الإلكتروني</label>
+                <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.email')}</label>
                 <div className="relative">
                   <FiMail className="absolute right-3 top-3 text-blue-500" />
                   <input type="email" name="email" value={formData.email} onChange={handleInputChange} required
                     className={`w-full p-4 pr-12 rounded-xl border-2 focus:outline-none focus:ring-2 transition-all duration-300 ${
                       errors.email ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-blue-400 focus:ring-blue-400'
-                    }`} placeholder="example@domain.com" />
+                    }`} placeholder={t('register.form.emailPlaceholder')} />
                 </div>
                 {errors.email && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.email}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-blue-600">رقم الهاتف</label>
+                <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.phone')}</label>
                 <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} required
                   className={`w-full p-4 rounded-xl border-2 focus:outline-none focus:ring-2 transition-all duration-300 ${
                     errors.phone ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-blue-400 focus:ring-blue-400'
-                  }`} placeholder="1234567890" />
+                  }`} placeholder={t('register.form.phonePlaceholder')} />
                 {errors.phone && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.phone}</p>}
               </div>
 
               {activeTab === 'parent' && (
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold mb-2 text-blue-600">رمز الاستجابة السريعة</label>
+                  <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.qrCode')}</label>
                   <div className="relative">
                     <FiFlag className="absolute right-3 top-3 text-blue-500" />
                     <input type="text" name="qr_code" value={formData.qr_code} onChange={handleInputChange} required
                       className={`w-full p-4 pr-12 rounded-xl border-2 focus:outline-none focus:ring-2 transition-all duration-300 ${
                         errors.qr_code ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-blue-400 focus:ring-blue-400'
-                      }`} placeholder="أدخل رمز الاستجابة السريعة" />
+                      }`} placeholder={t('register.form.qrCodePlaceholder')} />
                   </div>
+                  <p className="text-sm text-gray-500 mt-1">{t('register.form.qrCodeHelp')}</p>
                   {errors.qr_code && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.qr_code}</p>}
                 </div>
               )}
@@ -440,7 +441,7 @@ const UnifiedRegisterPage: React.FC = () => {
               {activeTab === 'teacher' && (
                 <>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold mb-2 text-blue-600">نوع المعلم</label>
+                    <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.teacherType')}</label>
                     <div className="grid grid-cols-2 gap-4">
                       {['male', 'female'].map((type) => (
                         <button type="button" key={type} onClick={() => setFormData(prev => ({ ...prev, teacher_type: type }))}
@@ -450,7 +451,9 @@ const UnifiedRegisterPage: React.FC = () => {
                               : 'border-gray-300 bg-white text-gray-600 hover:border-blue-400'
                           }`}>
                           <FiUserCheck className="text-xl" />
-                          <span className="font-medium">{type === 'male' ? 'معلم' : 'معلمة'}</span>
+                          <span className="font-medium">
+                            {type === 'male' ? t('register.form.maleTeacher') : t('register.form.femaleTeacher')}
+                          </span>
                         </button>
                       ))}
                     </div>
@@ -458,7 +461,7 @@ const UnifiedRegisterPage: React.FC = () => {
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold mb-2 text-blue-600">البلد</label>
+                    <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.country')}</label>
                     <div className="relative" ref={countryDropdownRef}>
                       <button type="button" onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
                         className={`w-full p-4 pr-12 rounded-xl border-2 text-right flex items-center justify-between transition-all duration-300 ${
@@ -470,7 +473,7 @@ const UnifiedRegisterPage: React.FC = () => {
                             <span className="font-medium">{getSelectedCountry()?.name}</span>
                           </div>
                         ) : (
-                          <span className="text-gray-500">اختر البلد</span>
+                          <span className="text-gray-500">{t('register.form.selectCountry')}</span>
                         )}
                         <FiChevronDown className={`transition-transform duration-300 ${isCountryDropdownOpen ? 'rotate-180' : ''}`} />
                       </button>
@@ -481,7 +484,7 @@ const UnifiedRegisterPage: React.FC = () => {
                             <div className="relative">
                               <FiSearch className="absolute right-3 top-3 text-gray-400" />
                               <input type="text" value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)}
-                                placeholder="ابحث عن البلد..." className="w-full p-3 pr-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 text-right" />
+                                placeholder={t('register.form.searchCountry')} className="w-full p-3 pr-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 text-right" />
                             </div>
                           </div>
                           <div className="overflow-y-auto max-h-60">
@@ -507,7 +510,7 @@ const UnifiedRegisterPage: React.FC = () => {
                   {formData.country_id && (
                     <div className="md:col-span-2">
                       <label className="block text-sm font-semibold mb-2 text-blue-600">
-                        {isEgyptSelected() ? 'الرقم القومي' : 'رقم جواز السفر'}
+                        {isEgyptSelected() ? t('register.form.nationalId') : t('register.form.passportNumber')}
                       </label>
                       <div className="relative">
                         <FiCreditCard className="absolute right-3 top-3 text-blue-500" />
@@ -516,7 +519,7 @@ const UnifiedRegisterPage: React.FC = () => {
                           onChange={handleInputChange} required maxLength={isEgyptSelected() ? 14 : undefined}
                           className={`w-full p-4 pr-12 rounded-xl border-2 focus:outline-none focus:ring-2 transition-all duration-300 ${
                             (errors.national_id || errors.passport_number) ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-blue-400 focus:ring-blue-400'
-                          }`} placeholder={isEgyptSelected() ? "14 رقم قومي" : "رقم جواز السفر"} />
+                          }`} placeholder={isEgyptSelected() ? t('register.form.nationalIdPlaceholder') : t('register.form.passportPlaceholder')} />
                       </div>
                       {isEgyptSelected() ? 
                         (errors.national_id && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.national_id}</p>) :
@@ -528,13 +531,13 @@ const UnifiedRegisterPage: React.FC = () => {
               )}
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-blue-600">كلمة المرور</label>
+                <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.password')}</label>
                 <div className="relative">
                   <FiLock className="absolute right-3 top-3 text-blue-500" />
                   <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleInputChange} required
                     className={`w-full p-4 pr-12 rounded-xl border-2 focus:outline-none focus:ring-2 transition-all duration-300 ${
                       errors.password ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-blue-400 focus:ring-blue-400'
-                    }`} placeholder="كلمة المرور" />
+                    }`} placeholder={t('register.form.passwordPlaceholder')} />
                   <button type="button" className="absolute left-3 top-3 text-gray-500 hover:text-gray-700 transition-colors duration-300" onClick={() => setShowPassword(!showPassword)}>
                     {showPassword ? <FiEyeOff /> : <FiEye />}
                   </button>
@@ -544,23 +547,23 @@ const UnifiedRegisterPage: React.FC = () => {
                     <div className="space-y-2">
                       <div className={`flex items-center gap-2 ${passwordValidation.requirements.minLength ? 'text-green-600' : 'text-red-600'}`}>
                         <FiCheck className={passwordValidation.requirements.minLength ? 'text-green-500' : 'text-red-500'} />
-                        <span className="text-sm">8 أحرف على الأقل</span>
+                        <span className="text-sm">{t('register.passwordRequirements.minLength')}</span>
                       </div>
                       <div className={`flex items-center gap-2 ${passwordValidation.requirements.hasUpperCase ? 'text-green-600' : 'text-red-600'}`}>
                         <FiCheck className={passwordValidation.requirements.hasUpperCase ? 'text-green-500' : 'text-red-500'} />
-                        <span className="text-sm">حرف كبير على الأقل (A-Z)</span>
+                        <span className="text-sm">{t('register.passwordRequirements.uppercase')}</span>
                       </div>
                       <div className={`flex items-center gap-2 ${passwordValidation.requirements.hasLowerCase ? 'text-green-600' : 'text-red-600'}`}>
                         <FiCheck className={passwordValidation.requirements.hasLowerCase ? 'text-green-500' : 'text-red-500'} />
-                        <span className="text-sm">حرف صغير على الأقل (a-z)</span>
+                        <span className="text-sm">{t('register.passwordRequirements.lowercase')}</span>
                       </div>
                       <div className={`flex items-center gap-2 ${passwordValidation.requirements.hasNumber ? 'text-green-600' : 'text-red-600'}`}>
                         <FiCheck className={passwordValidation.requirements.hasNumber ? 'text-green-500' : 'text-red-500'} />
-                        <span className="text-sm">رقم على الأقل (0-9)</span>
+                        <span className="text-sm">{t('register.passwordRequirements.number')}</span>
                       </div>
                       <div className={`flex items-center gap-2 ${passwordValidation.requirements.hasSpecialChar ? 'text-green-600' : 'text-red-600'}`}>
                         <FiCheck className={passwordValidation.requirements.hasSpecialChar ? 'text-green-500' : 'text-red-500'} />
-                        <span className="text-sm">رمز خاص (!@#$%^&*)</span>
+                        <span className="text-sm">{t('register.passwordRequirements.specialChar')}</span>
                       </div>
                     </div>
                   </div>
@@ -569,13 +572,13 @@ const UnifiedRegisterPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-blue-600">تأكيد كلمة المرور</label>
+                <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.confirmPassword')}</label>
                 <div className="relative">
                   <FiLock className="absolute right-3 top-3 text-blue-500" />
                   <input type={showConfirmPassword ? "text" : "password"} name="password_confirmation" value={formData.password_confirmation} onChange={handleInputChange} required
                     className={`w-full p-4 pr-12 rounded-xl border-2 focus:outline-none focus:ring-2 transition-all duration-300 ${
                       errors.password_confirmation ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-blue-400 focus:ring-blue-400'
-                    }`} placeholder="تأكيد كلمة المرور" />
+                    }`} placeholder={t('register.form.confirmPasswordPlaceholder')} />
                   <button type="button" className="absolute left-3 top-3 text-gray-500 hover:text-gray-700 transition-colors duration-300" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
                     {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
                   </button>
@@ -584,15 +587,15 @@ const UnifiedRegisterPage: React.FC = () => {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold mb-2 text-blue-600">الصورة الشخصية </label>
+                <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.profileImage')}</label>
                 <div className={`border-2 border-dashed rounded-xl p-6 text-center transition-all duration-300 hover:scale-105 ${
                   errors.image ? 'border-red-500 bg-red-50' : 'border-blue-400 bg-blue-50 hover:bg-blue-100'
                 }`}>
                   <input type="file" name="image" onChange={handleFileChange} accept="image/*" className="hidden" id="image-upload" />
                   <label htmlFor="image-upload" className="cursor-pointer flex flex-col items-center">
                     <FiUpload className="text-3xl mb-3 text-blue-500" />
-                    <span className="text-blue-600 font-medium">انقر لرفع الصورة</span>
-                    <span className="text-sm text-gray-500 mt-1">PNG, JPG, JPEG (5MB كحد أقصى)</span>
+                    <span className="text-blue-600 font-medium">{t('register.form.uploadImage')}</span>
+                    <span className="text-sm text-gray-500 mt-1">{t('register.form.imageRequirements')}</span>
                   </label>
                 </div>
                 {imagePreview && (
@@ -612,7 +615,7 @@ const UnifiedRegisterPage: React.FC = () => {
           {currentStep === 2 && activeTab === 'teacher' && (
             <div className="space-y-6 animate-fade-in-up">
               <div>
-                <label className="block text-sm font-semibold mb-2 text-blue-600">المراحل التعليمية</label>
+                <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.educationalStages')}</label>
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {stages.map((stage) => (
@@ -625,16 +628,16 @@ const UnifiedRegisterPage: React.FC = () => {
                     ))}
                   </div>
                   
-                  {/* <button type="button" onClick={() => setShowCustomStage(!showCustomStage)} 
+                  <button type="button" onClick={() => setShowCustomStage(!showCustomStage)} 
                     className="flex items-center gap-2 text-blue-600 font-medium text-sm hover:text-blue-700 transition-colors duration-300">
                     {showCustomStage ? <FiMinus /> : <FiPlus />}
-                    إضافة مرحلة جديدة
-                  </button> */}
+                    {t('register.form.addNewStage')}
+                  </button>
                   
                   {showCustomStage && (
                     <div className="animate-fade-in-up">
                       <input type="text" name="custom_stage" value={formData.custom_stage} onChange={handleInputChange}
-                        placeholder="أدخل اسم المرحلة الجديدة" className="w-full p-3 rounded-xl border-2 border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                        placeholder={t('register.form.newStagePlaceholder')} className="w-full p-3 rounded-xl border-2 border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400" />
                     </div>
                   )}
                 </div>
@@ -642,7 +645,7 @@ const UnifiedRegisterPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-blue-600">المواد الدراسية</label>
+                <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.subjects')}</label>
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {subjects.map((subject) => (
@@ -655,16 +658,16 @@ const UnifiedRegisterPage: React.FC = () => {
                     ))}
                   </div>
                   
-                  {/* <button type="button" onClick={() => setShowCustomSubject(!showCustomSubject)} 
+                  <button type="button" onClick={() => setShowCustomSubject(!showCustomSubject)} 
                     className="flex items-center gap-2 text-blue-600 font-medium text-sm hover:text-blue-700 transition-colors duration-300">
                     {showCustomSubject ? <FiMinus /> : <FiPlus />}
-                    إضافة مادة جديدة
-                  </button> */}
+                    {t('register.form.addNewSubject')}
+                  </button>
                   
                   {showCustomSubject && (
                     <div className="animate-fade-in-up">
                       <input type="text" name="custom_subject" value={formData.custom_subject} onChange={handleInputChange}
-                        placeholder="أدخل اسم المادة الجديدة" className="w-full p-3 rounded-xl border-2 border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                        placeholder={t('register.form.newSubjectPlaceholder')} className="w-full p-3 rounded-xl border-2 border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400" />
                     </div>
                   )}
                 </div>
@@ -673,14 +676,14 @@ const UnifiedRegisterPage: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold mb-2 text-blue-600">صورة البطاقة (الوجه)</label>
+                  <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.idCardFront')}</label>
                   <div className={`border-2 border-dashed rounded-xl p-6 text-center transition-all duration-300 hover:scale-105 ${
                     errors.id_card_front ? 'border-red-500 bg-red-50' : 'border-blue-400 bg-blue-50 hover:bg-blue-100'
                   }`}>
                     <input type="file" name="id_card_front" onChange={handleFileChange} accept="image/*" className="hidden" id="id-card-front" />
                     <label htmlFor="id-card-front" className="cursor-pointer flex flex-col items-center">
                       <FiUpload className="text-3xl mb-3 text-blue-500" />
-                      <span className="text-blue-600 font-medium">الوجه الأمامي للبطاقة</span>
+                      <span className="text-blue-600 font-medium">{t('register.form.uploadFront')}</span>
                     </label>
                   </div>
                   {idCardFrontPreview && (
@@ -695,14 +698,14 @@ const UnifiedRegisterPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold mb-2 text-blue-600">صورة البطاقة (الظهر)</label>
+                  <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.idCardBack')}</label>
                   <div className={`border-2 border-dashed rounded-xl p-6 text-center transition-all duration-300 hover:scale-105 ${
                     errors.id_card_back ? 'border-red-500 bg-red-50' : 'border-blue-400 bg-blue-50 hover:bg-blue-100'
                   }`}>
                     <input type="file" name="id_card_back" onChange={handleFileChange} accept="image/*" className="hidden" id="id-card-back" />
                     <label htmlFor="id-card-back" className="cursor-pointer flex flex-col items-center">
                       <FiUpload className="text-3xl mb-3 text-blue-500" />
-                      <span className="text-blue-600 font-medium">الوجه الخلفي للبطاقة</span>
+                      <span className="text-blue-600 font-medium">{t('register.form.uploadBack')}</span>
                     </label>
                   </div>
                   {idCardBackPreview && (
@@ -718,14 +721,14 @@ const UnifiedRegisterPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-blue-600">صورة الشهادة</label>
+                <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.certificateImage')}</label>
                 <div className={`border-2 border-dashed rounded-xl p-6 text-center transition-all duration-300 hover:scale-105 ${
                   errors.certificate_image ? 'border-red-500 bg-red-50' : 'border-blue-400 bg-blue-50 hover:bg-blue-100'
                 }`}>
                   <input type="file" name="certificate_image" onChange={handleFileChange} accept="image/*" className="hidden" id="certificate" />
                   <label htmlFor="certificate" className="cursor-pointer flex flex-col items-center">
                     <FiUpload className="text-3xl mb-3 text-blue-500" />
-                    <span className="text-blue-600 font-medium">صورة الشهادة</span>
+                    <span className="text-blue-600 font-medium">{t('register.form.uploadCertificate')}</span>
                   </label>
                 </div>
                 {certificatePreview && (
@@ -740,12 +743,12 @@ const UnifiedRegisterPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2 text-blue-600">صورة الخبرة (اختياري)</label>
+                <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.experienceImage')}</label>
                 <div className="border-2 border-dashed border-blue-400 rounded-xl p-6 text-center transition-all duration-300 hover:scale-105 bg-blue-50 hover:bg-blue-100">
                   <input type="file" name="experience_image" onChange={handleFileChange} accept="image/*" className="hidden" id="experience" />
                   <label htmlFor="experience" className="cursor-pointer flex flex-col items-center">
                     <FiUpload className="text-3xl mb-3 text-blue-500" />
-                    <span className="text-blue-600 font-medium">صورة الخبرة</span>
+                    <span className="text-blue-600 font-medium">{t('register.form.uploadExperience')}</span>
                   </label>
                 </div>
                 {experiencePreview && (
@@ -765,8 +768,8 @@ const UnifiedRegisterPage: React.FC = () => {
             <div className="text-center py-8 animate-bounce-in">
               <div className="p-8 rounded-2xl border-2 bg-green-50 border-green-400 shadow-lg shadow-green-500/10">
                 <FiCheck className="text-5xl mx-auto mb-4 text-green-500 animate-check-mark" />
-                <h3 className="text-2xl font-bold mb-3 text-green-600">جاهز للتسجيل!</h3>
-                <p className="text-green-500">اضغط على زر التسجيل لإكمال عملية إنشاء حسابك</p>
+                <h3 className="text-2xl font-bold mb-3 text-green-600">{t('register.messages.readyToRegister')}</h3>
+                <p className="text-green-500">{t('register.messages.clickToComplete')}</p>
               </div>
             </div>
           )}
@@ -776,17 +779,17 @@ const UnifiedRegisterPage: React.FC = () => {
             <div className="flex gap-2">
               {currentStep > 1 && (
                 <button type="button" onClick={prevStep} className="px-6 py-3 rounded-lg transition-all duration-500 flex items-center gap-2 transform hover:scale-105 bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 shadow-lg hover:shadow-xl">
-                  <FiArrowRight className="transform rotate-180 transition-transform duration-300" /> السابق
+                  <FiArrowRight className="transform rotate-180 transition-transform duration-300" /> {t('register.buttons.previous')}
                 </button>
               )}
               <button type="button" onClick={resetForm} className="px-6 py-3 rounded-lg transition-all duration-500 transform hover:scale-105 bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300 shadow-lg hover:shadow-xl">
-                إعادة تعيين
+                {t('register.buttons.reset')}
               </button>
             </div>
             
             {currentStep < getTotalSteps() ? (
               <button type="button" onClick={nextStep} className="px-8 py-3 rounded-lg transition-all duration-500 flex items-center gap-2 transform hover:scale-105 bg-blue-500 text-white hover:bg-blue-400 shadow-lg shadow-blue-500/30 border border-blue-400 animate-pulse-slow">
-                التالي <FiArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
+                {t('register.buttons.next')} <FiArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
               </button>
             ) : (
               <button type="submit" disabled={isSubmitting} className={`px-8 py-3 rounded-lg transition-all duration-500 flex items-center gap-2 transform hover:scale-105 bg-green-500 text-white hover:bg-green-400 shadow-lg shadow-green-500/30 border border-green-400 disabled:opacity-50 ${
@@ -795,11 +798,11 @@ const UnifiedRegisterPage: React.FC = () => {
                 {isSubmitting ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    جاري التسجيل...
+                    {t('register.buttons.registering')}
                   </>
                 ) : (
                   <>
-                    <FiCheck className="transition-transform duration-300" /> تأكيد التسجيل
+                    <FiCheck className="transition-transform duration-300" /> {t('register.buttons.register')}
                   </>
                 )}
               </button>
@@ -809,9 +812,9 @@ const UnifiedRegisterPage: React.FC = () => {
 
         <div className="text-center mt-8 pt-6 border-t border-gray-300 animate-fade-in">
           <p className="text-gray-600">
-            لديك حساب بالفعل؟{' '}
+            {t('register.messages.alreadyHaveAccount')}{' '}
             <Link to="/login" className="font-semibold text-blue-500 hover:text-blue-400 transition-all duration-300 hover:underline">
-              سجل الدخول
+              {t('register.buttons.login')}
             </Link>
           </p>
         </div>

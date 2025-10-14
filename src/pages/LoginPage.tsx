@@ -41,27 +41,27 @@ export default function LoginPage() {
 
   const tabConfig = {
     student: {
-      title: t('login.student', 'طالب'),
+      title: t('login.student'),
       icon: User,
-      description: t('login.studentDesc', 'سجل الدخول لحسابك الطلابي والوصول إلى الدورات'),
+      description: t('login.studentDesc'),
       color: 'blue',
       gradient: 'from-blue-500 to-cyan-500',
       lightGradient: 'from-blue-50 to-cyan-50',
       darkGradient: 'from-blue-900/20 to-cyan-900/20'
     },
     parent: {
-      title: t('login.parent', 'ولي أمر'),
+      title: t('login.parent'),
       icon: Users,
-      description: t('login.parentDesc', 'تابع أداء أبنائك وتقدمهم التعليمي'),
+      description: t('login.parentDesc'),
       color: 'green',
       gradient: 'from-green-500 to-emerald-500',
       lightGradient: 'from-green-50 to-emerald-50',
       darkGradient: 'from-green-900/20 to-emerald-900/20'
     },
     teacher: {
-      title: t('login.teacher', 'معلم'),
+      title: t('login.teacher'),
       icon: GraduationCap,
-      description: t('login.teacherDesc', 'الوصول إلى منصة المعلمين لإدارة الدورات'),
+      description: t('login.teacherDesc'),
       color: 'purple',
       gradient: 'from-purple-500 to-indigo-500',
       lightGradient: 'from-purple-50 to-indigo-50',
@@ -210,10 +210,10 @@ export default function LoginPage() {
               </div>
             </div>
             <h1 className="text-3xl font-bold text-white mb-3 animate-slide-down">
-              {t('login.welcomeBack', 'مرحباً بعودتك')}
+              {t('login.welcomeBack')}
             </h1>
             <p className="text-white/90 text-lg">
-              {t('login.chooseAccountType', 'اختر نوع الحساب للمتابعة')}
+              {t('login.chooseAccountType')}
             </p>
           </div>
           
@@ -285,17 +285,17 @@ export default function LoginPage() {
                   <GraduationCap className={`w-10 h-10 text-${CurrentTab.color}-600`} />
                 </div>
                 <h3 className="text-xl font-bold text-gray-800 mb-3">
-                  {t('login.teacherPlatform', 'منصة المعلمين المتخصصة')}
+                  {t('login.teacherPlatform')}
                 </h3>
                 <p className="text-gray-600 leading-relaxed mb-6">
-                  {t('login.teacherRedirect', 'منصة متكاملة لإدارة الفصول والدورات التعليمية، متابعة الطلاب، وإنشاء المحتوى التعليمي')}
+                  {t('login.teacherRedirect')}
                 </p>
                 
                 <div className="grid grid-cols-3 gap-4 text-center">
                   {[
-                    { icon: BookOpen, text: 'إدارة الدورات' },
-                    { icon: Users, text: 'متابعة الطلاب' },
-                    { icon: Star, text: 'تقييم الأداء' }
+                    { icon: BookOpen, text: t('login.features.courseManagement') },
+                    { icon: Users, text: t('login.features.studentTracking') },
+                    { icon: Star, text: t('login.features.performanceEvaluation') }
                   ].map((item, index) => (
                     <div key={index} className="animate-scale-in" style={{ animationDelay: `${index * 200}ms` }}>
                       <div className={`inline-flex items-center justify-center w-12 h-12 rounded-lg bg-${CurrentTab.color}-100 mb-2`}>
@@ -312,13 +312,13 @@ export default function LoginPage() {
                 className={`w-full bg-gradient-to-r ${CurrentTab.gradient} text-white py-4 rounded-xl font-bold text-lg hover:shadow-2xl transform transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3 shadow-lg`}
               >
                 <ExternalLink className="w-6 h-6" />
-                {t('login.goToTeacherPlatform', 'الذهاب إلى منصة المعلمين')}
+                {t('login.goToTeacherPlatform')}
                 <Shield className="w-5 h-5" />
               </button>
 
               <div className="text-center pt-6 border-t border-gray-200">
                 <p className="text-sm text-gray-500">
-                  {t('login.teacherSupport', 'للدعم الفني: support@academy.com - 0123456789')}
+                  {t('login.teacherSupport')}
                 </p>
               </div>
             </div>
@@ -331,7 +331,7 @@ export default function LoginPage() {
                 <div className="space-y-3">
                   <Label htmlFor="qrCode" className="text-gray-700 font-semibold text-base flex items-center gap-2">
                     <QrCode className="w-5 h-5" />
-                    {t('login.qrCode', 'كود QR')}
+                    {t('login.qrCode')}
                   </Label>
                   <div className="relative group">
                     <div className={`absolute ${isRTL ? 'left-4' : 'right-4'} top-1/2 transform -translate-y-1/2 transition-colors duration-300 group-focus-within:text-${CurrentTab.color}-500`}>
@@ -346,12 +346,12 @@ export default function LoginPage() {
                       className={`w-full border-2 border-gray-200 rounded-xl py-4 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-${CurrentTab.color}-500/20 focus:border-${CurrentTab.color}-500 transition-all duration-300 ${
                         isRTL ? 'pl-16 pr-6' : 'pr-16 pl-6'
                       } text-lg hover:border-${CurrentTab.color}-300`}
-                      placeholder={t('login.qrCodePlaceholder', 'أدخل كود QR الخاص بك')}
+                      placeholder={t('login.qrCodePlaceholder')}
                       dir="ltr"
                     />
                   </div>
                   <p className="text-sm text-gray-500">
-                    {t('login.qrCodeHelp', 'استخدم كود QR المخصص لمتابعة أبنائك')}
+                    {t('login.qrCodeHelp')}
                   </p>
                 </div>
               ) : (
@@ -359,7 +359,7 @@ export default function LoginPage() {
                 <div className="space-y-3">
                   <Label htmlFor="email" className="text-gray-700 font-semibold text-base flex items-center gap-2">
                     <Mail className="w-5 h-5" />
-                    {t('login.email', 'البريد الإلكتروني')}
+                    {t('login.email')}
                   </Label>
                   <div className="relative group">
                     <div className={`absolute ${isRTL ? 'left-4' : 'right-4'} top-1/2 transform -translate-y-1/2 transition-colors duration-300 group-focus-within:text-${CurrentTab.color}-500`}>
@@ -374,7 +374,7 @@ export default function LoginPage() {
                       className={`w-full border-2 border-gray-200 rounded-xl py-4 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-${CurrentTab.color}-500/20 focus:border-${CurrentTab.color}-500 transition-all duration-300 ${
                         isRTL ? 'pl-16 pr-6' : 'pr-16 pl-6'
                       } text-lg hover:border-${CurrentTab.color}-300`}
-                      placeholder={t('login.emailPlaceholder', 'example@example.com')}
+                      placeholder={t('login.emailPlaceholder')}
                       dir="ltr"
                     />
                   </div>
@@ -385,7 +385,7 @@ export default function LoginPage() {
               <div className="space-y-3">
                 <Label htmlFor="password" className="text-gray-700 font-semibold text-base flex items-center gap-2">
                   <Lock className="w-5 h-5" />
-                  {t('login.password', 'كلمة المرور')}
+                  {t('login.password')}
                 </Label>
                 <div className="relative group">
                   <div className={`absolute ${isRTL ? 'left-4' : 'right-4'} top-1/2 transform -translate-y-1/2 transition-colors duration-300 group-focus-within:text-${CurrentTab.color}-500`}>
@@ -428,11 +428,11 @@ export default function LoginPage() {
                     />
                   </div>
                   <Label htmlFor="remember-me" className="text-gray-600 font-medium cursor-pointer text-base">
-                    {t('login.rememberMe', 'تذكرني')}
+                    {t('login.rememberMe')}
                   </Label>
                 </div>
                 <a href="#" className={`text-${CurrentTab.color}-600 hover:text-${CurrentTab.color}-700 font-semibold transition-colors duration-300 text-base`}>
-                  {t('login.forgotPassword', 'نسيت كلمة المرور؟')}
+                  {t('login.forgotPassword')}
                 </a>
               </div>
 
@@ -454,12 +454,12 @@ export default function LoginPage() {
                 {loading ? (
                   <div className="flex items-center justify-center gap-3">
                     <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
-                    {t('login.signingIn', 'جارٍ تسجيل الدخول...')}
+                    {t('login.signingIn')}
                   </div>
                 ) : (
                   <div className="flex items-center justify-center gap-3">
                     <User className="w-6 h-6" />
-                    {t('login.signIn', 'تسجيل الدخول')}
+                    {t('login.signIn')}
                     <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
                   </div>
                 )}
@@ -468,12 +468,12 @@ export default function LoginPage() {
               {/* Sign Up Link */}
               <div className="text-center pt-6 border-t border-gray-200">
                 <p className="text-gray-600 text-base">
-                  {t('login.noAccount', 'ليس لديك حساب؟')}{" "}
+                  {t('login.noAccount')}{" "}
                   <Link 
                     to="/register" 
                     className={`font-bold text-${CurrentTab.color}-600 hover:text-${CurrentTab.color}-700 transition-colors duration-300 underline-offset-4 hover:underline`}
                   >
-                    {t('login.signUpNow', 'سجل الآن مجاناً')}
+                    {t('login.signUpNow')}
                   </Link>
                 </p>
               </div>
@@ -487,13 +487,13 @@ export default function LoginPage() {
             <div className="text-center">
               <h4 className="text-lg font-bold text-gray-800 mb-3 flex items-center justify-center gap-2">
                 <Star className="w-5 h-5 text-green-600" />
-                {t('login.parentFeatures', 'مميزات ولي الأمر')}
+                {t('login.parentFeatures')}
               </h4>
               <div className="grid grid-cols-3 gap-4 text-sm">
                 {[
-                  { text: 'متابعة التقدم', emoji: '📊' },
-                  { text: 'تقارير الأداء', emoji: '📈' },
-                  { text: 'التواصل مع المعلمين', emoji: '👨‍🏫' }
+                  { text: t('login.features.progressTracking'), emoji: '📊' },
+                  { text: t('login.features.performanceReports'), emoji: '📈' },
+                  { text: t('login.features.teacherCommunication'), emoji: '👨‍🏫' }
                 ].map((item, index) => (
                   <div key={index} className="animate-fade-in" style={{ animationDelay: `${index * 200}ms` }}>
                     <div className="text-2xl mb-1">{item.emoji}</div>

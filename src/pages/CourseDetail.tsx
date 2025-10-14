@@ -49,6 +49,7 @@ import {
   DollarSign
 } from "lucide-react";
 import { apiFetch } from '@/lib/api';
+import { useTranslation } from 'react-i18next';
 
 interface Comment {
   id: number;
@@ -153,33 +154,8 @@ interface ApiResponse {
   status: number;
 }
 
-// بيانات تقييمات وهمية
-const mockReviews = [
-  {
-    id: 1,
-    user: {
-      name: "أحمد محمد",
-      avatar: "AM"
-    },
-    rating: 5,
-    comment: "دورة رائعة جداً! الشرح واضح والمحتوى منظم بشكل ممتاز. أنصح بها بشدة للمبتدئين.",
-    date: "2024-01-15",
-    likes: 24
-  },
-  {
-    id: 2,
-    user: {
-      name: "فاطمة علي",
-      avatar: "FA"
-    },
-    rating: 4,
-    comment: "المحتوى جيد ولكن أتمنى وجود أمثلة أكثر تطبيقية. بشكل عام دورة مفيدة.",
-    date: "2024-01-10",
-    likes: 12
-  }
-];
-
 const CourseDetail = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -249,8 +225,8 @@ const CourseDetail = () => {
     
     if (!token) {
       toast({
-        title: "Login Required",
-        description: "Please login to enroll in this course",
+        title: t('login.required'),
+        description: t('login.requiredDescription'),
         variant: "destructive",
       });
       navigate('/login');
@@ -270,22 +246,22 @@ const CourseDetail = () => {
 
       if (response.result === "Success") {
         toast({
-          title: "Enrollment Successful!",
-          description: "You have been successfully enrolled in the course",
+          title: t('enrollment.success'),
+          description: t('enrollment.successDescription'),
           variant: "default",
         });
         
         await refreshUserData();
         navigate('/profile');
       } else {
-        throw new Error(response.message || "Enrollment failed");
+        throw new Error(response.message || t('enrollment.failed'));
       }
     } catch (error: any) {
       console.error("Enrollment error:", error);
       
       toast({
-        title: "Error",
-        description: error.message || "Failed to enroll in the course",
+        title: t('common.error'),
+        description: error.message || t('enrollment.failed'),
         variant: "destructive",
       });
     } finally {
@@ -293,12 +269,11 @@ const CourseDetail = () => {
     }
   };
 
-  // ✅ دالة تطبيق كود الخصم
   const applyDiscount = async () => {
     if (!discountCode.trim()) {
       toast({
-        title: "خطأ",
-        description: "الرجاء إدخال كود الخصم",
+        title: t('common.error'),
+        description: t('discount.enterCode'),
         variant: "destructive",
       });
       return;
@@ -322,17 +297,17 @@ const CourseDetail = () => {
         setDiscountApplied(true);
         
         toast({
-          title: "تم تطبيق الخصم!",
-          description: `وفرت ${response.data.discount_percentage || 10}% على هذه الدورة`,
+          title: t('discount.applied'),
+          description: t('discount.savedPercentage', { percentage: response.data.discount_percentage || 10 }),
           variant: "default",
         });
       } else {
-        throw new Error(response.message || "كود الخصم غير صالح");
+        throw new Error(response.message || t('discount.invalid'));
       }
     } catch (error: any) {
       toast({
-        title: "كود الخصم غير صالح",
-        description: error.message || "كود الخصم الذي أدخلته غير صالح أو منتهي الصلاحية",
+        title: t('discount.invalid'),
+        description: error.message || t('discount.invalidDescription'),
         variant: "destructive",
       });
     } finally {
@@ -340,12 +315,11 @@ const CourseDetail = () => {
     }
   };
 
-  // ✅ دالة إضافة تعليق وتقييم للكورس
   const handleAddComment = async () => {
     if (!newComment.trim() || rating === 0) {
       toast({
-        title: "خطأ",
-        description: "الرجاء إدخال تعليق وتقييم",
+        title: t('common.error'),
+        description: t('reviews.enterCommentAndRating'),
         variant: "destructive",
       });
       return;
@@ -364,8 +338,8 @@ const CourseDetail = () => {
 
       if (response.result === "Success") {
         toast({
-          title: "تمت الإضافة!",
-          description: "تم إضافة تعليقك بنجاح",
+          title: t('common.success'),
+          description: t('reviews.commentAdded'),
           variant: "default",
         });
         
@@ -373,13 +347,13 @@ const CourseDetail = () => {
         setNewComment("");
         setRating(0);
       } else {
-        throw new Error(response.message || 'Failed to add comment');
+        throw new Error(response.message || t('reviews.addFailed'));
       }
     } catch (error: any) {
       console.error('Error adding comment:', error);
       toast({
-        title: "خطأ",
-        description: error.message || "فشل في إضافة التعليق",
+        title: t('common.error'),
+        description: error.message || t('reviews.addFailed'),
         variant: "destructive",
       });
     } finally {
@@ -387,13 +361,12 @@ const CourseDetail = () => {
     }
   };
 
-  // ✅ Render Course Curriculum
   const renderCurriculum = () => {
     const details = course?.details || [];
 
     return (
       <div className="mb-8">
-        <h2 className="text-2xl font-bold mb-6">محتويات الدورة</h2>
+        <h2 className="text-2xl font-bold mb-6">{t('course.curriculum')}</h2>
         
         <div className="border border-gray-200 rounded-lg mb-4">
           <button
@@ -404,10 +377,10 @@ const CourseDetail = () => {
             }))}
           >
             <div>
-              <h3 className="font-bold text-lg">محتويات الدورة</h3>
+              <h3 className="font-bold text-lg">{t('course.curriculum')}</h3>
               <p className="text-sm text-gray-600 mt-1">
-                {details.length} قسم • {details.filter(l => l.content_type === 'video').length} محاضرة • 
-                {Math.floor(details.length * 10 / 60)}س {details.length * 10 % 60}د
+                {details.length} {t('course.sections')} • {details.filter(l => l.content_type === 'video').length} {t('course.lectures')} • 
+                {Math.floor(details.length * 10 / 60)}{t('common.hours')} {details.length * 10 % 60}{t('common.minutes')}
               </p>
             </div>
             {expandedSections.curriculum ? (
@@ -434,21 +407,21 @@ const CourseDetail = () => {
                         {lesson.content_type === 'zoom' && <Video className="w-5 h-5 text-blue-500" />}
                         
                         <div className="flex-1">
-                          <h4 className="font-medium text-sm">{lesson.title || `الدرس ${lessonIndex + 1}`}</h4>
+                          <h4 className="font-medium text-sm">{lesson.title || `${t('course.lesson')} ${lessonIndex + 1}`}</h4>
                           <div className="flex items-center gap-2 text-xs text-gray-600 mt-1">
-                            {lesson.content_type === 'video' && <span>فيديو • 10د</span>}
-                            {lesson.content_type === 'pdf' && <span>ملف • PDF</span>}
+                            {lesson.content_type === 'video' && <span>{t('course.video')} • 10{t('common.minutes')}</span>}
+                            {lesson.content_type === 'pdf' && <span>{t('course.file')} • PDF</span>}
                             {lesson.content_type === 'zoom' && (
                               <span>
-                                بث مباشر • 
+                                {t('course.liveStream')} • 
                                 {lesson.session_date && ` ${lesson.session_date}`}
-                                {lesson.session_time && ` الساعة ${lesson.session_time}`}
+                                {lesson.session_time && ` ${t('course.atTime')} ${lesson.session_time}`}
                               </span>
                             )}
                             {totalStudents > 0 && (
                               <span className="flex items-center gap-1 text-green-600">
                                 <Eye className="w-3 h-3" />
-                                {avgWatched}ث متوسط المشاهدة
+                                {avgWatched}{t('common.seconds')} {t('course.averageWatch')}
                               </span>
                             )}
                           </div>
@@ -464,7 +437,7 @@ const CourseDetail = () => {
                             setShowVideoModal(true);
                           }}
                         >
-                          معاينة
+                          {t('course.preview')}
                         </Button>
                       )}
                     </div>
@@ -476,16 +449,15 @@ const CourseDetail = () => {
         </div>
         
         <div className="text-center text-sm text-gray-600 mt-4">
-          {details.length} درس • {Math.floor(details.length * 10 / 60)}س {details.length * 10 % 60}د
+          {details.length} {t('course.lessons')} • {Math.floor(details.length * 10 / 60)}{t('common.hours')} {details.length * 10 % 60}{t('common.minutes')}
         </div>
       </div>
     );
   };
 
-  // ✅ Render Instructor Info
   const renderInstructor = () => (
     <div className="mb-8">
-      <h2 className="text-2xl font-bold mb-6">المدرس</h2>
+      <h2 className="text-2xl font-bold mb-6">{t('course.instructor')}</h2>
       <div className="border border-gray-200 rounded-lg p-6">
         <div className="flex items-start gap-6">
           <Avatar className="w-24 h-24 border-2 border-gray-300">
@@ -500,37 +472,40 @@ const CourseDetail = () => {
               <h3 className="text-xl font-bold mb-2">{course?.teacher?.name}</h3>
             </Link>
             <p className="text-gray-600 mb-4">
-              مدرس {course?.teacher?.subject?.name} متمرس مع سنوات من الخبرة في التدريس في {course?.teacher?.country?.name}.
+              {t('course.teacherDescription', {
+                subject: course?.teacher?.subject?.name,
+                country: course?.teacher?.country?.name
+              })}
             </p>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <Star className="w-4 h-4 fill-orange-400 text-orange-400" />
-                  <span className="font-bold text-lg">{course?.teacher?.total_rate }</span>
+                  <span className="font-bold text-lg">{course?.teacher?.total_rate}</span>
                 </div>
-                <span className="text-sm text-gray-600">تقييم المدرس</span>
+                <span className="text-sm text-gray-600">{t('teachers.rating')}</span>
               </div>
               
               <div className="text-center">
                 <div className="font-bold text-lg mb-1">{course?.teacher?.courses_count || 1}</div>
-                <span className="text-sm text-gray-600">دورة</span>
+                <span className="text-sm text-gray-600">{t('teachers.courses')}</span>
               </div>
               
               <div className="text-center">
                 <div className="font-bold text-lg mb-1">{(course?.teacher?.students_count || 0).toLocaleString()}</div>
-                <span className="text-sm text-gray-600">طالب</span>
+                <span className="text-sm text-gray-600">{t('teachers.students')}</span>
               </div>
               
               <div className="text-center">
                 <div className="font-bold text-lg mb-1">{course?.subscribers_count?.toLocaleString()}</div>
-                <span className="text-sm text-gray-600">طلاب الدورة</span>
+                <span className="text-sm text-gray-600">{t('course.courseStudents')}</span>
               </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6 mt-6">
               <div>
-                <h4 className="font-semibold mb-3">عن المدرس</h4>
+                <h4 className="font-semibold mb-3">{t('course.aboutInstructor')}</h4>
                 <div className="space-y-2 text-sm text-gray-600">
                   <div className="flex items-center gap-2">
                     <User className="w-4 h-4" />
@@ -542,7 +517,7 @@ const CourseDetail = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <BookOpen className="w-4 h-4" />
-                    <span>مدرس {course?.teacher?.subject?.name}</span>
+                    <span>{t('course.teacherOf', { subject: course?.teacher?.subject?.name })}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Target className="w-4 h-4" />
@@ -552,18 +527,18 @@ const CourseDetail = () => {
               </div>
               
               <div>
-                <h4 className="font-semibold mb-3">الشهادات</h4>
+                <h4 className="font-semibold mb-3">{t('course.certificates')}</h4>
                 <div className="space-y-2">
                   {course?.teacher?.certificate_image && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Award className="w-4 h-4 text-green-500" />
-                      <span>معتمد في تدريس {course?.teacher?.subject?.name}</span>
+                      <span>{t('course.certifiedIn', { subject: course?.teacher?.subject?.name })}</span>
                     </div>
                   )}
                   {course?.teacher?.experience_image && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Trophy className="w-4 h-4 text-yellow-500" />
-                      <span>خبرة تدريس موثقة</span>
+                      <span>{t('course.experienceVerified')}</span>
                     </div>
                   )}
                 </div>
@@ -575,10 +550,9 @@ const CourseDetail = () => {
     </div>
   );
 
-  // ✅ Render Exams
   const renderExams = () => (
     <div className="mb-8">
-      <h2 className="text-2xl font-bold mb-6">اختبارات الدورة</h2>
+      <h2 className="text-2xl font-bold mb-6">{t('course.exams')}</h2>
       
       <div className="space-y-4">
         {course?.exams?.map((exam) => (
@@ -594,21 +568,21 @@ const CourseDetail = () => {
                   <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                     <div className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
-                      <span>{exam.duration} دقيقة</span>
+                      <span>{exam.duration} {t('common.minutes')}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <FileText className="w-4 h-4" />
-                      <span>{exam.questions_count} سؤال</span>
+                      <span>{exam.questions_count} {t('course.questions')}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
-                      <span>أنشئ: {new Date(exam.created_at).toLocaleDateString('ar-SA')}</span>
+                      <span>{t('course.createdAt')} {new Date(exam.created_at).toLocaleDateString('ar-SA')}</span>
                     </div>
                   </div>
                 </div>
               </div>
               <Button className="bg-green-600 hover:bg-green-700">
-                ابدأ الاختبار
+                {t('course.startExam')}
               </Button>
             </div>
           </div>
@@ -617,126 +591,13 @@ const CourseDetail = () => {
         {(!course?.exams || course.exams.length === 0) && (
           <div className="text-center py-8 text-gray-500">
             <Award className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p>لا توجد اختبارات متاحة لهذه الدورة بعد.</p>
+            <p>{t('course.noExamsAvailable')}</p>
           </div>
         )}
       </div>
     </div>
   );
 
-  // ✅ Render Reviews Section (القديم)
-  const renderReviews = () => {
-    const totalReviews = mockReviews.length;
-    const averageRating = mockReviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews;
-    
-    const ratingDistribution = {
-      5: mockReviews.filter(r => r.rating === 5).length,
-      4: mockReviews.filter(r => r.rating === 4).length,
-      3: mockReviews.filter(r => r.rating === 3).length,
-      2: mockReviews.filter(r => r.rating === 2).length,
-      1: mockReviews.filter(r => r.rating === 1).length
-    };
-
-    return (
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold mb-6">تقييمات الطلاب</h2>
-        
-        <div className="border border-gray-200 rounded-lg p-6 mb-6">
-          <div className="flex items-center gap-8">
-            <div className="text-center">
-              <div className="text-5xl font-bold text-orange-400 mb-2">{averageRating.toFixed(1)}</div>
-              <div className="flex mb-1 justify-center">
-                {[...Array(5)].map((_, i) => (
-                  <Star 
-                    key={i} 
-                    className={`w-4 h-4 ${
-                      i < Math.floor(averageRating) 
-                        ? "fill-orange-400 text-orange-400" 
-                        : "text-gray-300"
-                    }`} 
-                  />
-                ))}
-              </div>
-              <div className="text-sm text-gray-600">متوسط التقييم</div>
-              <div className="text-xs text-gray-500 mt-1">{totalReviews} تقييم</div>
-            </div>
-            
-            <div className="flex-1">
-              {[5, 4, 3, 2, 1].map((stars) => (
-                <div key={stars} className="flex items-center gap-2 mb-1">
-                  <div className="flex w-8 justify-end">
-                    <span className="text-sm text-gray-600">{stars}</span>
-                    <Star className="w-4 h-4 fill-orange-400 text-orange-400 ml-1" />
-                  </div>
-                  <div className="flex-1 bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-orange-400 h-2 rounded-full" 
-                      style={{ width: `${(ratingDistribution[stars as keyof typeof ratingDistribution] / totalReviews) * 100}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-sm text-gray-600 w-8">
-                    {ratingDistribution[stars as keyof typeof ratingDistribution]}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          {mockReviews.map((review) => (
-            <div key={review.id} className="border border-gray-200 rounded-lg p-6">
-              <div className="flex items-start gap-4 mb-3">
-                <Avatar className="w-10 h-10">
-                  <AvatarFallback className="bg-blue-500 text-white">
-                    {review.user.avatar}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="font-semibold">{review.user.name}</div>
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star 
-                            key={i} 
-                            className={`w-4 h-4 ${
-                              i < review.rating 
-                                ? "fill-orange-400 text-orange-400" 
-                                : "text-gray-300"
-                            }`} 
-                          />
-                        ))}
-                        <span className="text-sm text-gray-600 mr-2">
-                          {new Date(review.date).toLocaleDateString('ar-SA')}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-gray-700 mt-2 leading-relaxed">{review.comment}</p>
-                  <div className="flex items-center gap-4 mt-3 text-sm text-gray-600">
-                    <button className="flex items-center gap-1 hover:text-gray-800">
-                      <ThumbsUp className="w-4 h-4" />
-                      <span>مفيد ({review.likes})</span>
-                    </button>
-                    <button className="hover:text-gray-800">رد</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="text-center mt-6">
-          <Button variant="outline">
-            تحميل المزيد من التقييمات
-          </Button>
-        </div>
-      </div>
-    );
-  };
-
-  // ✅ Render Course Reviews Tab - الجديد
   const renderCourseReviews = () => {
     if (!course) return null;
 
@@ -754,9 +615,7 @@ const CourseDetail = () => {
     return (
       <div className="mb-8">
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Left Column - Rating Summary and Add Comment */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Rating Summary */}
             <Card>
               <CardContent className="p-6">
                 <div className="text-center mb-6">
@@ -776,11 +635,10 @@ const CourseDetail = () => {
                     ))}
                   </div>
                   <p className="text-gray-600">
-                    بناءً على {comments.length} تقييم
+                    {t('reviews.basedOn', { count: comments.length })}
                   </p>
                 </div>
 
-                {/* Rating Distribution */}
                 <div className="space-y-2">
                   {[5, 4, 3, 2, 1].map((stars) => (
                     <div key={stars} className="flex items-center gap-2">
@@ -805,15 +663,13 @@ const CourseDetail = () => {
               </CardContent>
             </Card>
 
-            {/* Add Comment Form */}
             <Card>
               <CardContent className="p-6 space-y-4">
-                <h3 className="text-lg font-semibold">أضف تقييمك</h3>
+                <h3 className="text-lg font-semibold">{t('reviews.addYourReview')}</h3>
                 
-                {/* Star Rating */}
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-2 block">
-                    تقييمك
+                    {t('reviews.yourRating')}
                   </label>
                   <div className="flex gap-1">
                     {[1, 2, 3, 4, 5].map((star) => (
@@ -835,21 +691,19 @@ const CourseDetail = () => {
                   </div>
                 </div>
 
-                {/* Comment Textarea */}
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-2 block">
-                    تعليقك
+                    {t('reviews.yourComment')}
                   </label>
                   <Textarea
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="شاركنا تجربتك مع هذه الدورة..."
+                    placeholder={t('reviews.commentPlaceholder')}
                     rows={4}
                     className="resize-none"
                   />
                 </div>
 
-                {/* Submit Button */}
                 <Button
                   onClick={handleAddComment}
                   disabled={submittingComment || !newComment.trim() || rating === 0}
@@ -858,12 +712,12 @@ const CourseDetail = () => {
                   {submittingComment ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      جاري الإرسال...
+                      {t('common.sending')}
                     </>
                   ) : (
                     <>
                       <Send className="w-4 h-4 ml-2" />
-                      إرسال التقييم
+                      {t('reviews.submitReview')}
                     </>
                   )}
                 </Button>
@@ -871,9 +725,8 @@ const CourseDetail = () => {
             </Card>
           </div>
 
-          {/* Right Column - Comments List */}
           <div className="lg:col-span-2">
-            <h2 className="text-2xl font-bold mb-6">تقييمات الطلاب</h2>
+            <h2 className="text-2xl font-bold mb-6">{t('reviews.studentReviews')}</h2>
             
             {comments.length > 0 ? (
               <div className="space-y-6">
@@ -881,7 +734,6 @@ const CourseDetail = () => {
                   <Card key={comment.id} className="hover:shadow-md transition-shadow duration-300">
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4">
-                        {/* Student Avatar */}
                         <Avatar className="w-12 h-12 border-2 border-gray-200">
                           <AvatarImage src={comment.student.image} alt={comment.student.name} />
                           <AvatarFallback className="bg-blue-500 text-white">
@@ -889,7 +741,6 @@ const CourseDetail = () => {
                           </AvatarFallback>
                         </Avatar>
 
-                        {/* Comment Content */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between mb-2">
                             <div>
@@ -918,14 +769,13 @@ const CourseDetail = () => {
                             {comment.comment}
                           </p>
 
-                          {/* Actions */}
                           <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
                             <button className="flex items-center gap-1 hover:text-gray-700 transition-colors">
                               <ThumbsUp className="w-4 h-4" />
-                              <span>مفيد</span>
+                              <span>{t('reviews.helpful')}</span>
                             </button>
                             <button className="hover:text-gray-700 transition-colors">
-                              رد
+                              {t('reviews.reply')}
                             </button>
                           </div>
                         </div>
@@ -939,10 +789,10 @@ const CourseDetail = () => {
                 <CardContent className="p-12 text-center">
                   <Star className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    لا توجد تقييمات بعد
+                    {t('reviews.noReviews')}
                   </h3>
                   <p className="text-gray-600">
-                    كن أول من يقيم هذه الدورة
+                    {t('reviews.beFirstToReview')}
                   </p>
                 </CardContent>
               </Card>
@@ -953,7 +803,6 @@ const CourseDetail = () => {
     );
   };
 
-  // ✅ Render Hero Section
   const renderUdemyHero = () => {
     if (!course) return null;
 
@@ -970,7 +819,6 @@ const CourseDetail = () => {
       >
         <div className="container mx-auto px-4 py-12">
           <div className="max-w-6xl mx-auto">
-            {/* Breadcrumb */}
             <nav className="text-sm text-gray-300 mb-4">
               <span>{course.country?.name || "Global"}</span>
               <span className="mx-2">›</span>
@@ -981,7 +829,6 @@ const CourseDetail = () => {
 
             <h1 className="text-4xl font-bold mb-4">{course.title}</h1>
             
-            {/* Ratings and Students */}
             <div className="flex items-center gap-4 mb-4 flex-wrap">
               <div className="flex items-center gap-1">
                 <span className="text-orange-400 font-bold text-lg">{course.average_rating || 5}</span>
@@ -998,46 +845,43 @@ const CourseDetail = () => {
                   ))}
                 </div>
                 <span className="text-blue-300 underline ml-1 text-sm cursor-pointer">
-                  ({course.comments?.length || 0} تقييمات)
+                  ({course.comments?.length || 0} {t('reviews.reviews')})
                 </span>
               </div>
               <span className="text-gray-400">•</span>
-              <span className="text-gray-200">{(course.count_student || 0).toLocaleString()} طالب</span>
+              <span className="text-gray-200">{(course.count_student || 0).toLocaleString()} {t('teachers.students')}</span>
               <span className="text-gray-400">•</span>
-              <span className="text-gray-200">{totalLessons} درس</span>
+              <span className="text-gray-200">{totalLessons} {t('course.lessons')}</span>
               <span className="text-gray-400">•</span>
               <span className="text-gray-200">
-                {Math.floor(totalVideoDuration / 60)}س {totalVideoDuration % 60}د
+                {Math.floor(totalVideoDuration / 60)}{t('common.hours')} {totalVideoDuration % 60}{t('common.minutes')}
               </span>
             </div>
 
-            {/* Created By */}
             <div className="flex items-center gap-2 mb-6">
-              <span className="text-gray-300">تم الإنشاء بواسطة</span>
+              <span className="text-gray-300">{t('course.createdBy')}</span>
               <Link to={`/profileTeacher/${course?.teacher?.id}`} className="text-white underline cursor-pointer">
                 {course.teacher?.name}
               </Link>
             </div>
 
-            {/* Course Highlights */}
             <div className="flex items-center gap-6 text-sm mb-6 flex-wrap">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-400" />
-                <span>آخر تحديث {new Date(course.created_at).toLocaleDateString('ar-SA', { month: 'short', year: 'numeric' })}</span>
+                <span>{t('course.lastUpdate')} {new Date(course.created_at).toLocaleDateString('ar-SA', { month: 'short', year: 'numeric' })}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Globe className="w-4 h-4 text-green-400" />
-                <span>العربية</span>
+                <span>{t('course.arabic')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Captions className="w-4 h-4 text-green-400" />
-                <span>ترجمة [تلقائية]</span>
+                <span>{t('course.subtitles')}</span>
               </div>
             </div>
 
-            {/* What You'll Learn */}
             <div className="mb-6">
-              <h3 className="text-lg font-bold mb-3">ما الذي ستتعلمه</h3>
+              <h3 className="text-lg font-bold mb-3">{t('course.whatYouWillLearn')}</h3>
               <div className="grid md:grid-cols-2 gap-3">
                 {course.what_you_will_learn.split(',').map((point, index) => (
                   <div key={index} className="flex items-start gap-3">
@@ -1053,7 +897,6 @@ const CourseDetail = () => {
     );
   };
 
-  // ✅ Render Pricing Card
   const renderPricingCard = () => {
     if (!course) return null;
 
@@ -1071,17 +914,16 @@ const CourseDetail = () => {
       : 0;
 
     const features = [
-      { icon: PlayCircle, text: `${course.details?.filter(d => d.content_type === 'video').length || 0} درس فيديو` },
-      { icon: FileText, text: `${course.details?.filter(d => d.content_type === 'pdf').length || 0} ملف قابل للتحميل` },
-      { icon: Infinity, text: "وصول كامل مدى الحياة" },
-      { icon: Smartphone, text: "الوصول على الهاتف والتلفزيون" },
-      { icon: Award, text: "شهادة إتمام" },
-      { icon: Users, text: `${course.count_student || 0} طالب مسجل` },
+      { icon: PlayCircle, text: `${course.details?.filter(d => d.content_type === 'video').length || 0} ${t('course.videoLessons')}` },
+      { icon: FileText, text: `${course.details?.filter(d => d.content_type === 'pdf').length || 0} ${t('course.downloadableFiles')}` },
+      { icon: Infinity, text: t('course.lifetimeAccess') },
+      { icon: Smartphone, text: t('course.mobileAccess') },
+      { icon: Award, text: t('course.certificate') },
+      { icon: Users, text: `${course.count_student || 0} ${t('teachers.students')}` },
     ];
 
     return (
       <div className="sticky top-6 border border-gray-300 rounded-lg shadow-xl bg-white">
-        {/* Course Image */}
         <div className="relative">
           <img 
             src={course.image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=300&fit=crop"} 
@@ -1103,10 +945,8 @@ const CourseDetail = () => {
           )}
         </div>
 
-        {/* Pricing Section */}
         <div className="p-6">
           <div className="space-y-4">
-            {/* Price */}
             <div className="space-y-2">
               {discountApplied ? (
                 <>
@@ -1115,25 +955,24 @@ const CourseDetail = () => {
                       {currency} {displayPrice.toFixed(2)}
                     </span>
                     <Badge className="bg-green-100 text-green-800 border-green-200 text-sm">
-                      وفرت {discountPercentage}%
+                      {t('discount.saved')} {discountPercentage}%
                     </Badge>
                   </div>
                   <div className="text-sm text-gray-500 line-through">
-                    كان: {currency} {originalPrice.toFixed(2)}
+                    {t('course.was')}: {currency} {originalPrice.toFixed(2)}
                   </div>
                 </>
               ) : (
                 <span className="text-3xl font-bold">
-                  {currentPrice === 0 ? "مجاني" : `${currency} ${displayPrice.toFixed(2)}`}
+                  {currentPrice === 0 ? t('common.free') : `${currency} ${displayPrice.toFixed(2)}`}
                 </span>
               )}
             </div>
 
-            {/* Discount Code Input */}
             <div className="space-y-2">
               <div className="flex gap-2">
                 <Input
-                  placeholder="كود الخصم"
+                  placeholder={t('discount.codePlaceholder')}
                   value={discountCode}
                   onChange={(e) => setDiscountCode(e.target.value)}
                   disabled={discountApplied}
@@ -1147,20 +986,19 @@ const CourseDetail = () => {
                   {applyingDiscount ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : discountApplied ? (
-                    "مطبق"
+                    t('discount.applied')
                   ) : (
-                    "تطبيق"
+                    t('discount.apply')
                   )}
                 </Button>
               </div>
               {discountApplied && (
                 <p className="text-sm text-green-600">
-                  تم تطبيق الخصم بنجاح! السعر الجديد: {currency} {displayPrice.toFixed(2)}
+                  {t('discount.appliedSuccess')} {currency} {displayPrice.toFixed(2)}
                 </p>
               )}
             </div>
 
-            {/* Enroll Button */}
             {isLoggedIn ? (
               <Button 
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 text-lg font-semibold shadow-lg"
@@ -1170,10 +1008,10 @@ const CourseDetail = () => {
                 {enrolling ? (
                   <>
                     <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    جاري التسجيل...
+                    {t('enrollment.enrolling')}
                   </>
                 ) : (
-                  "سجل الآن"
+                  t('enrollment.enrollNow')
                 )}
               </Button>
             ) : (
@@ -1182,18 +1020,16 @@ const CourseDetail = () => {
                 onClick={() => navigate('/login')}
               >
                 <LogIn className="w-5 h-5 mr-2" />
-                سجل الدخول للتسجيل
+                {t('login.signInToEnroll')}
               </Button>
             )}
 
-            {/* Money Back Guarantee */}
             <p className="text-center text-sm text-gray-600">
-              ضمان استرجاع المبلغ خلال 30 يوم
+              {t('course.moneyBackGuarantee')}
             </p>
 
-            {/* Course Includes */}
             <div className="space-y-3">
-              <h4 className="font-bold text-lg">تشمل هذه الدورة:</h4>
+              <h4 className="font-bold text-lg">{t('course.includes')}</h4>
               <div className="space-y-2 text-sm">
                 {features.map((feature, index) => (
                   <div key={index} className="flex items-center gap-3">
@@ -1204,7 +1040,6 @@ const CourseDetail = () => {
               </div>
             </div>
 
-            {/* Rating Summary in Sidebar */}
             <div className="border-t pt-4 mt-4">
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1 mb-2">
@@ -1222,15 +1057,14 @@ const CourseDetail = () => {
                     ))}
                   </div>
                 </div>
-                <p className="text-sm text-gray-600">{course.comments?.length || 0} تقييم</p>
+                <p className="text-sm text-gray-600">{course.comments?.length || 0} {t('reviews.reviews')}</p>
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex gap-2 pt-4">
               <Button variant="outline" className="flex-1">
                 <Share2 className="w-4 h-4 mr-2" />
-                مشاركة
+                {t('common.share')}
               </Button>
             </div>
           </div>
@@ -1245,7 +1079,7 @@ const CourseDetail = () => {
         <div className="container mx-auto px-4">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">جاري تحميل تفاصيل الدورة...</p>
+            <p className="mt-4 text-gray-600">{t('course.loadingDetails')}</p>
           </div>
         </div>
       </div>
@@ -1257,9 +1091,9 @@ const CourseDetail = () => {
       <div className="min-h-screen py-8">
         <div className="container mx-auto px-4">
           <div className="text-center text-red-500">
-            <p>خطأ: {error || 'الدورة غير موجودة'}</p>
+            <p>{t('common.error')}: {error || t('course.notFound')}</p>
             <Button onClick={fetchCourseDetail} className="mt-4">
-              حاول مرة أخرى
+              {t('common.tryAgain')}
             </Button>
           </div>
         </div>
@@ -1269,23 +1103,19 @@ const CourseDetail = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section */}
       {renderUdemyHero()}
 
-      {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-3 gap-8">
-          {/* Left Column - Course Content */}
           <div className="lg:col-span-2">
-            {/* Navigation Tabs */}
             <div className="border-b border-gray-200 mb-8">
               <nav className="flex space-x-8">
                 {[
-                  { id: "overview", label: "نظرة عامة" },
-                  { id: "curriculum", label: "المحتوى" },
-                  { id: "instructor", label: "المدرس" },
-                  { id: "reviews", label: "التقييمات", count: course?.comments?.length || 0 },
-                  { id: "exams", label: "الاختبارات" },
+                  { id: "overview", label: t('course.overview') },
+                  { id: "curriculum", label: t('course.curriculum') },
+                  { id: "instructor", label: t('course.instructor') },
+                  { id: "reviews", label: t('reviews.reviews'), count: course?.comments?.length || 0 },
+                  { id: "exams", label: t('course.exams') },
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -1307,13 +1137,11 @@ const CourseDetail = () => {
               </nav>
             </div>
 
-            {/* Tab Content */}
             <div className="mb-8">
               {activeTab === "overview" && (
                 <>
-                  {/* What You'll Learn */}
                   <div className="mb-8">
-                    <h2 className="text-2xl font-bold mb-6">ما الذي ستتعلمه</h2>
+                    <h2 className="text-2xl font-bold mb-6">{t('course.whatYouWillLearn')}</h2>
                     <div className="grid md:grid-cols-2 gap-4">
                       {course.what_you_will_learn.split(',').map((point, index) => (
                         <div key={index} className="flex items-start gap-3">
@@ -1324,63 +1152,41 @@ const CourseDetail = () => {
                     </div>
                   </div>
 
-                  {/* Requirements */}
-                  {/* <div className="mb-8">
-                    <h2 className="text-2xl font-bold mb-4">المتطلبات</h2>
-                    <ul className="space-y-2 text-gray-700">
-                      <li className="flex items-start gap-3">
-                        <div className="w-1.5 h-1.5 bg-gray-600 rounded-full mt-2 flex-shrink-0"></div>
-                        <span>لا توجد خبرة مسبقة مطلوبة</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <div className="w-1.5 h-1.5 bg-gray-600 rounded-full mt-2 flex-shrink-0"></div>
-                        <span>مهارات أساسية في استخدام الكمبيوتر</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <div className="w-1.5 h-1.5 bg-gray-600 rounded-full mt-2 flex-shrink-0"></div>
-                        <span>الرغبة في التعلم والممارسة</span>
-                      </li>
-                    </ul>
-                  </div> */}
-
-                  {/* Description */}
                   <div className="mb-8">
-                    <h2 className="text-2xl font-bold mb-4">الوصف</h2>
+                    <h2 className="text-2xl font-bold mb-4">{t('course.description')}</h2>
                     <div className="prose max-w-none text-gray-700">
                       <p>{course.description}</p>
                     </div>
                   </div>
 
-                  {/* Course Statistics */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     <div className="text-center p-4 border border-gray-200 rounded-lg">
                       <Users className="w-8 h-8 text-blue-500 mx-auto mb-2" />
                       <div className="text-2xl font-bold">{(course.subscribers_count || 0).toLocaleString()}</div>
-                      <div className="text-sm text-gray-600">طالب</div>
+                      <div className="text-sm text-gray-600">{t('teachers.students')}</div>
                     </div>
                     <div className="text-center p-4 border border-gray-200 rounded-lg">
                       <PlayCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
                       <div className="text-2xl font-bold">{course.details?.length || 0}</div>
-                      <div className="text-sm text-gray-600">درس</div>
+                      <div className="text-sm text-gray-600">{t('course.lessons')}</div>
                     </div>
                     <div className="text-center p-4 border border-gray-200 rounded-lg">
                       <Clock className="w-8 h-8 text-orange-500 mx-auto mb-2" />
                       <div className="text-2xl font-bold">
-                        {Math.floor((course.details?.length || 0) * 10 / 60)}س
+                        {Math.floor((course.details?.length || 0) * 10 / 60)}
                       </div>
-                      <div className="text-sm text-gray-600">المدة</div>
+                      <div className="text-sm text-gray-600">{t('course.duration')}</div>
                     </div>
                     <div className="text-center p-4 border border-gray-200 rounded-lg">
                       <BarChart3 className="w-8 h-8 text-purple-500 mx-auto mb-2" />
                       <div className="text-2xl font-bold">{course.average_rating || 0}</div>
-                      <div className="text-sm text-gray-600">التقييم</div>
+                      <div className="text-sm text-gray-600">{t('teachers.rating')}</div>
                     </div>
                   </div>
 
-                  {/* Intro Video */}
                   {course?.intro_video_url && (
                     <div className="mb-8">
-                      <h2 className="text-2xl font-bold mb-4">مقدمة الدورة</h2>
+                      <h2 className="text-2xl font-bold mb-4">{t('course.courseIntro')}</h2>
                       <div className="aspect-video bg-black rounded-lg overflow-hidden">
                         <YouTubePlayer videoUrl={course.intro_video_url} />
                       </div>
@@ -1391,27 +1197,24 @@ const CourseDetail = () => {
 
               {activeTab === "curriculum" && renderCurriculum()}
               {activeTab === "instructor" && renderInstructor()}
-              {activeTab === "reviews" && renderCourseReviews()} {/* ✅ استخدم renderCourseReviews الجديد */}
+              {activeTab === "reviews" && renderCourseReviews()}
               {activeTab === "exams" && renderExams()}
             </div>
           </div>
 
-          {/* Right Column - Pricing Card */}
           <div className="lg:col-span-1">
             {renderPricingCard()}
           </div>
         </div>
       </div>
 
-      {/* Video Modal */}
       {showVideoModal && selectedVideo && (
         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
           <div className="relative w-full max-w-4xl bg-black rounded-xl shadow-2xl border border-gray-700 overflow-hidden">
-            {/* Header */}
             <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 to-transparent z-10 p-4">
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-white font-semibold text-lg">معاينة الدورة</h3>
+                  <h3 className="text-white font-semibold text-lg">{t('course.coursePreview')}</h3>
                 </div>
                 <Button
                   variant="ghost"
@@ -1427,7 +1230,6 @@ const CourseDetail = () => {
               </div>
             </div>
 
-            {/* Video Player */}
             <div className="aspect-video bg-black">
               <YouTubePlayer videoUrl={selectedVideo} />
             </div>

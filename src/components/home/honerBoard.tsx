@@ -61,7 +61,7 @@ const HonorBoard = () => {
   useEffect(() => {
     fetchHonorBoardData(currentPage);
     
-    // أنيميشن الظهور عند التمرير
+    // Scroll animation
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -87,7 +87,7 @@ const HonorBoard = () => {
       setLoading(true);
       setError(null);
 
-      // محاولة جلب البيانات من API بدون توكن
+      // Try to fetch data from API without token
       try {
         const response = await apiFetch<ApiResponse>('/teacher/index', {
           method: 'POST',
@@ -102,7 +102,7 @@ const HonorBoard = () => {
         });
 
         if (response.result === "Success" && response.data && response.data.length > 0) {
-          // ترتيب البيانات حسب إجمالي الكورسات أولاً، ثم التقييمات
+          // Sort data by total courses first, then ratings
           const sortedTeachers = response.data.sort((a, b) => {
             if (b.courses_count !== a.courses_count) {
               return b.courses_count - a.courses_count;
@@ -119,7 +119,7 @@ const HonorBoard = () => {
         console.log('API not available, using cached data');
       }
 
-      // استخدام البيانات المخزنة في الكاش إذا لم تكن API متاحة
+      // Use cached data if API is not available
       const startIndex = (page - 1) * 8;
       const paginatedTeachers = cachedTeachers.slice(startIndex, startIndex + 8);
       setTeachers(paginatedTeachers);
@@ -128,9 +128,9 @@ const HonorBoard = () => {
 
     } catch (err: any) {
       console.error('Error fetching honor board:', err);
-      setError(err.message || 'حدث خطأ أثناء تحميل البيانات');
+      setError(err.message || t('common.error'));
       
-      // استخدام البيانات المخزنة في الكاش في حالة الخطأ
+      // Use cached data in case of error
       const startIndex = (currentPage - 1) * 8;
       const paginatedTeachers = cachedTeachers.slice(startIndex, startIndex + 8);
       setTeachers(paginatedTeachers);
@@ -140,7 +140,6 @@ const HonorBoard = () => {
       setLoading(false);
     }
   };
-
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -168,7 +167,7 @@ const HonorBoard = () => {
     }
   };
 
-  // الحصول على صورة افتراضية
+  // Get default avatar
   const getDefaultAvatar = (teacher: Teacher) => {
     const avatars = [
       'https://images.unsplash.com/photo-1566753323558-f4e0952af115?w=150&h=150&fit=crop&crop=face',
@@ -219,19 +218,19 @@ const HonorBoard = () => {
   return (
     <div ref={sectionRef} className="min-h-[500px] bg-gradient-to-b from-background to-muted/30 py-16">
       <div className="container mx-auto px-4">
-        {/* Header مع أنيميشن */}
+        {/* Header with animation */}
         <div className={`text-center mb-12 transition-all duration-700 ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
         }`}>
           <div className="inline-flex items-center gap-3 mb-4">
             <Sparkles className="w-8 h-8 text-yellow-500 animate-pulse" />
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-              {t('teachers.title', 'المعلمين المتميزين')}
+              {t('teachers.title')}
             </h1>
             <Sparkles className="w-8 h-8 text-yellow-500 animate-pulse" />
           </div>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            {t('teachers.subtitle', 'تعرف على معلمينا الأكثر تفوقاً وإبداعاً')}
+            {t('teachers.subtitle')}
           </p>
         </div>
 
@@ -240,18 +239,18 @@ const HonorBoard = () => {
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
         }`}>
           <p className="text-muted-foreground text-sm">
-            {t('common.showing', 'عرض')} {((currentPage - 1) * 8) + 1} {t('common.to', 'إلى')} {Math.min(currentPage * 8, totalTeachers)} {t('common.of', 'من')} {totalTeachers} {t('teachers.title', 'معلم')}
+            {t('common.showing')} {((currentPage - 1) * 8) + 1} {t('common.to')} {Math.min(currentPage * 8, totalTeachers)} {t('common.of')} {totalTeachers} {t('teachers.teacher')}
           </p>
           <div className="text-sm text-muted-foreground">
-            {t('common.sortedBy', 'مرتب حسب')}: <strong>{t('teachers.courses', 'الكورسات')}</strong> & <strong>{t('teachers.rating', 'التقييم')}</strong>
+            {t('common.sortedBy')}: <strong>{t('teachers.courses')}</strong> & <strong>{t('teachers.rating')}</strong>
           </div>
         </div>
 
-        {/* Teachers Grid مع أنيميشن */}
+        {/* Teachers Grid with animation */}
         {teachers.length === 0 ? (
           <div className="text-center text-muted-foreground py-12">
             <Trophy className="w-16 h-16 mx-auto mb-4 opacity-50" />
-            <p>{t('teachers.noData', 'لا توجد بيانات للمعلمين حالياً')}</p>
+            <p>{t('teachers.noData', 'No teachers data available at the moment')}</p>
           </div>
         ) : (
           <>
@@ -272,10 +271,10 @@ const HonorBoard = () => {
                       animationFillMode: 'forwards'
                     }}
                   >
-                    {/* تأثير خلفي متحرك */}
+                    {/* Animated background effect */}
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-950/20 dark:to-purple-950/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                     
-                    {/* Rank Badge مع أنيميشن */}
+                    {/* Rank Badge with animation */}
                     <div className={`absolute top-4 ${isArabic ? 'left-4' : 'right-4'} ${
                       getRankBgColor(globalRank)
                     } text-white px-3 py-1 rounded-full flex items-center gap-2 text-sm font-bold z-10 transform transition-all duration-300 group-hover:scale-110 group-hover:rotate-6`}>
@@ -284,7 +283,7 @@ const HonorBoard = () => {
                     </div>
                     
                     <CardHeader className="text-center pt-8 pb-4 relative z-10">
-                      {/* Avatar مع أنيميشن */}
+                      {/* Avatar with animation */}
                       <div className="relative mx-auto mb-4">
                         <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full scale-110 opacity-0 group-hover:opacity-100 transition-all duration-500 blur-sm"></div>
                         <Avatar className="w-20 h-20 border-4 border-white shadow-lg transform transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 relative z-10">
@@ -308,19 +307,19 @@ const HonorBoard = () => {
                           variant="secondary" 
                           className="mx-auto text-xs transition-all duration-300 group-hover:bg-blue-100 group-hover:text-blue-700 dark:group-hover:bg-blue-900/30"
                         >
-                          {teacher.subject?.name || t('common.general', 'عام')}
+                          {teacher.subject?.name || t('common.general', 'General')}
                         </Badge>
                         <Badge 
                           variant="outline" 
                           className="mx-auto text-xs transition-all duration-300 group-hover:border-blue-300"
                         >
-                          {teacher.courses_count} {t('teachers.courses', 'كورس')}
+                          {teacher.courses_count} {t('teachers.courses')}
                         </Badge>
                       </div>
                     </CardHeader>
                     
                     <CardContent className="space-y-4 relative z-10">
-                      {/* Teacher Stats مع أنيميشن */}
+                      {/* Teacher Stats with animation */}
                       <div className="grid grid-cols-3 gap-3 text-center">
                         <div className="transform transition-all duration-300 group-hover:scale-110">
                           <div className="text-xl font-bold text-primary flex flex-col items-center gap-1">
@@ -328,16 +327,17 @@ const HonorBoard = () => {
                             {teacher.courses_count}
                           </div>
                           <div className="text-xs text-muted-foreground transition-all duration-300 group-hover:text-foreground group-hover:font-medium">
-                            {t('teachers.courses', 'الكورسات')}
+                            {t('teachers.courses')}
                           </div>
                         </div>
                         
                         <div className="transform transition-all duration-300 group-hover:scale-110">
                           <div className="text-xl font-bold text-green-600 flex flex-col items-center gap-1">
                             <Users className="w-4 h-4 transition-all duration-300 group-hover:scale-125 group-hover:text-green-500" />
+                            {teacher.students_count || 0}
                           </div>
                           <div className="text-xs text-muted-foreground transition-all duration-300 group-hover:text-foreground group-hover:font-medium">
-                            {t('teachers.teacher', 'المعلم ')}
+                            {t('teachers.students')}
                           </div>
                         </div>
                         
@@ -347,7 +347,7 @@ const HonorBoard = () => {
                             {teacher.total_rate ? teacher.total_rate.toFixed(1) : '0.0'}
                           </div>
                           <div className="text-xs text-muted-foreground transition-all duration-300 group-hover:text-foreground group-hover:font-medium">
-                            {t('teachers.rating', 'التقييم')}
+                            {t('teachers.rating')}
                           </div>
                         </div>
                       </div>
@@ -356,19 +356,64 @@ const HonorBoard = () => {
                       {teacher.total_rating && (
                         <div className="text-center pt-2 border-t border-gray-200 dark:border-gray-700">
                           <div className="text-sm font-semibold text-muted-foreground transition-all duration-300 group-hover:text-foreground">
-                            {t('teachers.totalRatings', 'إجمالي التقييمات')}: {teacher.total_rating}
+                            {t('teachers.totalRatings', 'Total Ratings')}: {teacher.total_rating}
                           </div>
                         </div>
                       )}
                     </CardContent>
 
-                    {/* تأثير Hover */}
+                    {/* Hover effect */}
                     <div className="absolute inset-0 border-2 border-transparent group-hover:border-blue-300 dark:group-hover:border-blue-600 rounded-lg transition-all duration-500 pointer-events-none"></div>
                   </Card>
                 );
               })}
             </div>
 
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className={`flex justify-center items-center gap-2 mt-8 transition-all duration-700 delay-500 ${
+                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+              }`}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="flex items-center gap-1"
+                >
+                  {isArabic ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+                  {t('common.previous')}
+                </Button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const pageNum = i + 1;
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handlePageChange(pageNum)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="flex items-center gap-1"
+                >
+                  {t('common.next')}
+                  {isArabic ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                </Button>
+              </div>
+            )}
           </>
         )}
 
@@ -377,7 +422,7 @@ const HonorBoard = () => {
           <div className={`text-center text-yellow-600 bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-8 transition-all duration-500 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}>
-            <p>{t('common.error', 'خطأ')}: {error}</p>
+            <p>{t('common.error')}: {error}</p>
           </div>
         )}
 
@@ -400,5 +445,10 @@ const HonorBoard = () => {
     </div>
   );
 };
+
+// Cached teachers data for fallback
+const cachedTeachers: Teacher[] = [
+  // This would be your fallback data
+];
 
 export default HonorBoard;

@@ -89,17 +89,15 @@ export default function LatestCourses() {
       if (response.result === "Success" && response.data) {
         setCourses(response.data);
       } else {
-        setError('Failed to fetch courses');
+        setError(t('common.error'));
       }
     } catch (err) {
       console.error('Error fetching courses:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : t('common.error'));
     } finally {
       setLoading(false);
     }
   };
-
- 
 
   // دالة لتحويل البيانات لـ CourseCard format
   const transformCourseData = (course: Course) => {
@@ -130,10 +128,10 @@ export default function LatestCourses() {
 
     const getCourseDuration = () => {
       const lessonCount = course.details?.length || 0;
-      if (lessonCount === 0) return "Flexible";
-      if (lessonCount <= 5) return "2-4 hours";
-      if (lessonCount <= 10) return "5-8 hours";
-      return "8+ hours";
+      if (lessonCount === 0) return t('courses.flexible', 'Flexible');
+      if (lessonCount <= 5) return t('courses.hours2-4', '2-4 hours');
+      if (lessonCount <= 10) return t('courses.hours5-8', '5-8 hours');
+      return t('courses.hours8+', '8+ hours');
     };
 
     return {
@@ -141,7 +139,7 @@ export default function LatestCourses() {
       title: course.title,
       instructor: course.teacher.name,
       thumbnail: course?.image , 
-           price: parseFloat(course.price) || 0,
+      price: parseFloat(course.price) || 0,
       originalPrice: parseFloat(course.original_price) || 0,
       studentsCount: course.count_student || course.subscribers_count || 0,
       duration: getCourseDuration(),
@@ -170,7 +168,7 @@ export default function LatestCourses() {
                 <Sparkles className="w-6 h-6 text-primary absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-pulse" />
               </div>
             </div>
-            <p className="text-lg text-muted-foreground animate-pulse">Loading amazing courses...</p>
+            <p className="text-lg text-muted-foreground animate-pulse">{t('common.loading')}</p>
           </div>
         </div>
       </section>
@@ -182,9 +180,9 @@ export default function LatestCourses() {
       <section className="py-16 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="text-center text-red-500 animate-fade-in-up">
-            <p>Error: {error}</p>
+            <p>{t('common.error')}: {error}</p>
             <Button onClick={fetchLatestCourses} className="mt-4 animate-bounce-in">
-              Try Again
+              {t('courses.tryAgain', 'Try Again')}
             </Button>
           </div>
         </div>
@@ -209,17 +207,17 @@ export default function LatestCourses() {
             <div className="flex items-center gap-2 mb-3">
               <Badge variant="secondary" className="bg-primary/10 text-primary border-0 animate-pulse-glow">
                 <TrendingUp className="w-3 h-3 mr-1" />
-                Fresh Content
+                {t('courses.freshContent')}
               </Badge>
               <Sparkles className="w-5 h-5 text-primary animate-spin" style={{ animationDelay: '0.5s' }} />
             </div>
             
             <h2 className="text-3xl lg:text-4xl font-bold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              Newly Added <span className="text-tan bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent animate-text-shine">Courses</span>
+              {t('courses.newlyAdded')} <span className="text-tan bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent animate-text-shine">{t('nav.courses')}</span>
             </h2>
             
             <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
-              Discover our latest courses added to the platform. Fresh content, updated curriculum, and modern teaching approaches.
+              {t('courses.newlyAddedDesc')}
             </p>
           </div>
           
@@ -229,7 +227,7 @@ export default function LatestCourses() {
               className="hidden sm:flex group relative overflow-hidden border border-border hover:border-primary/30 transition-all duration-500 hover:scale-105"
             >
               <span className="relative z-10 flex items-center gap-2">
-                View All Courses
+                {t('courses.viewAllCourses')}
                 <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
               </span>
               <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -246,15 +244,15 @@ export default function LatestCourses() {
               </div>
             </div>
             <h3 className="text-xl font-semibold mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              No courses available
+              {t('courses.noCoursesAvailable')}
             </h3>
-            <p className="text-muted-foreground mb-4">Check back later for new courses</p>
+            <p className="text-muted-foreground mb-4">{t('courses.checkBackLater')}</p>
             <Button 
               onClick={fetchLatestCourses} 
               className="animate-bounce-in hover:scale-105 transition-transform duration-300"
             >
               <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
+              {t('courses.refresh')}
             </Button>
           </div>
         ) : (
@@ -294,7 +292,7 @@ export default function LatestCourses() {
                     }`}>
                       <Badge className="bg-green-500 text-white border-0 shadow-glow animate-pulse-glow">
                         <Star className="w-3 h-3 mr-1" />
-                        Popular
+                        {t('courses.popular')}
                       </Badge>
                     </div>
                   )}
@@ -306,7 +304,7 @@ export default function LatestCourses() {
                     }`}>
                       <Badge className="bg-blue-500 text-white border-0 shadow-glow animate-bounce">
                         <Clock className="w-3 h-3 mr-1" />
-                        New
+                        {t('courses.new')}
                       </Badge>
                     </div>
                   )}
@@ -322,7 +320,7 @@ export default function LatestCourses() {
                   className="w-full sm:w-auto group relative overflow-hidden hover:scale-105 transition-transform duration-300"
                 >
                   <span className="relative z-10 flex items-center gap-2">
-                    View All Courses
+                    {t('courses.viewAllCourses')}
                     <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
                   </span>
                   <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -334,16 +332,16 @@ export default function LatestCourses() {
             <div className="text-center mt-12 animate-fade-in-up" style={{ animationDelay: '700ms' }}>
               <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-2xl p-6 border border-primary/20">
                 <h3 className="text-xl font-semibold mb-2 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                  Ready to start learning?
+                  {t('courses.readyToStart')}
                 </h3>
                 <p className="text-muted-foreground mb-4">
-                  Join thousands of students already learning with us
+                  {t('courses.joinStudents')}
                 </p>
                 <Link to="/courses">
                   <Button className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white shadow-glow hover:shadow-glow-lg transition-all duration-500 hover:scale-105 group">
                     <span className="relative z-10 flex items-center gap-2">
                       <Sparkles className="w-4 h-4 group-hover:animate-spin" />
-                      Explore All Courses
+                      {t('courses.exploreAllCourses')}
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
                     </span>
                   </Button>
