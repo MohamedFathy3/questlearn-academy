@@ -308,40 +308,10 @@ const HonorBoard = () => {
     window.scrollTo({ top: sectionRef.current?.offsetTop || 0, behavior: 'smooth' });
   };
 
-  if (loading) {
-    return (
-      <div ref={sectionRef} className="min-h-[500px] bg-gradient-to-b from-background to-muted/30 py-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <Skeleton className="h-12 w-64 mx-auto mb-4" />
-            <Skeleton className="h-6 w-96 mx-auto" />
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, i) => (
-              <Card key={i} className="overflow-hidden text-center animate-pulse">
-                <CardHeader className="pt-8">
-                  <Skeleton className="h-20 w-20 rounded-full mx-auto mb-4" />
-                  <Skeleton className="h-6 w-32 mx-auto mb-2" />
-                  <Skeleton className="h-4 w-24 mx-auto mb-4" />
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-3 gap-3">
-                    <Skeleton className="h-12 rounded" />
-                    <Skeleton className="h-12 rounded" />
-                    <Skeleton className="h-12 rounded" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div ref={sectionRef} className="min-h-[500px] bg-gradient-to-b from-background to-muted/30 ">
-      <Hero />
       <div className="container mx-auto px-4 mt-12">
         {/* Header مع أنيميشن */}
         <div className={`text-center mb-12 transition-all duration-700 ${

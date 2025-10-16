@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FiMail, FiLock, FiUser, FiPhone, FiCreditCard, FiBook, FiFlag, FiCheck, FiX, FiUpload, FiEye, FiEyeOff, FiArrowRight, FiUserCheck, FiUsers, FiSearch, FiChevronDown, FiPlus, FiMinus } from 'react-icons/fi';
+import { FiMail, FiLock, FiUser, FiPhone, FiCreditCard, FiBook, FiFlag, FiCheck, FiX, FiUpload, FiEye, FiEyeOff, FiArrowRight, FiUserCheck, FiUsers, FiSearch, FiChevronDown, FiPlus, FiMinus, FiCalendar } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -10,6 +10,7 @@ interface Country {
   name: string;
   code: string;
   image: string;
+  phone_code: string;
 }
 
 interface Stage {
@@ -31,11 +32,11 @@ const UnifiedRegisterPage: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', national_id: '', passport_number: '',
     password: '', password_confirmation: '', country_id: '', qr_code: '',
-    stage_id: [] as string[], subject_id: [] as string[], teacher_type: '',
+    stage_id: '', subject_id: [] as string[], teacher_type: '', // ✅ stage_id للطالب قيمة واحدة
     phone_country_code: '+20', custom_stage: '', custom_subject: '',
     image: null as File | null, certificate_image: null as File | null,
     experience_image: null as File | null, id_card_front: null as File | null,
-    id_card_back: null as File | null
+    id_card_back: null as File | null, date_of_birth: null // ✅ تاريخ الميلاد للجميع
   });
 
   const [countries, setCountries] = useState<Country[]>([]);
@@ -51,32 +52,56 @@ const UnifiedRegisterPage: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+  const [isPhoneCountryDropdownOpen, setIsPhoneCountryDropdownOpen] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
+  const [phoneCountrySearch, setPhoneCountrySearch] = useState('');
   const [showCustomStage, setShowCustomStage] = useState(false);
   const [showCustomSubject, setShowCustomSubject] = useState(false);
 
   const navigate = useNavigate();
   const API_URL = '/api';
   const countryDropdownRef = useRef<HTMLDivElement>(null);
+  const phoneCountryDropdownRef = useRef<HTMLDivElement>(null);
 
   // جلب البيانات
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [countriesRes, stagesRes, subjectsRes] = await Promise.all([
-          fetch(`${API_URL}/country/index`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filters: {}, perPage: 100, paginate: true }) }),
-          fetch(`${API_URL}/stage/index`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filters: {}, perPage: 100, paginate: true }) }),
-          fetch(`${API_URL}/subject/index`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filters: {}, perPage: 100, paginate: true }) })
+          fetch(`${API_URL}/country/index`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ filters: {}, perPage: 100, paginate: true }) 
+          }),
+          fetch(`${API_URL}/stage/index`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ filters: {}, perPage: 100, paginate: true }) 
+          }),
+          fetch(`${API_URL}/subject/index`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ filters: {}, perPage: 100, paginate: true }) 
+          })
         ]);
 
-        const [countriesData, stagesData, subjectsData] = await Promise.all([countriesRes.json(), stagesRes.json(), subjectsRes.json()]);
+        const [countriesData, stagesData, subjectsData] = await Promise.all([
+          countriesRes.json(),
+          stagesRes.json(),
+          subjectsRes.json()
+        ]);
         
-        if (countriesData.status === 200) setCountries(countriesData.data);
-        if (stagesData.status === 200) setStages(stagesData.data);
-        if (subjectsData.status === 200) setSubjects(subjectsData.data);
+        if (countriesData.status === 200) setCountries(countriesData.data || []);
+        if (stagesData.status === 200) setStages(stagesData.data || []);
+        if (subjectsData.status === 200) setSubjects(subjectsData.data || []);
+        
         toast.success(t('register.messages.successOnLoad'));
       } catch (error) {
+        console.error('Error loading data:', error);
         toast.error(t('register.messages.errorLoading'));
+        setCountries([]);
+        setStages([]);
+        setSubjects([]);
       }
     };
     fetchData();
@@ -87,6 +112,9 @@ const UnifiedRegisterPage: React.FC = () => {
     const handleClickOutside = (event: MouseEvent) => {
       if (countryDropdownRef.current && !countryDropdownRef.current.contains(event.target as Node)) {
         setIsCountryDropdownOpen(false);
+      }
+      if (phoneCountryDropdownRef.current && !phoneCountryDropdownRef.current.contains(event.target as Node)) {
+        setIsPhoneCountryDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -117,6 +145,12 @@ const UnifiedRegisterPage: React.FC = () => {
       if (!formData.email.trim()) newErrors.email = t('register.validation.emailRequired');
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = t('register.validation.invalidEmail');
       if (!formData.phone.trim()) newErrors.phone = t('register.validation.phoneRequired');
+      else if (!/^\d+$/.test(formData.phone)) newErrors.phone = t('register.validation.phoneInvalid');
+
+      // ✅ تاريخ الميلاد للجميع
+      if (!formData.date_of_birth) {
+        newErrors.date_of_birth = t('register.validation.dateOfBirthRequired');
+      }
 
       const passwordValidation = validatePassword(formData.password);
       if (!formData.password) newErrors.password = t('register.validation.passwordRequired');
@@ -125,13 +159,13 @@ const UnifiedRegisterPage: React.FC = () => {
       if (!formData.password_confirmation) newErrors.password_confirmation = t('register.validation.confirmPasswordRequired');
       else if (formData.password !== formData.password_confirmation) newErrors.password_confirmation = t('register.validation.passwordsMismatch');
 
-      // ✅ التحقق من البلد للطالب والمعلم
-      if ((activeTab === 'teacher' || activeTab === 'student') && !formData.country_id) {
+      // ✅ التحقق من البلد للطالب والمعلم وولي الأمر
+      if ((activeTab === 'teacher' || activeTab === 'student' || activeTab === 'parent') && !formData.country_id) {
         newErrors.country_id = t('register.validation.countryRequired');
       }
 
       // ✅ التحقق من المرحلة للطالب
-      if (activeTab === 'student' && !formData.stage_id.length && !formData.custom_stage) {
+      if (activeTab === 'student' && !formData.stage_id && !formData.custom_stage) {
         newErrors.stage_id = t('register.validation.stageRequired');
       }
 
@@ -170,7 +204,7 @@ const UnifiedRegisterPage: React.FC = () => {
     if (errors[name]) setErrors((prev: any) => ({ ...prev, [name]: undefined }));
   };
 
-  const handleMultiSelectChange = (name: 'stage_id' | 'subject_id', value: string) => {
+  const handleMultiSelectChange = (name: 'subject_id', value: string) => {
     setFormData(prev => ({
       ...prev,
       [name]: prev[name].includes(value) ? prev[name].filter(item => item !== value) : [...prev[name], value]
@@ -186,6 +220,15 @@ const UnifiedRegisterPage: React.FC = () => {
     }));
     setIsCountryDropdownOpen(false);
     setCountrySearch('');
+  };
+
+  const handlePhoneCountrySelect = (country: Country) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      phone_country_code: country.phone_code
+    }));
+    setIsPhoneCountryDropdownOpen(false);
+    setPhoneCountrySearch('');
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -262,6 +305,9 @@ const UnifiedRegisterPage: React.FC = () => {
         }
       });
 
+      // ✅ إضافة نوع المستخدم
+      payload.append('user_type', activeTab);
+
       const apiEndpoint = {
         student: `${API_URL}/student/register`,
         teacher: `${API_URL}/teachers/register`,
@@ -287,38 +333,48 @@ const UnifiedRegisterPage: React.FC = () => {
   const resetForm = () => {
     setFormData({
       name: '', email: '', phone: '', national_id: '', passport_number: '',
-      password: '', password_confirmation: '', country_id: '', stage_id: [],
+      password: '', password_confirmation: '', country_id: '', stage_id: '',
       subject_id: [], qr_code: '', image: null, certificate_image: null,
       experience_image: null, id_card_front: null, id_card_back: null,
-      teacher_type: '', phone_country_code: '+20', custom_stage: '', custom_subject: ''
+      teacher_type: '', phone_country_code: '+20', custom_stage: '', custom_subject: '',
+      date_of_birth: ''
     });
     setImagePreview(null); setCertificatePreview(null); setExperiencePreview(null);
     setIdCardFrontPreview(null); setIdCardBackPreview(null); setErrors({});
-    setCurrentStep(1); setCountrySearch(''); setShowCustomStage(false); setShowCustomSubject(false);
+    setCurrentStep(1); setCountrySearch(''); setPhoneCountrySearch(''); 
+    setShowCustomStage(false); setShowCustomSubject(false);
   };
 
   const getTotalSteps = () => {
     if (activeTab === 'teacher') return 3;
-    if (activeTab === 'student') return 2; // ✅ الطالب له خطوتان الآن
+    if (activeTab === 'student') return 2;
     return 2;
   };
 
   const getStepTitle = () => ({
-    student: [t('register.steps.personalInfo'), t('register.steps.academicInfo')], // ✅ إضافة خطوة أكاديمية للطالب
+    student: [t('register.steps.personalInfo'), t('register.steps.academicInfo')],
     teacher: [t('register.steps.personalInfo'), t('register.steps.academicInfo'), t('register.steps.reviewData')],
     parent: [t('register.steps.personalInfo'), t('register.steps.completeRegistration')],
   }[activeTab][currentStep - 1]);
 
   const getSelectedCountry = () => countries.find(country => country.id.toString() === formData.country_id);
+  const getSelectedPhoneCountry = () => countries.find(country => country.phone_code === formData.phone_country_code);
   
   const isEgyptSelected = () => {
     const selectedCountry = getSelectedCountry();
     return selectedCountry?.name === 'مصر' || selectedCountry?.name === 'Egypt';
   };
 
-  const filteredCountries = countries.filter(country =>
-    country.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
-    country.code.toLowerCase().includes(countrySearch.toLowerCase())
+  // ✅ إصلاح: التحقق من وجود countries قبل استخدام filter
+  const filteredCountries = (countries || []).filter(country =>
+    country.name?.toLowerCase().includes(countrySearch.toLowerCase()) ||
+    country.code?.toLowerCase().includes(countrySearch.toLowerCase())
+  );
+
+  const filteredPhoneCountries = (countries || []).filter(country =>
+    country.name?.toLowerCase().includes(phoneCountrySearch.toLowerCase()) ||
+    country.code?.toLowerCase().includes(phoneCountrySearch.toLowerCase()) ||
+    country.phone_code?.includes(phoneCountrySearch)
   );
 
   const passwordValidation = validatePassword(formData.password);
@@ -430,17 +486,85 @@ const UnifiedRegisterPage: React.FC = () => {
                 {errors.email && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.email}</p>}
               </div>
 
+              {/* ✅ تاريخ الميلاد للجميع */}
               <div>
+                <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.dateOfBirth')}</label>
+                <div className="relative">
+                  <FiCalendar className="absolute right-3 top-3 text-blue-500" />
+                  <input type="date" name="date_of_birth" value={formData.date_of_birth} onChange={handleInputChange} required
+                    className={`w-full p-4 pr-12 rounded-xl border-2 focus:outline-none focus:ring-2 transition-all duration-300 ${
+                      errors.date_of_birth ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-blue-400 focus:ring-blue-400'
+                    }`} />
+                </div>
+                {errors.date_of_birth && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.date_of_birth}</p>}
+              </div>
+
+              <div className="md:col-span-2">
                 <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.phone')}</label>
-                <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} required
-                  className={`w-full p-4 rounded-xl border-2 focus:outline-none focus:ring-2 transition-all duration-300 ${
-                    errors.phone ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-blue-400 focus:ring-blue-400'
-                  }`} placeholder={t('register.form.phonePlaceholder')} />
+                <div className="flex gap-3">
+                  <div className="relative flex-1" ref={phoneCountryDropdownRef}>
+                    <button type="button" onClick={() => setIsPhoneCountryDropdownOpen(!isPhoneCountryDropdownOpen)}
+                      className={`w-full p-4 rounded-xl border-2 text-right flex items-center justify-between transition-all duration-300 ${
+                        errors.phone ? 'border-red-500 bg-red-50' : 'border-blue-400 focus:ring-2 focus:ring-blue-400'
+                      }`}>
+                      {getSelectedPhoneCountry() ? (
+                        <div className="flex items-center gap-3">
+                          {getSelectedPhoneCountry()?.image && (
+                            <img src={getSelectedPhoneCountry()?.image} alt="flag" className="w-6 h-4 object-cover rounded" />
+                          )}
+                          <span className="font-medium">{getSelectedPhoneCountry()?.phone_code}</span>
+                        </div>
+                      ) : (
+                        <span className="text-gray-500">{t('register.form.selectCode')}</span>
+                      )}
+                      <FiChevronDown className={`transition-transform duration-300 ${isPhoneCountryDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {isPhoneCountryDropdownOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-blue-400 rounded-xl shadow-2xl shadow-blue-500/20 z-50 max-h-80 overflow-hidden animate-fade-in-up">
+                        <div className="p-3 border-b border-gray-200">
+                          <div className="relative">
+                            <FiSearch className="absolute right-3 top-3 text-gray-400" />
+                            <input type="text" value={phoneCountrySearch} onChange={(e) => setPhoneCountrySearch(e.target.value)}
+                              placeholder={t('register.form.searchCountry')} className="w-full p-3 pr-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 text-right" />
+                          </div>
+                        </div>
+                        <div className="overflow-y-auto max-h-60">
+                          {filteredPhoneCountries.length > 0 ? (
+                            filteredPhoneCountries.map((country) => (
+                              <button key={country.id} type="button" onClick={() => handlePhoneCountrySelect(country)}
+                                className="w-full p-3 text-right border-b border-gray-100 hover:bg-blue-50 transition-colors duration-200 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  {country.image && (
+                                    <img src={country.image} alt={country.name} className="w-6 h-4 object-cover rounded" />
+                                  )}
+                                  <div className="text-left">
+                                    <div className="font-medium text-gray-800">{country.name}</div>
+                                    <div className="text-sm text-gray-500">{country.phone_code}</div>
+                                  </div>
+                                </div>
+                                {formData.phone_country_code === country.phone_code && <FiCheck className="text-green-500" />}
+                              </button>
+                            ))
+                          ) : (
+                            <div className="p-4 text-center text-gray-500">{t('register.form.noCountriesFound')}</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-[2]">
+                    <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} required
+                      className={`w-full p-4 rounded-xl border-2 focus:outline-none focus:ring-2 transition-all duration-300 ${
+                        errors.phone ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-blue-400 focus:ring-blue-400'
+                      }`} placeholder={t('register.form.phonePlaceholder')} />
+                  </div>
+                </div>
                 {errors.phone && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.phone}</p>}
               </div>
 
-              {/* ✅ البلد للطالب والمعلم */}
-              {(activeTab === 'student' || activeTab === 'teacher') && (
+              {/* ✅ البلد للطالب والمعلم وولي الأمر */}
+              {(activeTab === 'student' || activeTab === 'teacher' || activeTab === 'parent') && (
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.country')}</label>
                   <div className="relative" ref={countryDropdownRef}>
@@ -450,7 +574,9 @@ const UnifiedRegisterPage: React.FC = () => {
                       }`}>
                       {getSelectedCountry() ? (
                         <div className="flex items-center gap-3">
-                          <img src={getSelectedCountry()?.image} alt="flag" className="w-6 h-4 object-cover rounded" />
+                          {getSelectedCountry()?.image && (
+                            <img src={getSelectedCountry()?.image} alt="flag" className="w-6 h-4 object-cover rounded" />
+                          )}
                           <span className="font-medium">{getSelectedCountry()?.name}</span>
                         </div>
                       ) : (
@@ -469,18 +595,24 @@ const UnifiedRegisterPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="overflow-y-auto max-h-60">
-                          {filteredCountries.map((country) => (
-                            <button key={country.id} type="button" onClick={() => handleCountrySelect(country)}
-                              className="w-full p-3 text-right border-b border-gray-100 hover:bg-blue-50 transition-colors duration-200 flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <img src={country.image} alt={country.name} className="w-6 h-4 object-cover rounded" />
-                                <div className="text-left">
-                                  <div className="font-medium text-gray-800">{country.name}</div>
+                          {filteredCountries.length > 0 ? (
+                            filteredCountries.map((country) => (
+                              <button key={country.id} type="button" onClick={() => handleCountrySelect(country)}
+                                className="w-full p-3 text-right border-b border-gray-100 hover:bg-blue-50 transition-colors duration-200 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  {country.image && (
+                                    <img src={country.image} alt={country.name} className="w-6 h-4 object-cover rounded" />
+                                  )}
+                                  <div className="text-left">
+                                    <div className="font-medium text-gray-800">{country.name}</div>
+                                  </div>
                                 </div>
-                              </div>
-                              {formData.country_id === country.id.toString() && <FiCheck className="text-green-500" />}
-                            </button>
-                          ))}
+                                {formData.country_id === country.id.toString() && <FiCheck className="text-green-500" />}
+                              </button>
+                            ))
+                          ) : (
+                            <div className="p-4 text-center text-gray-500">{t('register.form.noCountriesFound')}</div>
+                          )}
                         </div>
                       </div>
                     )}
@@ -603,6 +735,9 @@ const UnifiedRegisterPage: React.FC = () => {
                     {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
                   </button>
                 </div>
+                {formData.password_confirmation && formData.password !== formData.password_confirmation && (
+                  <p className="text-red-500 text-sm mt-1 animate-pulse">{t('register.validation.passwordsMismatch')}</p>
+                )}
                 {errors.password_confirmation && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.password_confirmation}</p>}
               </div>
 
@@ -630,18 +765,41 @@ const UnifiedRegisterPage: React.FC = () => {
               </div>
             </div>
           )}
-{(activeTab === 'student' ) &&
- <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+
+          {/* الخطوة 2 للطلاب */}
+          {currentStep === 2 && activeTab === 'student' && (
+            <div className="space-y-6 animate-fade-in-up">
+              <div>
+                <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.educationalStage')}</label>
+                <div className="space-y-3">
+                  <select name="stage_id" value={formData.stage_id} onChange={handleInputChange}
+                    className={`w-full p-4 rounded-xl border-2 focus:outline-none focus:ring-2 transition-all duration-300 ${
+                      errors.stage_id ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-blue-400 focus:ring-blue-400'
+                    }`}>
+                    <option value="">{t('register.form.selectStage')}</option>
                     {stages.map((stage) => (
-                      <label key={stage.id} className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border-2 border-gray-300 hover:border-blue-400 transition-all duration-300 bg-white hover:bg-blue-50">
-                        <input type="checkbox" checked={formData.stage_id.includes(stage.id.toString())} 
-                          onChange={() => handleMultiSelectChange('stage_id', stage.id.toString())}
-                          className="w-5 h-5 text-blue-600 rounded-lg focus:ring-blue-500" />
-                        <span className="font-medium text-gray-700">{stage.name}</span>
-                      </label>
+                      <option key={stage.id} value={stage.id}>{stage.name}</option>
                     ))}
-                  </div>
-}
+                  </select>
+                  
+                  <button type="button" onClick={() => setShowCustomStage(!showCustomStage)} 
+                    className="flex items-center gap-2 text-blue-600 font-medium text-sm hover:text-blue-700 transition-colors duration-300">
+                    {showCustomStage ? <FiMinus /> : <FiPlus />}
+                    {t('register.form.addNewStage')}
+                  </button>
+                  
+                  {showCustomStage && (
+                    <div className="animate-fade-in-up">
+                      <input type="text" name="custom_stage" value={formData.custom_stage} onChange={handleInputChange}
+                        placeholder={t('register.form.newStagePlaceholder')} className="w-full p-3 rounded-xl border-2 border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                    </div>
+                  )}
+                </div>
+                {errors.stage_id && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.stage_id}</p>}
+              </div>
+            </div>
+          )}
+
           {/* الخطوة 2 للمعلمين */}
           {currentStep === 2 && activeTab === 'teacher' && (
             <div className="space-y-6 animate-fade-in-up">
@@ -795,7 +953,7 @@ const UnifiedRegisterPage: React.FC = () => {
           )}
 
           {/* الخطوة النهائية */}
-          {currentStep === (activeTab === 'teacher' ? 3 : 2) && activeTab !== 'teacher' && (
+          {currentStep === (activeTab === 'teacher' ? 3 : 2) && (
             <div className="text-center py-8 animate-bounce-in">
               <div className="p-8 rounded-2xl border-2 bg-green-50 border-green-400 shadow-lg shadow-green-500/10">
                 <FiCheck className="text-5xl mx-auto mb-4 text-green-500 animate-check-mark" />

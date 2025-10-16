@@ -300,44 +300,12 @@ const StudentsHonorBoard = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="gradient-hero text-white py-20">
-          <div className="container mx-auto px-6 text-center">
-            <Skeleton className="h-12 w-64 mx-auto mb-4" />
-            <Skeleton className="h-6 w-96 mx-auto" />
-          </div>
-        </div>
-        <div className="container mx-auto px-6 py-12">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, i) => (
-              <Card key={i} className="overflow-hidden text-center">
-                <CardHeader className="pt-8">
-                  <Skeleton className="h-20 w-20 rounded-full mx-auto mb-4" />
-                  <Skeleton className="h-6 w-32 mx-auto mb-2" />
-                  <Skeleton className="h-4 w-24 mx-auto mb-4" />
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-3 gap-3">
-                    <Skeleton className="h-12 rounded" />
-                    <Skeleton className="h-12 rounded" />
-                    <Skeleton className="h-12 rounded" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
+ 
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header Section */}
       <div className="">
-        <Hero />
       </div>
 
       <div className="container mx-auto px-6 py-12">

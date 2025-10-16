@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
   ArrowRight, Play, Star, Users, Award, BookOpen, 
-  Code, Briefcase, Palette, Camera, Music, Zap, Sparkles, Rocket, Target 
+  Code, Briefcase, Palette, Camera, Music, Zap, Sparkles, Rocket, ArrowUp 
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Hero from '@/components/home/hero';
@@ -207,13 +207,14 @@ const Home = () => {
 
       {/* Scroll-to-top button */}
       <div className="fixed bottom-8 right-8 z-50 animate-bounce-in" style={{ animationDelay: '2s' }}>
+        
         <Button 
           size="icon" 
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-primary/80 shadow-glow-lg 
                      hover:shadow-glow hover:scale-110 transition-all duration-300 group"
         >
-          <Target className="w-6 h-6 text-white group-hover:animate-spin" />
+  <ArrowUp className="w-6 h-6 text-white group-hover:-translate-y-1 transition-transform duration-300" />
         </Button>
       </div>
 
