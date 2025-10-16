@@ -129,7 +129,7 @@ const resources: Record<string, any> = {
           courseIncome: 'Course Income',
           teacherShare: 'Teacher Share',
           viewCourse: 'View Course',
-          noCourses: 'No courses available at the moment'
+          noCourses: 'No courses available at the moment',
         },
         reviews: {
           title: 'Ratings and Reviews',
@@ -220,7 +220,8 @@ const resources: Record<string, any> = {
         courseIntro: 'Course Introduction',
         coursePreview: 'Course Preview',
         loadingDetails: 'Loading course details...',
-        notFound: 'Course not found'
+        notFound: 'Course not found',
+
       },
       enrollment: {
         success: 'Enrollment Successful!',
@@ -756,6 +757,9 @@ const resources: Record<string, any> = {
       footer: {
         description: 'Transform your career with expert-led courses in technology, business, and creative skills.',
         learn: 'Learn',
+        topTeachers:'topTeachers',
+        topStudents:'topStudents',
+        content:'content',
         freeCourses: 'Free Courses',
         certificates: 'Certificates',
         learningPaths: 'Learning Paths',
@@ -802,7 +806,8 @@ const resources: Record<string, any> = {
           students: 'Students',
           courses: 'Courses',
           instructors: 'Instructors',
-          satisfaction: 'Satisfaction Rate'
+          satisfaction: 'Satisfaction Rate',
+          visitors:'visitors'
         },
     
       },
@@ -813,6 +818,9 @@ const resources: Record<string, any> = {
           readyToStart:' readyToStart',
           joinStudents:'joinStudents',
           exploreAllCourses:'exploreAllCourses',
+                  freshContent:'freshContent',
+group:'group',
+private:'private',
         title: "All",
         courses: "Courses",
         discover: "Discover thousands of courses across various categories",
@@ -982,7 +990,8 @@ const resources: Record<string, any> = {
         topCategories: {
           title: 'استكشف أشهر',
           highlight: 'الفئات',
-          description: 'اكتشف الدورات في مختلف المجالات وابدأ رحلة التعلم اليوم'
+          description: 'اكتشف الدورات في مختلف المجالات وابدأ رحلة التعلم اليوم',
+          badge:'اصناف',
         },
         categories: {
           webDevelopment: 'تطوير الويب',
@@ -998,7 +1007,8 @@ const resources: Record<string, any> = {
           students: 'طالب',
           courses: 'كورس',
           instructors: 'مدرس',
-          satisfaction: 'معدل الرضا'
+          satisfaction: 'معدل الرضا',
+          visitors:'زوار'
         }
       },
       teacherProfile: {
@@ -1079,6 +1089,21 @@ const resources: Record<string, any> = {
           readyToStart:'جاهز للبدء',
           joinStudents:'الطلاب',
           exploreAllCourses:'استكشف جميع الدورات',
+                  freshContent:'محتوي جديد',
+group: "جماعي",
+    private: "خاص",
+    enrollmentProgress: "تقدم التسجيل",
+    filled: "ممتلئ",
+    students: "طالب",
+    joined: "منضم",
+    remaining: "متبقي",
+    completed: "مكتمل",
+    almostFull: "يكاد يمتلئ",
+    fillingFast: "يمتلئ بسرعة",
+    available: "متاح",
+    hurryUp: "أسرع! فقط",
+    seatsLeft: "مقاعد متبقية",
+    hurryEnroll: "سجل الآن!",
         title: "جميع",
         courses: "الكورسات",
         discover: "اكتشف الآلاف من الكورسات عبر مختلف التصنيفات",
@@ -1112,9 +1137,7 @@ const resources: Record<string, any> = {
         tryAgain: "حاول مرة أخرى",
         error: "خطأ",
         enrolled: "مشترك",
-        enrollmentProgress: "تقدم التسجيل",
-        students: "طالب",
-        filled: "ممتلئ",
+     
         enrollNow: "احجز الآن",
         new: "جديد",
         bestseller: "الأكثر مبيعاً",
@@ -1666,6 +1689,9 @@ const resources: Record<string, any> = {
       footer: {
         description: 'حوّل مسارك المهني مع دورات يقودها خبراء في التكنولوجيا والأعمال والمهارات الإبداعية.',
         learn: 'التعلم',
+         topTeachers:'لوحه الشرف للمعلم',
+        topStudents:'لوحه الشرف لطالب',
+        content:'تواصل',
         freeCourses: 'دورات مجانية',
         certificates: 'الشهادات',
         learningPaths: 'مسارات التعلم',
@@ -1683,7 +1709,7 @@ const resources: Record<string, any> = {
         terms: 'شروط الخدمة',
         cookies: 'سياسة الكوكيز',
         rights: 'جميع الحقوق محفوظة.',
-        followUs: 'تابعنا'
+        followUs: 'تابعنا',
       },
     
       

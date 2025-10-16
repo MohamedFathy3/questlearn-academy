@@ -125,10 +125,20 @@ const UnifiedRegisterPage: React.FC = () => {
       if (!formData.password_confirmation) newErrors.password_confirmation = t('register.validation.confirmPasswordRequired');
       else if (formData.password !== formData.password_confirmation) newErrors.password_confirmation = t('register.validation.passwordsMismatch');
 
+      // ✅ التحقق من البلد للطالب والمعلم
+      if ((activeTab === 'teacher' || activeTab === 'student') && !formData.country_id) {
+        newErrors.country_id = t('register.validation.countryRequired');
+      }
+
+      // ✅ التحقق من المرحلة للطالب
+      if (activeTab === 'student' && !formData.stage_id.length && !formData.custom_stage) {
+        newErrors.stage_id = t('register.validation.stageRequired');
+      }
+
       if (activeTab === 'teacher') {
         if (!formData.teacher_type) newErrors.teacher_type = t('register.validation.teacherTypeRequired');
-        if (!formData.country_id) newErrors.country_id = t('register.validation.countryRequired');
-        else {
+        
+        if (formData.country_id) {
           const selectedCountry = getSelectedCountry();
           if (selectedCountry?.name === 'مصر' || selectedCountry?.name === 'Egypt') {
             if (!formData.national_id.trim()) newErrors.national_id = t('register.validation.nationalIdRequired');
@@ -138,6 +148,7 @@ const UnifiedRegisterPage: React.FC = () => {
           }
         }
       }
+
       if (activeTab === 'parent' && !formData.qr_code.trim()) newErrors.qr_code = t('register.validation.qrCodeRequired');
     }
 
@@ -286,9 +297,14 @@ const UnifiedRegisterPage: React.FC = () => {
     setCurrentStep(1); setCountrySearch(''); setShowCustomStage(false); setShowCustomSubject(false);
   };
 
-  const getTotalSteps = () => activeTab === 'teacher' ? 3 : 2;
+  const getTotalSteps = () => {
+    if (activeTab === 'teacher') return 3;
+    if (activeTab === 'student') return 2; // ✅ الطالب له خطوتان الآن
+    return 2;
+  };
+
   const getStepTitle = () => ({
-    student: [t('register.steps.personalInfo'), t('register.steps.completeRegistration')],
+    student: [t('register.steps.personalInfo'), t('register.steps.academicInfo')], // ✅ إضافة خطوة أكاديمية للطالب
     teacher: [t('register.steps.personalInfo'), t('register.steps.academicInfo'), t('register.steps.reviewData')],
     parent: [t('register.steps.personalInfo'), t('register.steps.completeRegistration')],
   }[activeTab][currentStep - 1]);
@@ -423,6 +439,102 @@ const UnifiedRegisterPage: React.FC = () => {
                 {errors.phone && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.phone}</p>}
               </div>
 
+              {/* ✅ البلد للطالب والمعلم */}
+              {(activeTab === 'student' || activeTab === 'teacher') && (
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.country')}</label>
+                  <div className="relative" ref={countryDropdownRef}>
+                    <button type="button" onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
+                      className={`w-full p-4 pr-12 rounded-xl border-2 text-right flex items-center justify-between transition-all duration-300 ${
+                        errors.country_id ? 'border-red-500 bg-red-50' : 'border-blue-400 focus:ring-2 focus:ring-blue-400'
+                      }`}>
+                      {getSelectedCountry() ? (
+                        <div className="flex items-center gap-3">
+                          <img src={getSelectedCountry()?.image} alt="flag" className="w-6 h-4 object-cover rounded" />
+                          <span className="font-medium">{getSelectedCountry()?.name}</span>
+                        </div>
+                      ) : (
+                        <span className="text-gray-500">{t('register.form.selectCountry')}</span>
+                      )}
+                      <FiChevronDown className={`transition-transform duration-300 ${isCountryDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {isCountryDropdownOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-blue-400 rounded-xl shadow-2xl shadow-blue-500/20 z-50 max-h-80 overflow-hidden animate-fade-in-up">
+                        <div className="p-3 border-b border-gray-200">
+                          <div className="relative">
+                            <FiSearch className="absolute right-3 top-3 text-gray-400" />
+                            <input type="text" value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)}
+                              placeholder={t('register.form.searchCountry')} className="w-full p-3 pr-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 text-right" />
+                          </div>
+                        </div>
+                        <div className="overflow-y-auto max-h-60">
+                          {filteredCountries.map((country) => (
+                            <button key={country.id} type="button" onClick={() => handleCountrySelect(country)}
+                              className="w-full p-3 text-right border-b border-gray-100 hover:bg-blue-50 transition-colors duration-200 flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <img src={country.image} alt={country.name} className="w-6 h-4 object-cover rounded" />
+                                <div className="text-left">
+                                  <div className="font-medium text-gray-800">{country.name}</div>
+                                </div>
+                              </div>
+                              {formData.country_id === country.id.toString() && <FiCheck className="text-green-500" />}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {errors.country_id && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.country_id}</p>}
+                </div>
+              )}
+
+              {/* ✅ نوع المعلم للمعلمين فقط */}
+              {activeTab === 'teacher' && (
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.teacherType')}</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    {['male', 'female'].map((type) => (
+                      <button type="button" key={type} onClick={() => setFormData(prev => ({ ...prev, teacher_type: type }))}
+                        className={`p-4 rounded-xl border-2 transition-all duration-300 flex items-center justify-center gap-3 ${
+                          formData.teacher_type === type
+                            ? 'border-blue-500 bg-blue-50 text-blue-600 shadow-lg shadow-blue-500/20'
+                            : 'border-gray-300 bg-white text-gray-600 hover:border-blue-400'
+                        }`}>
+                        <FiUserCheck className="text-xl" />
+                        <span className="font-medium">
+                          {type === 'male' ? t('register.form.maleTeacher') : t('register.form.femaleTeacher')}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  {errors.teacher_type && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.teacher_type}</p>}
+                </div>
+              )}
+
+              {/* ✅ الرقم القومي أو جواز السفر للمعلمين فقط */}
+              {activeTab === 'teacher' && formData.country_id && (
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold mb-2 text-blue-600">
+                    {isEgyptSelected() ? t('register.form.nationalId') : t('register.form.passportNumber')}
+                  </label>
+                  <div className="relative">
+                    <FiCreditCard className="absolute right-3 top-3 text-blue-500" />
+                    <input type="text" name={isEgyptSelected() ? "national_id" : "passport_number"} 
+                      value={isEgyptSelected() ? formData.national_id : formData.passport_number} 
+                      onChange={handleInputChange} required maxLength={isEgyptSelected() ? 14 : undefined}
+                      className={`w-full p-4 pr-12 rounded-xl border-2 focus:outline-none focus:ring-2 transition-all duration-300 ${
+                        (errors.national_id || errors.passport_number) ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-blue-400 focus:ring-blue-400'
+                      }`} placeholder={isEgyptSelected() ? t('register.form.nationalIdPlaceholder') : t('register.form.passportPlaceholder')} />
+                  </div>
+                  {isEgyptSelected() ? 
+                    (errors.national_id && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.national_id}</p>) :
+                    (errors.passport_number && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.passport_number}</p>)
+                  }
+                </div>
+              )}
+
+              {/* ✅ QR Code للوالدين فقط */}
               {activeTab === 'parent' && (
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.qrCode')}</label>
@@ -436,98 +548,6 @@ const UnifiedRegisterPage: React.FC = () => {
                   <p className="text-sm text-gray-500 mt-1">{t('register.form.qrCodeHelp')}</p>
                   {errors.qr_code && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.qr_code}</p>}
                 </div>
-              )}
-
-              {activeTab === 'teacher' && (
-                <>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.teacherType')}</label>
-                    <div className="grid grid-cols-2 gap-4">
-                      {['male', 'female'].map((type) => (
-                        <button type="button" key={type} onClick={() => setFormData(prev => ({ ...prev, teacher_type: type }))}
-                          className={`p-4 rounded-xl border-2 transition-all duration-300 flex items-center justify-center gap-3 ${
-                            formData.teacher_type === type
-                              ? 'border-blue-500 bg-blue-50 text-blue-600 shadow-lg shadow-blue-500/20'
-                              : 'border-gray-300 bg-white text-gray-600 hover:border-blue-400'
-                          }`}>
-                          <FiUserCheck className="text-xl" />
-                          <span className="font-medium">
-                            {type === 'male' ? t('register.form.maleTeacher') : t('register.form.femaleTeacher')}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                    {errors.teacher_type && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.teacher_type}</p>}
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold mb-2 text-blue-600">{t('register.form.country')}</label>
-                    <div className="relative" ref={countryDropdownRef}>
-                      <button type="button" onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
-                        className={`w-full p-4 pr-12 rounded-xl border-2 text-right flex items-center justify-between transition-all duration-300 ${
-                          errors.country_id ? 'border-red-500 bg-red-50' : 'border-blue-400 focus:ring-2 focus:ring-blue-400'
-                        }`}>
-                        {getSelectedCountry() ? (
-                          <div className="flex items-center gap-3">
-                            <img src={getSelectedCountry()?.image} alt="flag" className="w-6 h-4 object-cover rounded" />
-                            <span className="font-medium">{getSelectedCountry()?.name}</span>
-                          </div>
-                        ) : (
-                          <span className="text-gray-500">{t('register.form.selectCountry')}</span>
-                        )}
-                        <FiChevronDown className={`transition-transform duration-300 ${isCountryDropdownOpen ? 'rotate-180' : ''}`} />
-                      </button>
-
-                      {isCountryDropdownOpen && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-blue-400 rounded-xl shadow-2xl shadow-blue-500/20 z-50 max-h-80 overflow-hidden animate-fade-in-up">
-                          <div className="p-3 border-b border-gray-200">
-                            <div className="relative">
-                              <FiSearch className="absolute right-3 top-3 text-gray-400" />
-                              <input type="text" value={countrySearch} onChange={(e) => setCountrySearch(e.target.value)}
-                                placeholder={t('register.form.searchCountry')} className="w-full p-3 pr-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 text-right" />
-                            </div>
-                          </div>
-                          <div className="overflow-y-auto max-h-60">
-                            {filteredCountries.map((country) => (
-                              <button key={country.id} type="button" onClick={() => handleCountrySelect(country)}
-                                className="w-full p-3 text-right border-b border-gray-100 hover:bg-blue-50 transition-colors duration-200 flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                  <img src={country.image} alt={country.name} className="w-6 h-4 object-cover rounded" />
-                                  <div className="text-left">
-                                    <div className="font-medium text-gray-800">{country.name}</div>
-                                  </div>
-                                </div>
-                                {formData.country_id === country.id.toString() && <FiCheck className="text-green-500" />}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    {errors.country_id && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.country_id}</p>}
-                  </div>
-
-                  {formData.country_id && (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-semibold mb-2 text-blue-600">
-                        {isEgyptSelected() ? t('register.form.nationalId') : t('register.form.passportNumber')}
-                      </label>
-                      <div className="relative">
-                        <FiCreditCard className="absolute right-3 top-3 text-blue-500" />
-                        <input type="text" name={isEgyptSelected() ? "national_id" : "passport_number"} 
-                          value={isEgyptSelected() ? formData.national_id : formData.passport_number} 
-                          onChange={handleInputChange} required maxLength={isEgyptSelected() ? 14 : undefined}
-                          className={`w-full p-4 pr-12 rounded-xl border-2 focus:outline-none focus:ring-2 transition-all duration-300 ${
-                            (errors.national_id || errors.passport_number) ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-blue-400 focus:ring-blue-400'
-                          }`} placeholder={isEgyptSelected() ? t('register.form.nationalIdPlaceholder') : t('register.form.passportPlaceholder')} />
-                      </div>
-                      {isEgyptSelected() ? 
-                        (errors.national_id && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.national_id}</p>) :
-                        (errors.passport_number && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.passport_number}</p>)
-                      }
-                    </div>
-                  )}
-                </>
               )}
 
               <div>
@@ -610,7 +630,18 @@ const UnifiedRegisterPage: React.FC = () => {
               </div>
             </div>
           )}
-
+{(activeTab === 'student' ) &&
+ <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {stages.map((stage) => (
+                      <label key={stage.id} className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border-2 border-gray-300 hover:border-blue-400 transition-all duration-300 bg-white hover:bg-blue-50">
+                        <input type="checkbox" checked={formData.stage_id.includes(stage.id.toString())} 
+                          onChange={() => handleMultiSelectChange('stage_id', stage.id.toString())}
+                          className="w-5 h-5 text-blue-600 rounded-lg focus:ring-blue-500" />
+                        <span className="font-medium text-gray-700">{stage.name}</span>
+                      </label>
+                    ))}
+                  </div>
+}
           {/* الخطوة 2 للمعلمين */}
           {currentStep === 2 && activeTab === 'teacher' && (
             <div className="space-y-6 animate-fade-in-up">

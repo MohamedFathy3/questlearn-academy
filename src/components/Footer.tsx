@@ -68,7 +68,7 @@ const Footer = () => {
                 {t('courses.title', 'All Courses')}
               </Link>
               <Link to="/honor-board" className="block text-muted-foreground hover:text-tan transition-colors">
-                {t('nav.topTeachers', 'Top Teachers')}
+                {t('footer.topTeachers', 'Top Teachers')}
               </Link>
               <Link to="/HonerBoard" className="block text-muted-foreground hover:text-tan transition-colors">
                 {t('footer.topStudents', 'Top Students')}
@@ -135,7 +135,7 @@ const Footer = () => {
 
         <div className="border-t border-tan/20 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-muted-foreground text-sm">
-            © 2026 Professional Academy. {t('footer.rights', 'All rights reserved.')}
+            © 2026 Professional Academy  {t('footer.rights', 'All rights reserved.')}
           </div>
           
           {/* Language Selector */}

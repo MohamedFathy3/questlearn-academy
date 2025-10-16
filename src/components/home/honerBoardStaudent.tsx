@@ -3,12 +3,18 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import {
-  Trophy, Award, Star, Medal, Crown, Users, BookOpen, CheckCircle, ChevronLeft, ChevronRight, Sparkles
+import { 
+  Trophy, Award, Star, Medal, Crown, BookOpen, CheckCircle, Sparkles 
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
+
+// Import Swiper styles
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Autoplay } from 'swiper/modules';
 
 interface Student {
   id: number;
@@ -21,14 +27,18 @@ interface Student {
   total_hours: number;
   points: number;
   total_rate: number;
+  average_rating: number;
   grade: {
     name: string;
+    name_ar?: string;
   };
   stage: {
     name: string;
+    name_ar?: string;
   };
   country: {
     name: string;
+    name_ar?: string;
   };
 }
 
@@ -47,27 +57,24 @@ interface ApiResponse {
   status: number;
 }
 
-const StudentsHonorBoard = () => {
+const StudentsHonorBoardCarousel = () => {
   const { t, i18n } = useTranslation();
   const isArabic = i18n.language === 'ar';
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalStudents, setTotalStudents] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchStudentsHonorBoardData(currentPage);
+    fetchStudentsHonorBoardData();
 
     // Scroll animation
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsVisible(true);
-          observer.unobserve(entry.target); // One-time only
+          observer.unobserve(entry.target);
         }
       },
       { threshold: 0.1 }
@@ -82,9 +89,9 @@ const StudentsHonorBoard = () => {
         observer.unobserve(sectionRef.current);
       }
     };
-  }, [currentPage]);
+  }, []);
 
-  const fetchStudentsHonorBoardData = async (page: number) => {
+  const fetchStudentsHonorBoardData = async () => {
     try {
       setLoading(true);
       setError(null);
@@ -95,28 +102,20 @@ const StudentsHonorBoard = () => {
           filters: {},
           orderBy: "total_rate",
           orderByDirection: "desc",
-          perPage: 4,
-          paginate: true,
-          page: page
+          perPage: 5, // Get only top 5 students
+          paginate: false, // No pagination
         }
       });
 
       if (response.result === "Success" && response.data && response.data.length > 0) {
         setStudents(response.data);
-        setTotalPages(response.meta?.last_page || 1);
-        setTotalStudents(response.meta?.total || response.data.length);
       } else {
-        // If data is not ready, use stored or empty data
         setStudents([]);
-        setTotalPages(1);
-        setTotalStudents(0);
       }
     } catch (err: any) {
       console.error('Error fetching students honor board:', err);
       setError(err.message || t('common.error'));
       setStudents([]);
-      setTotalPages(1);
-      setTotalStudents(0);
     } finally {
       setLoading(false);
     }
@@ -125,13 +124,26 @@ const StudentsHonorBoard = () => {
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1:
-        return <Crown className="w-5 h-5 text-yellow-500 animate-pulse" />;
+        return <Crown className="w-6 h-6 text-yellow-500 animate-pulse" />;
       case 2:
-        return <Medal className="w-5 h-5 text-gray-400 animate-bounce" />;
+        return <Medal className="w-6 h-6 text-gray-400 animate-bounce" />;
       case 3:
-        return <Award className="w-5 h-5 text-amber-600 animate-pulse" />;
+        return <Award className="w-6 h-6 text-amber-600 animate-pulse" />;
       default:
-        return <Trophy className="w-4 h-4 text-blue-500" />;
+        return <Trophy className="w-5 h-5 text-blue-500" />;
+    }
+  };
+
+  const getRankBadge = (rank: number) => {
+    switch (rank) {
+      case 1:
+        return "🥇";
+      case 2:
+        return "🥈";
+      case 3:
+        return "🥉";
+      default:
+        return "🏅";
     }
   };
 
@@ -158,11 +170,10 @@ const StudentsHonorBoard = () => {
     return student.image || avatars[student.id % avatars.length];
   };
 
-  const handlePageChange = (newPage: number) => {
-    if (newPage < 1 || newPage > totalPages) return;
-    setCurrentPage(newPage);
-    // Scroll to section
-    sectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // دالة للحصول على الاسم بناءً على اللغة
+  const getLocalizedName = (item: { name: string; name_ar?: string } | null | undefined) => {
+    if (!item) return t('common.notSpecified', 'Not Specified');
+    return isArabic && item.name_ar ? item.name_ar : item.name;
   };
 
   if (loading) {
@@ -173,23 +184,25 @@ const StudentsHonorBoard = () => {
             <Skeleton className="h-12 w-64 mx-auto mb-4" />
             <Skeleton className="h-6 w-96 mx-auto" />
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
-              <Card key={i} className="overflow-hidden text-center animate-pulse">
-                <CardHeader className="pt-8">
-                  <Skeleton className="h-20 w-20 rounded-full mx-auto mb-4" />
-                  <Skeleton className="h-6 w-32 mx-auto mb-2" />
-                  <Skeleton className="h-4 w-24 mx-auto mb-4" />
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-3 gap-3">
-                    <Skeleton className="h-12 rounded" />
-                    <Skeleton className="h-12 rounded" />
-                    <Skeleton className="h-12 rounded" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(3)].map((_, i) => (
+                <Card key={i} className="overflow-hidden text-center animate-pulse">
+                  <CardHeader className="pt-8">
+                    <Skeleton className="h-20 w-20 rounded-full mx-auto mb-4" />
+                    <Skeleton className="h-6 w-32 mx-auto mb-2" />
+                    <Skeleton className="h-4 w-24 mx-auto mb-4" />
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-3 gap-3">
+                      <Skeleton className="h-12 rounded" />
+                      <Skeleton className="h-12 rounded" />
+                      <Skeleton className="h-12 rounded" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -197,7 +210,11 @@ const StudentsHonorBoard = () => {
   }
 
   return (
-    <div ref={sectionRef} className="min-h-[500px] bg-gradient-to-b from-background to-muted/30 py-16">
+    <div 
+      ref={sectionRef} 
+      className="min-h-[500px] bg-gradient-to-b from-background to-muted/30 py-16"
+      dir={isArabic ? 'rtl' : 'ltr'}
+    >
       <div className="container mx-auto px-4">
         {/* Header with animation */}
         <div
@@ -208,219 +225,205 @@ const StudentsHonorBoard = () => {
           <div className="inline-flex items-center gap-3 mb-4">
             <Sparkles className="w-8 h-8 text-yellow-500 animate-pulse" />
             <h2 className="text-3xl md:text-4xl font-bold text-foreground">
-              {t('students.title')}
+              {t('students.topStudents', 'Top Students')}
             </h2>
             <Sparkles className="w-8 h-8 text-yellow-500 animate-pulse" />
           </div>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            {t('students.subtitle')}
+            {t('students.honorBoard', 'Meet our top performing students')}
           </p>
         </div>
 
-        {/* Results Info */}
-        {students.length > 0 && (
-          <div className={`flex justify-between items-center mb-8 transition-all duration-700 delay-300 ${
-            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-          }`}>
-            <p className="text-muted-foreground text-sm">
-              {t('common.showing')} {((currentPage - 1) * 4) + 1} {t('common.to')} {Math.min(currentPage * 4, totalStudents)} {t('common.of')} {totalStudents} {t('students.student')}
-            </p>
-            <div className="text-sm text-muted-foreground">
-              {t('common.sortedBy')}: <strong>{t('students.rating')}</strong>
-            </div>
-          </div>
-        )}
-
-        {/* Students */}
         {students.length === 0 ? (
           <div className="text-center text-muted-foreground py-12">
             <Trophy className="w-16 h-16 mx-auto mb-4 opacity-50" />
             <p>{t('students.noData', 'No students data available at the moment')}</p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {students.map((student, index) => {
-              const globalRank = (currentPage - 1) * 4 + index + 1;
-
-              return (
-                <Card
-                  key={student.id}
-                  className={`group cursor-pointer hover:shadow-2xl transition-all duration-500 border-0 shadow-lg relative overflow-hidden ${
-                    isVisible
-                      ? 'opacity-100 translate-y-0 scale-100'
-                      : 'opacity-0 translate-y-10 scale-95'
-                  }`}
-                  style={{
-                    transitionDelay: `${index * 150}ms`
-                  }}
-                >
-                  {/* Background effect on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-950/20 dark:to-purple-950/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
-                  {/* Student rank */}
-                  <div
-                    className={`absolute top-4 ${isArabic ? 'left-4' : 'right-4'} ${
-                      getRankBgColor(globalRank)
-                    } text-white px-3 py-1 rounded-full flex items-center gap-2 text-sm font-bold z-10 transform transition-all duration-300 group-hover:scale-110 group-hover:rotate-3`}
-                  >
-                    {getRankIcon(globalRank)}
-                    #{globalRank}
-                  </div>
-
-                  <CardHeader className="text-center pt-8 pb-4 relative z-10">
-                    {/* Avatar */}
-                    <div className="relative mx-auto mb-4">
-                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full scale-110 opacity-0 group-hover:opacity-100 transition-all duration-500 blur-sm"></div>
-                      <Avatar className="w-20 h-20 border-4 border-white shadow-lg transform transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 relative z-10">
-                        <AvatarImage
-                          src={getDefaultAvatar(student)}
-                          alt={student.name}
-                          className="transition-all duration-500 group-hover:brightness-110"
-                        />
-                        <AvatarFallback className="text-sm bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold transition-all duration-500 group-hover:scale-110">
-                          {student.name
-                            .split(' ')
-                            .map((n) => n[0])
-                            .join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                    </div>
-
-                    <CardTitle className="text-lg transition-all duration-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:scale-105">
-                      {student.name}
-                    </CardTitle>
-
-                    <div className="flex flex-col gap-1 mt-2">
-                      <Badge
-                        variant="secondary"
-                        className="mx-auto text-xs transition-all duration-300 group-hover:bg-blue-100 group-hover:text-blue-700 dark:group-hover:bg-blue-900/30"
-                      >
-                        {student.grade?.name || t('common.notSpecified', 'Not Specified')}
-                      </Badge>
-                      <Badge
-                        variant="outline"
-                        className="mx-auto text-xs transition-all duration-300 group-hover:border-blue-300"
-                      >
-                        {student.country?.name || t('common.notSpecified', 'Not Specified')}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="space-y-4 relative z-10">
-                    <div className="grid grid-cols-3 gap-3 text-center">
-                      <div className="transform transition-all duration-300 group-hover:scale-110">
-                        <div className="text-xl font-bold text-primary flex flex-col items-center gap-1">
-                          <BookOpen className="w-4 h-4 transition-all duration-300 group-hover:scale-125 group-hover:text-blue-500" />
-                          {student.total_courses}
-                        </div>
-                        <div className="text-xs text-muted-foreground transition-all duration-300 group-hover:text-foreground group-hover:font-medium">
-                          {t('students.totalCourses')}
-                        </div>
-                      </div>
-
-                      <div className="transform transition-all duration-300 group-hover:scale-110">
-                        <div className="text-xl font-bold text-green-600 flex flex-col items-center gap-1">
-                          <CheckCircle className="w-4 h-4 transition-all duration-300 group-hover:scale-125 group-hover:text-green-500" />
-                          {student.completed_courses}
-                        </div>
-                        <div className="text-xs text-muted-foreground transition-all duration-300 group-hover:text-foreground group-hover:font-medium">
-                          {t('students.completed')}
-                        </div>
-                      </div>
-
-                      <div className="transform transition-all duration-300 group-hover:scale-110">
-                        <div className="text-xl font-bold text-amber-600 flex flex-col items-center gap-1">
-                          <Star className="w-4 h-4 transition-all duration-300 group-hover:scale-125 group-hover:text-yellow-500" />
-                          {student.total_rate}
-                        </div>
-                        <div className="text-xs text-muted-foreground transition-all duration-300 group-hover:text-foreground group-hover:font-medium">
-                          {t('students.rating')}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-
-                  <div className="absolute inset-0 border-2 border-transparent group-hover:border-blue-300 dark:group-hover:border-blue-600 rounded-lg transition-all duration-500 pointer-events-none"></div>
-                </Card>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className={`flex justify-center items-center gap-2 mt-8 transition-all duration-700 delay-500 ${
+          <div className={`max-w-6xl mx-auto transition-all duration-700 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="flex items-center gap-1"
+            <Swiper
+              modules={[Navigation, Autoplay]}
+              spaceBetween={30}
+              slidesPerView={1}
+              navigation
+              autoplay={{
+                delay: 3000,
+                disableOnInteraction: false,
+              }}
+              breakpoints={{
+                640: {
+                  slidesPerView: 1,
+                  spaceBetween: 20,
+                },
+                768: {
+                  slidesPerView: 2,
+                  spaceBetween: 30,
+                },
+                1024: {
+                  slidesPerView: 3,
+                  spaceBetween: 30,
+                },
+              }}
+              className="students-swiper"
+              dir={isArabic ? 'rtl' : 'ltr'}
             >
-              {isArabic ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-              {t('common.previous')}
-            </Button>
-            
-            <div className="flex items-center gap-1">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                const pageNum = i + 1;
+              {students.map((student, index) => {
+                const rank = index + 1;
+                
                 return (
-                  <Button
-                    key={pageNum}
-                    variant={currentPage === pageNum ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handlePageChange(pageNum)}
-                    className="w-8 h-8 p-0"
-                  >
-                    {pageNum}
-                  </Button>
+                  <SwiperSlide key={student.id}>
+                    <Card className="group cursor-pointer hover:shadow-2xl transition-all duration-500 border-0 shadow-lg relative overflow-hidden h-full">
+                      {/* Rank Badge */}
+                      <div className={`absolute -top-2 z-20 ${isArabic ? '-left-2' : '-right-2'}`}>
+                        <div className={`${getRankBgColor(rank)} text-white px-4 py-2 rounded-full flex items-center gap-2 text-lg font-bold transform rotate-12 shadow-2xl`}>
+                          <span className="text-xl">{getRankBadge(rank)}</span>
+                          <span>#{rank}</span>
+                        </div>
+                      </div>
+
+                      {/* Background effect on hover */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-950/20 dark:to-purple-950/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+                      <CardHeader className="text-center pt-12 pb-4 relative z-10">
+                        {/* Avatar */}
+                        <div className="relative mx-auto mb-4">
+                          <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full scale-110 opacity-0 group-hover:opacity-100 transition-all duration-500 blur-sm"></div>
+                          <Avatar className="w-24 h-24 border-4 border-white shadow-lg transform transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 relative z-10">
+                            <AvatarImage
+                              src={getDefaultAvatar(student)}
+                              alt={student.name}
+                              className="transition-all duration-500 group-hover:brightness-110"
+                            />
+                            <AvatarFallback className="text-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold">
+                              {student.name
+                                .split(' ')
+                                .map((n) => n[0])
+                                .join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
+
+                        <CardTitle className="text-xl transition-all duration-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:scale-105">
+                          {student.name}
+                        </CardTitle>
+
+                        {/* Grade and Country */}
+                        <div className="flex flex-col gap-2 mt-3">
+                          <Badge
+                            variant="secondary"
+                            className="mx-auto text-sm transition-all duration-300 group-hover:bg-blue-100 group-hover:text-blue-700 dark:group-hover:bg-blue-900/30"
+                          >
+                            📚 {getLocalizedName(student.grade)}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className="mx-auto text-sm transition-all duration-300 group-hover:border-blue-300"
+                          >
+                            🌍 {getLocalizedName(student.country)}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+
+                      <CardContent className="space-y-4 relative z-10 pb-8">
+                        {/* Statistics */}
+                        <div className="grid grid-cols-3 gap-4 text-center">
+                          {/* Total Courses */}
+                          <div className="transform transition-all duration-300 group-hover:scale-110">
+                            <div className="text-lg font-bold text-primary flex flex-col items-center gap-1">
+                              <BookOpen className="w-5 h-5 transition-all duration-300 group-hover:scale-125 group-hover:text-blue-500" />
+                              {student.total_courses}
+                            </div>
+                            <div className="text-xs text-muted-foreground transition-all duration-300 group-hover:text-foreground group-hover:font-medium">
+                              {t('students.totalCourses', 'Courses')}
+                            </div>
+                          </div>
+
+                          {/* Completed Courses */}
+                          <div className="transform transition-all duration-300 group-hover:scale-110">
+                            <div className="text-lg font-bold text-green-600 flex flex-col items-center gap-1">
+                              <CheckCircle className="w-5 h-5 transition-all duration-300 group-hover:scale-125 group-hover:text-green-500" />
+                              {student.completed_courses}
+                            </div>
+                            <div className="text-xs text-muted-foreground transition-all duration-300 group-hover:text-foreground group-hover:font-medium">
+                              {t('students.completed', 'Completed')}
+                            </div>
+                          </div>
+
+                          {/* Rating */}
+                          <div className="transform transition-all duration-300 group-hover:scale-110">
+                            <div className="text-lg font-bold text-amber-600 flex flex-col items-center gap-1">
+                              <Star className="w-5 h-5 transition-all duration-300 group-hover:scale-125 group-hover:text-yellow-500" />
+                              {student.average_rating}
+                            </div>
+                            <div className="text-xs text-muted-foreground transition-all duration-300 group-hover:text-foreground group-hover:font-medium">
+                              {t('students.rating', 'Rating')}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Success Rate */}
+                        <div className="bg-muted/50 rounded-lg p-3 mt-4">
+                          <div className="text-center">
+                            <div className="text-sm font-semibold text-foreground mb-1">
+                              {t('students.successRate', 'Success Rate')}
+                            </div>
+                            <div className="text-2xl font-bold text-green-600">
+                              {student.average_rating > 0 ? Math.min(100, student.total_rate * 20) : 0}%
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+
+                      <div className="absolute inset-0 border-2 border-transparent group-hover:border-blue-300 dark:group-hover:border-blue-600 rounded-lg transition-all duration-500 pointer-events-none"></div>
+                    </Card>
+                  </SwiperSlide>
                 );
               })}
-            </div>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="flex items-center gap-1"
-            >
-              {t('common.next')}
-              {isArabic ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            </Button>
+            </Swiper>
           </div>
         )}
 
         {error && (
-          <div
-            className={`text-center text-yellow-600 bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-8 transition-all duration-500 ${
-              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-            }`}
-          >
+          <div className="text-center text-yellow-600 bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-8">
             <p>{t('common.note', 'Note')}: {t('students.usingCachedData', 'Using cached data')} - {error}</p>
           </div>
         )}
-
-        {/* Floating particles effect */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(8)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-2 h-2 bg-blue-400/30 rounded-full animate-float"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${i * 1.5}s`,
-                animationDuration: `${8 + i * 1}s`,
-              }}
-            />
-          ))}
-        </div>
       </div>
+
+      {/* CSS for navigation arrows */}
+      <style jsx>{`
+        .students-swiper {
+          padding: 20px 10px;
+        }
+        .students-swiper :global(.swiper-button-next),
+        .students-swiper :global(.swiper-button-prev) {
+          color: rgb(59 130 246);
+          background: white;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .students-swiper :global(.swiper-button-next:after),
+        .students-swiper :global(.swiper-button-prev:after) {
+          font-size: 18px;
+          font-weight: bold;
+        }
+        
+        /* RTL support for Swiper */
+        .students-swiper[dir="rtl"] :global(.swiper-button-next) {
+          left: 10px;
+          right: auto;
+        }
+        .students-swiper[dir="rtl"] :global(.swiper-button-prev) {
+          right: 10px;
+          left: auto;
+        }
+      `}</style>
     </div>
   );
 };
 
-export default StudentsHonorBoard;
+export default StudentsHonorBoardCarousel;
