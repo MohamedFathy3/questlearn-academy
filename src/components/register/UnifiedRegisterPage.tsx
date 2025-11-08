@@ -171,18 +171,7 @@ console.log('🎯 [DEBUG] Subjects count:', subjects.length);
         <div className="text-center mb-6 animate-slide-down">
           <h2 className="text-2xl font-bold text-gray-800">{t(getStepTitle())}</h2>
         </div>
-<button 
-  type="button"
-  onClick={() => {
-    console.log('🧪 [TEST] Current form data:', formData);
-    console.log('🧪 [TEST] Active tab:', activeTab);
-    console.log('🧪 [TEST] Validation errors:', errors);
-    console.log('🧪 [TEST] Can proceed to next step?', validateStep(currentStep, formData, activeTab, countries));
-  }}
-  className="px-4 py-2 bg-gray-500 text-white rounded-lg text-sm"
->
-  Test Data (Dev Only)
-</button>
+
         <form onSubmit={handleSubmit}>
           {renderStepContent()}
 

@@ -423,12 +423,19 @@ const resources: Record<string, any> = {
           teacher: 'Teacher',
           parent: 'Parent'
         },
+     
         steps: {
           personalInfo: 'Personal Information',
           academicInfo: 'Academic Information',
           reviewData: 'Review Data',
           completeRegistration: 'Complete Registration'
         },
+titles:{
+officialDocuments:"officialDocuments",
+professionalInfo:"professionalInfo",
+
+},
+        
         form: {
           dateOfBirth:'dateOfBirth',
           selectCode:'selectcode',
@@ -1437,6 +1444,15 @@ group: "جماعي",
           uploadCertificate: 'صورة الشهادة',
           uploadExperience: 'صورة الخبرة'
         },
+
+
+
+        titles:{
+officialDocuments:"officialDocuments",
+professionalInfo:"professionalInfo",
+
+},
+     
         passwordRequirements: {
           title: 'متطلبات كلمة المرور',
           minLength: '8 أحرف على الأقل',
