@@ -132,6 +132,7 @@ const resources: Record<string, any> = {
           teacherShare: 'Teacher Share',
           viewCourse: 'View Course',
           noCourses: 'No courses available at the moment',
+      
         },
         reviews: {
           title: 'Ratings and Reviews',
@@ -834,6 +835,13 @@ const resources: Record<string, any> = {
           joinStudents:'joinStudents',
           exploreAllCourses:'exploreAllCourses',
                   freshContent:'freshContent',
+                      joined:"joined",
+                      remaining:"remaining",
+                      almostFull:"almostFull",
+                   fillingFast   :"fillingFast",
+                   available:"available",
+                   completed:"completed",
+                   hurryUp:"hurryUp",
 group:'group',
 private:'private',
         title: "All",
