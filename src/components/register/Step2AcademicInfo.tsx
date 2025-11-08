@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FiPlus, FiMinus, FiUpload } from 'react-icons/fi';
+import { FiPlus, FiMinus, FiBook, FiAward } from 'react-icons/fi';
 import { FormData } from '@/type/useFormData';
 import { UserType } from '@/utils/constants';
 import FileUpload from './FileUpload';
@@ -10,7 +10,6 @@ interface Step2AcademicInfoProps {
   updateFormData: (updates: Partial<FormData>) => void;
   errors: Record<string, string>;
   clearError: (field: string) => void;
-  countries: any[];
   stages: any[];
   subjects: any[];
   activeTab: UserType;
@@ -58,9 +57,14 @@ const Step2AcademicInfo: React.FC<Step2AcademicInfoProps> = ({
   if (activeTab === 'student') {
     return (
       <div className="space-y-6 animate-fade-in-up">
+        <div className="text-center mb-6">
+          <FiBook className="text-4xl mx-auto mb-3 text-blue-500" />
+          <h3 className="text-xl font-bold text-blue-600">{t('register.titles.academicInfo')}</h3>
+        </div>
+
         <div>
           <label className="block text-sm font-semibold mb-2 text-blue-600">
-            {t('register.form.educationalStage')}
+            {t('register.form.educationalStage')} *
           </label>
           <div className="space-y-3">
             <select 
@@ -105,14 +109,19 @@ const Step2AcademicInfo: React.FC<Step2AcademicInfoProps> = ({
     );
   }
 
-  // للمعلمين: مراحل ومواد متعددة
+  // للمعلمين: مراحل ومواد متعددة + وثائق
   if (activeTab === 'teacher') {
     return (
       <div className="space-y-6 animate-fade-in-up">
+        <div className="text-center mb-6">
+          <FiAward className="text-4xl mx-auto mb-3 text-blue-500" />
+          <h3 className="text-xl font-bold text-blue-600">{t('register.titles.professionalInfo')}</h3>
+        </div>
+
         {/* المراحل التعليمية */}
         <div>
           <label className="block text-sm font-semibold mb-2 text-blue-600">
-            {t('register.form.educationalStages')}
+            {t('register.form.educationalStages')} *
           </label>
           <div className="space-y-3">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -160,7 +169,7 @@ const Step2AcademicInfo: React.FC<Step2AcademicInfoProps> = ({
         {/* المواد الدراسية */}
         <div>
           <label className="block text-sm font-semibold mb-2 text-blue-600">
-            {t('register.form.subjects')}
+            {t('register.form.subjects')} *
           </label>
           <div className="space-y-3">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -205,80 +214,69 @@ const Step2AcademicInfo: React.FC<Step2AcademicInfoProps> = ({
           {errors.subject_id && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.subject_id}</p>}
         </div>
 
-        {/* بطاقة الهوية */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-semibold mb-2 text-blue-600">
-              {t('register.form.idCardFront')}
-            </label>
-            <FileUpload
-              onFileSelect={(file) => handleFileUpload(file, 'id_card_front')}
-              onFileRemove={() => handleFileRemove('id_card_front')}
-              preview={formData.id_card_front ? URL.createObjectURL(formData.id_card_front) : null}
-              accept="image/*"
-              error={errors.id_card_front}
-              uploadText={t('register.form.uploadFront')}
-            />
-            {errors.id_card_front && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.id_card_front}</p>}
+        {/* الوثائق الرسمية */}
+        <div className="bg-blue-50 p-6 rounded-2xl border-2 border-blue-200">
+          <h4 className="text-lg font-semibold text-blue-700 mb-4">{t('register.titles.officialDocuments')}</h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-blue-600">
+                {t('register.form.idCardFront')} *
+              </label>
+              <FileUpload
+                onFileSelect={(file) => handleFileUpload(file, 'id_card_front')}
+                onFileRemove={() => handleFileRemove('id_card_front')}
+                preview={formData.id_card_front ? URL.createObjectURL(formData.id_card_front) : null}
+                accept="image/*"
+                error={errors.id_card_front}
+                uploadText={t('register.form.uploadFront')}
+              />
+              {errors.id_card_front && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.id_card_front}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-blue-600">
+                {t('register.form.idCardBack')} *
+              </label>
+              <FileUpload
+                onFileSelect={(file) => handleFileUpload(file, 'id_card_back')}
+                onFileRemove={() => handleFileRemove('id_card_back')}
+                preview={formData.id_card_back ? URL.createObjectURL(formData.id_card_back) : null}
+                accept="image/*"
+                error={errors.id_card_back}
+                uploadText={t('register.form.uploadBack')}
+              />
+              {errors.id_card_back && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.id_card_back}</p>}
+            </div>
           </div>
 
-          <div>
+          <div className="mt-4">
             <label className="block text-sm font-semibold mb-2 text-blue-600">
-              {t('register.form.idCardBack')}
+              {t('register.form.certificateImage')} *
             </label>
             <FileUpload
-              onFileSelect={(file) => handleFileUpload(file, 'id_card_back')}
-              onFileRemove={() => handleFileRemove('id_card_back')}
-              preview={formData.id_card_back ? URL.createObjectURL(formData.id_card_back) : null}
+              onFileSelect={(file) => handleFileUpload(file, 'certificate_image')}
+              onFileRemove={() => handleFileRemove('certificate_image')}
+              preview={formData.certificate_image ? URL.createObjectURL(formData.certificate_image) : null}
               accept="image/*"
-              error={errors.id_card_back}
-              uploadText={t('register.form.uploadBack')}
+              error={errors.certificate_image}
+              uploadText={t('register.form.uploadCertificate')}
             />
-            {errors.id_card_back && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.id_card_back}</p>}
+            {errors.certificate_image && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.certificate_image}</p>}
           </div>
-        </div>
-
-        {/* الشهادات */}
-        <div>
-          <label className="block text-sm font-semibold mb-2 text-blue-600">
-            {t('register.form.certificateImage')}
-          </label>
-          <FileUpload
-            onFileSelect={(file) => handleFileUpload(file, 'certificate_image')}
-            onFileRemove={() => handleFileRemove('certificate_image')}
-            preview={formData.certificate_image ? URL.createObjectURL(formData.certificate_image) : null}
-            accept="image/*"
-            error={errors.certificate_image}
-            uploadText={t('register.form.uploadCertificate')}
-          />
-          {errors.certificate_image && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.certificate_image}</p>}
-        </div>
-
-        {/* خبرة العمل (اختياري) */}
-        <div>
-          <label className="block text-sm font-semibold mb-2 text-blue-600">
-            {t('register.form.experienceImage')} <span className="text-gray-500 text-sm font-normal">({t('register.form.optional')})</span>
-          </label>
-          <FileUpload
-            onFileSelect={(file) => handleFileUpload(file, 'experience_image')}
-            onFileRemove={() => handleFileRemove('experience_image')}
-            preview={formData.experience_image ? URL.createObjectURL(formData.experience_image) : null}
-            accept="image/*"
-            uploadText={t('register.form.uploadExperience')}
-          />
         </div>
       </div>
     );
   }
 
-  // لأولياء الأمور: لا توجد معلومات أكاديمية إضافية
   return (
     <div className="text-center py-8 animate-fade-in-up">
       <div className="p-8 rounded-2xl border-2 bg-blue-50 border-blue-400 shadow-lg shadow-blue-500/10">
+        <FiBook className="text-4xl mx-auto mb-4 text-blue-500" />
         <h3 className="text-2xl font-bold mb-3 text-blue-600">
-          {t('register.messages.readyToRegister')}
+          {t('register.messages.readyToContinue')}
         </h3>
-        <p className="text-blue-500">{t('register.messages.clickToComplete')}</p>
+        <p className="text-blue-500">{t('register.messages.clickToNext')}</p>
       </div>
     </div>
   );
