@@ -28,20 +28,15 @@ interface Student {
   enrolled_courses: number;
   total_hours: number;
   points: number;
+  country:string;
   total_rate: number;
   average_rating: number;
   grade: {
     name: string;
     name_ar?: string;
   };
-  stage: {
-    name: string;
-    name_ar?: string;
-  };
-  country: {
-    name: string;
-    name_ar?: string;
-  };
+ 
+stage:string
 }
 
 interface ApiResponse {
@@ -378,13 +373,13 @@ const StudentsHonorBoardCarousel = () => {
                             variant="secondary"
                             className="mx-auto text-sm transition-all duration-300 group-hover:bg-blue-100 group-hover:text-blue-700 dark:group-hover:bg-blue-900/30"
                           >
-                            📚 {getLocalizedName(student.grade)}
+                            📚 {student.stage}
                           </Badge>
                           <Badge
                             variant="outline"
                             className="mx-auto text-sm transition-all duration-300 group-hover:border-blue-300"
                           >
-                            🌍 {getLocalizedName(student.country)}
+                            🌍 {student.country}
                           </Badge>
                         </div>
                       </CardHeader>
