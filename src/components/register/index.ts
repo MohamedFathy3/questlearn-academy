@@ -1,0 +1,9 @@
+export { default as UnifiedRegisterPage } from './UnifiedRegisterPage';
+export { default as RegisterTabs } from './RegisterTabs';
+export { default as StepIndicator } from './StepIndicator';
+export { default as Step1PersonalInfo } from './Step1PersonalInfo';
+export { default as Step2AcademicInfo } from './Step2AcademicInfo';
+export { default as Step3ReviewData } from './Step3ReviewData';
+export { default as CountryDropdown } from './CountryDropdown';
+export { default as FileUpload } from './FileUpload';
+export { default as PasswordStrength } from './PasswordStrength';

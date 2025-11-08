@@ -19,6 +19,8 @@ const resources: Record<string, any> = {
         library_teacher: 'Teacher Library',
         library_student: 'Student Library'
       },
+
+    
       profile: {
         learningStats: 'Learning Statistics',
         yourLearningProgress: 'Your learning progress and achievements',
@@ -436,6 +438,8 @@ const resources: Record<string, any> = {
           phone: 'Phone Number',
           phonePlaceholder: '1234567890',
           qrCode: 'QR Code',
+          phoneRequer:"Please select the code",
+          chooscontry:"Choose the country",
           qrCodePlaceholder: 'Enter QR code',
           qrCodeHelp: 'Use the dedicated QR code to track your children',
           teacherType: 'Teacher Type',
@@ -445,6 +449,8 @@ const resources: Record<string, any> = {
           selectCountry: 'Select Country',
           searchCountry: 'Search for country...',
           nationalId: 'National ID',
+          educationalStage:"educationalStage",  
+          selectStage:"selectStage",
           passportNumber: 'Passport Number',
           nationalIdPlaceholder: '14-digit national ID',
           passportPlaceholder: 'Passport number',
@@ -530,7 +536,15 @@ const resources: Record<string, any> = {
         experienceFuture: 'Experience the future of education',
         scrollDown: 'Scroll Down'
       },
+
+
+      
       teachers: {
+
+
+        male: "teachers",
+    female:"teachers",
+ 
         title: 'Top Teachers',
         subtitle: 'Meet our most successful instructors',
         teacher: 'teacher',
@@ -609,44 +623,43 @@ const resources: Record<string, any> = {
         lastMonth: 'Last Month',
         allTime: 'All Time'
       },
-      contact: {
-        title: 'Contact Us',
-        subtitle: 'Get in Touch',
-        description: 'Your message will reach us instantly and we\'ll respond as quickly as possible',
-        formTitle: 'Talk to Us Anytime',
-        submitted: 'Message Sent!',
-        submittedMessage: 'Your message has been received and we\'ll get back to you soon',
-        quickResponse: 'Response within 24 hours ⚡',
-        
-        // Form Fields
-        form: {
-          name: 'Full Name',
-          namePlaceholder: 'Enter your full name',
-          phone: 'Phone Number',
-          phonePlaceholder: 'Enter your phone number',
-          email: 'Email Address',
-          emailPlaceholder: 'Enter your email address',
-          message: 'Message',
-          messagePlaceholder: 'Write your message here...',
-          submit: 'Send Message',
-          sending: 'Sending...'
-        },
-        
-        // Validation Messages
-        validation: {
-          required: 'This field is required',
-          invalidEmail: 'Please enter a valid email address',
-          invalidPhone: 'Please enter a valid phone number'
-        },
-        
-        // Contact Methods
-        methods: {
-          email: 'Email',
-          phone: 'Phone',
-          address: 'Address',
-          workingHours: 'Working Hours'
-        }
-      },
+   contact: {
+    "title": "Contact Us",
+    "subtitle": "Get in Touch", 
+    "description": "Your message will reach us instantly and we'll respond as quickly as possible",
+    "formTitle": "Contact Us for Complaints & Suggestions",
+    "submitted": "Message Sent!",
+    "submittedMessage": "Your message has been received and will be reviewed. We'll get back to you as soon as possible. Happy to hear from you!",
+    "quickResponse": "Your message will be reviewed and we'll respond to you as soon as possible ⚡",
+    
+    "types": {
+      "complaint": "Complaint",
+      "suggestion": "Suggestion"
+    },
+    
+    "userTypes": {
+      "student": "Student",
+      "teacher": "Teacher",
+      "parent": "Parent"
+    },
+    
+    "form": {
+      "type": "Message Type",
+      "userType": "User Type", 
+      "name": "Full Name",
+      "namePlaceholder": "Enter your full name",
+      "phone": "Phone Number",
+      "phonePlaceholder": "Enter your phone number",
+      "email": "Email Address",
+      "emailPlaceholder": "Enter your email address",
+      "message": "Message",
+      "messagePlaceholder": "Write your message here...",
+      "complaintPlaceholder": "Describe your complaint in detail...",
+      "suggestionPlaceholder": "Share your suggestion with us...",
+      "submit": "Send Message",
+      "sending": "Sending..."
+    }
+  },
       libraries: {
         title: 'My Library',
         description: 'Manage and organize your educational files',
@@ -1374,6 +1387,10 @@ group: "جماعي",
           qrCodeHelp: 'استخدم كود QR المخصص لمتابعة أبنائك',
           teacherType: 'نوع المعلم',
           maleTeacher: 'معلم',
+          chooscontry:'اختار الدوله',
+            educationalStage:"educationalStage",  
+          selectStage:"اختار المرحله",
+          phoneRequer:"يرجى اختيار رمز الدولة",
           femaleTeacher: 'معلمة',
           country: 'الدوله',
           selectCountry: 'اختر الدوله',
@@ -1465,6 +1482,9 @@ group: "جماعي",
         scrollDown: 'قم بالتمرير للأسفل'
       },
       teachers: {
+
+        male: "معلم ",
+    female:"معلمه",
         title: 'المعلمين المتميزين',
         subtitle: 'تعرف على معلمينا الأكثر تفوقاً',
         teacher: 'معلم',
@@ -1543,44 +1563,43 @@ group: "جماعي",
         lastMonth: 'الشهر الماضي',
         allTime: 'كل الوقت'
       },
-      contact: {
-        title: 'اتصل بنا',
-        subtitle: 'تواصل معنا',
-        description: 'رسالتك هتوصلنا في ثانية ونرد عليك بأقصى سرعة',
-        formTitle: 'كلمنا وقت ما تحب',
-        submitted: 'تم الإرسال!',
-        submittedMessage: 'رسالتك وصلتنا وهنرد عليك قريب',
-        quickResponse: 'الرد خلال ٢٤ ساعة ⚡',
-        
-        // Form Fields
-        form: {
-          name: 'الاسم الكامل',
-          namePlaceholder: 'أدخل اسمك الكامل',
-          phone: 'رقم التليفون',
-          phonePlaceholder: 'أدخل رقم التليفون',
-          email: 'البريد الإلكتروني',
-          emailPlaceholder: 'أدخل بريدك الإلكتروني',
-          message: 'الرسالة',
-          messagePlaceholder: 'اكتب رسالتك هنا...',
-          submit: 'إرسال الرسالة',
-          sending: 'جاري الإرسال...'
-        },
-        
-        // Validation Messages
-        validation: {
-          required: 'هذا الحقل مطلوب',
-          invalidEmail: 'يرجى إدخال بريد إلكتروني صحيح',
-          invalidPhone: 'يرجى إدخال رقم هاتف صحيح'
-        },
-        
-        // Contact Methods
-        methods: {
-          email: 'البريد الإلكتروني',
-          phone: 'الهاتف',
-          address: 'العنوان',
-          workingHours: 'ساعات العمل'
-        }
-      },
+     contact: {
+    title: "تواصل معنا",
+    subtitle: "تواصل معنا",
+    description: "رسالتك ستصل إلينا فوراً وسنرد في أقرب وقت",
+    formTitle: "تواصل معنا للشكاوي والمقترحات",
+    submitted: "تم إرسال الرسالة!",
+    submittedMessage: "تم استلام رسالتك وسيتم مراجعتها والرد عليك في أقرب وقت. سعداء بتواصلك معنا",
+    quickResponse: "سوف يتم مراجعة رسالتك والرد عليك في أقرب وقت ⚡",
+    
+    types: {
+      complaint: "شكوي",
+      suggestion: "مقترح"
+    },
+    
+    userTypes: {
+      student: "طالب/ة",
+      teacher: "معلم/ة", 
+      parent: "ولي أمر"
+    },
+    
+    form: {
+      type: "نوع الرسالة",
+      userType: "نوع المستخدم",
+      name: "الاسم بالكامل",
+      namePlaceholder: "أدخل اسمك بالكامل",
+      phone: "رقم الهاتف",
+      phonePlaceholder: "أدخل رقم هاتفك",
+      email: "البريد الإلكتروني",
+      emailPlaceholder: "أدخل بريدك الإلكتروني",
+      message: "الرسالة",
+      "messagePlaceholder": "اكتب رسالتك هنا...",
+      "complaintPlaceholder": "اكتب شكواك بالتفصيل...",
+      "suggestionPlaceholder": "شاركنا بمقترحك...",
+      "submit": "إرسال الرسالة",
+      "sending": "جاري الإرسال..."
+    }
+  },
       libraries: {
         title: 'مكتبتي',
         description: 'إدارة وتنظيم ملفاتك التعليمية',

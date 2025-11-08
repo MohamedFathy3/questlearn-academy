@@ -1,8 +1,7 @@
-// ContactUs.jsx
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { Send, Mail, Phone, User, MessageCircle, CheckCircle } from 'lucide-react';
+import { Send, Mail, Phone, User, MessageCircle, CheckCircle, AlertCircle, Lightbulb } from 'lucide-react';
 const API_BASE_URL = "/api";
 import Hero from '@/components/home/hero';
 
@@ -12,7 +11,9 @@ const ContactUs = () => {
     name: '',
     phone: '',
     email: '',
-    message: ''
+    message: '',
+    type: 'complaint', // 'complaint' or 'suggestion'
+    userType: 'student' // 'student', 'teacher', 'parent'
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -35,7 +36,10 @@ const ContactUs = () => {
       body: JSON.stringify({
         name: formData.name,
         phone: formData.phone,
-        message: formData.email
+        email: formData.email,
+        message: formData.message,
+        type: formData.type,
+        userType: formData.userType
       }),
     }).catch(error => {
       console.error('Error:', error);
@@ -50,7 +54,9 @@ const ContactUs = () => {
         name: '',
         phone: '',
         email: '',
-        message: ''
+        message: '',
+        type: 'complaint',
+        userType: 'student'
       });
       setIsSubmitted(false);
     }, 2000);
@@ -128,11 +134,75 @@ const ContactUs = () => {
                 </motion.div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Name Field */}
+                  {/* Type Selection */}
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.4 }}
+                  >
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      {t('contact.form.type')}
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setFormData({...formData, type: 'complaint'})}
+                        className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all duration-300 ${
+                          formData.type === 'complaint' 
+                            ? 'border-red-500 bg-red-50 text-red-700' 
+                            : 'border-gray-300 bg-white/50 hover:bg-gray-50'
+                        }`}
+                      >
+                        <AlertCircle className="w-5 h-5" />
+                        {t('contact.types.complaint')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({...formData, type: 'suggestion'})}
+                        className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all duration-300 ${
+                          formData.type === 'suggestion' 
+                            ? 'border-green-500 bg-green-50 text-green-700' 
+                            : 'border-gray-300 bg-white/50 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Lightbulb className="w-5 h-5" />
+                        {t('contact.types.suggestion')}
+                      </button>
+                    </div>
+                  </motion.div>
+
+                  {/* User Type Selection */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.45 }}
+                  >
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      {t('contact.form.userType')}
+                    </label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {['student', 'teacher', 'parent'].map((userType) => (
+                        <button
+                          key={userType}
+                          type="button"
+                          onClick={() => setFormData({...formData, userType})}
+                          className={`p-3 rounded-xl border-2 transition-all duration-300 ${
+                            formData.userType === userType 
+                              ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold' 
+                              : 'border-gray-300 bg-white/50 hover:bg-gray-50'
+                          }`}
+                        >
+                          {t(`contact.userTypes.${userType}`)}
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+
+                  {/* Name Field */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.5 }}
                   >
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t('contact.form.name')}
@@ -155,7 +225,7 @@ const ContactUs = () => {
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.5 }}
+                    transition={{ delay: 0.55 }}
                   >
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t('contact.form.phone')}
@@ -201,7 +271,7 @@ const ContactUs = () => {
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.7 }}
+                    transition={{ delay: 0.65 }}
                   >
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t('contact.form.message')}
@@ -213,7 +283,11 @@ const ContactUs = () => {
                       required
                       rows="5"
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 bg-white/50 hover:bg-white/70 resize-none"
-                      placeholder={t('contact.form.messagePlaceholder')}
+                      placeholder={
+                        formData.type === 'complaint' 
+                          ? t('contact.form.complaintPlaceholder')
+                          : t('contact.form.suggestionPlaceholder')
+                      }
                     />
                   </motion.div>
 
@@ -221,7 +295,7 @@ const ContactUs = () => {
                   <motion.button
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.8 }}
+                    transition={{ delay: 0.7 }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     type="submit"
@@ -238,7 +312,7 @@ const ContactUs = () => {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.9 }}
+              transition={{ delay: 0.8 }}
               className="text-center mt-8 text-lg text-gray-600"
             >
               <p>{t('contact.quickResponse')}</p>

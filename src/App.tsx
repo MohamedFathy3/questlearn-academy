@@ -23,11 +23,12 @@ import LIbraryStudent from "@/pages/library_student";
 import LibraryTeacher from "@/pages/library_teacher";
 import TeacherDetils from "@/pages/teacherDatails";
 import { useAuth } from "@/context/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute"; // Import the ProtectedRoute
 
 const queryClient = new QueryClient();
 
 const App = () => {
-  const { user } = useAuth();  // هنا جبت حالة المستخدم
+  const { user } = useAuth();
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -40,8 +41,25 @@ const App = () => {
               <Route path="/" element={<Home />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/contact" element={<ContactUs />} />
-              <Route path="/library_student" element={<LIbraryStudent />} />
-              <Route path="/library_teacher" element={<LibraryTeacher />} />
+              
+              {/* Protected Routes - require authentication */}
+              <Route 
+                path="/library_student" 
+                element={
+                  <ProtectedRoute>
+                    <LIbraryStudent />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/library_teacher" 
+                element={
+                  <ProtectedRoute>
+                    <LibraryTeacher />
+                  </ProtectedRoute>
+                } 
+              />
+              
               <Route path="/profileParent" element={<Profileparent />} />
               <Route path="/profileTeacher/:id" element={<TeacherDetils />} />
               <Route path="/HonerBoard" element={<HonerBoard />} />
@@ -71,7 +89,7 @@ const App = () => {
                   </div>
                 }
               />
-              {/* شرط منع الدخول للصفحات دي لو المستخدم مسجل دخول */}
+              
               <Route
                 path="/login"
                 element={!user ? <LoginPage /> : <Navigate to="/" replace />}
@@ -81,7 +99,6 @@ const App = () => {
                 element={!user ? <RegisterPage /> : <Navigate to="/" replace />}
               />
 
-              {/* هذا لازم يكون في الآخر */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>
