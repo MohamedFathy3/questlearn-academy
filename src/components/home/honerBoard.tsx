@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Trophy, Award, Star, Medal, Crown, Users, BookOpen, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { Trophy, Award, Star, Medal, Crown, Users, BookOpen, ChevronLeft, ChevronRight, Sparkles, MapPin, GraduationCap } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -35,7 +35,14 @@ interface Teacher {
   };
   country: {
     name: string;
+    image: string;
   };
+  courses: Array<{
+    course_name: string;
+    students_count: number;
+    course_income: number;
+    teacher_share: number;
+  }>;
 }
 
 interface ApiResponse {
@@ -195,6 +202,22 @@ const HonorBoard = () => {
     }
   };
 
+  // دالة لاستخراج المواد الفريدة من الكورسات
+  const getUniqueSubjects = (teacher: Teacher) => {
+    if (!teacher.courses || teacher.courses.length === 0) {
+      return [t('teachers.noSubjects', 'لا توجد مواد')];
+    }
+    
+    // استخراج المواد من أسماء الكورسات (يمكن تعديل هذا المنطق حسب هيكل البيانات الفعلي)
+    const subjects = teacher.courses.map(course => {
+      // يمكنك تعديل هذا المنطق بناءً على كيفية تخزين اسم المادة
+      return course.course_name.split(' ')[0] || course.course_name;
+    });
+    
+    // إرجاع المواد الفريدة فقط
+    return [...new Set(subjects)].slice(0, 3); // الحد الأقصى 3 مواد
+  };
+
   const handleTeacherClick = (teacherId: number) => {
     navigate(`/profileTeacher/${teacherId}`);
   };
@@ -297,6 +320,7 @@ const HonorBoard = () => {
             >
               {teachers.map((teacher, index) => {
                 const rank = index + 1;
+                const subjects = getUniqueSubjects(teacher);
                 
                 return (
                   <SwiperSlide key={teacher.id}>
@@ -338,21 +362,37 @@ const HonorBoard = () => {
                           {getLocalizedTeacherType(teacher.teacher_type)} {teacher.name}
                         </CardTitle>
 
-                        {/* Subject and Courses */}
-                        <div className="flex flex-col gap-2 mt-3">
-                          <Badge
-                            variant="secondary"
-                            className="mx-auto text-sm transition-all duration-300 group-hover:bg-blue-100 group-hover:text-blue-700 dark:group-hover:bg-blue-900/30"
-                          >
-                            📚 {teacher.subject?.name || t('common.general', 'General')}
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className="mx-auto text-sm transition-all duration-300 group-hover:border-blue-300"
-                          >
-                            🎓 {teacher.courses_count} {t('teachers.courses', 'Courses')}
-                          </Badge>
+                        {/* Country */}
+                        {teacher.country && (
+                          <div className="flex items-center justify-center gap-2 mt-2">
+                            <MapPin className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground">
+                              {teacher.country.name}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Subjects */}
+                        <div className="flex flex-wrap justify-center gap-2 mt-3">
+                          {subjects.map((subject, idx) => (
+                            <Badge
+                              key={idx}
+                              variant="secondary"
+                              className="text-xs transition-all duration-300 group-hover:bg-green-100 group-hover:text-green-700 dark:group-hover:bg-green-900/30"
+                            >
+                              <GraduationCap className="w-3 h-3 mr-1" />
+                              {subject}
+                            </Badge>
+                          ))}
                         </div>
+
+                        {/* Courses Count */}
+                        <Badge
+                          variant="outline"
+                          className="mx-auto mt-2 text-sm transition-all duration-300 group-hover:border-blue-300"
+                        >
+                          🎓 {teacher.courses_count} {t('teachers.courses', 'Courses')}
+                        </Badge>
                       </CardHeader>
 
                       <CardContent className="space-y-4 relative z-10 pb-8">
@@ -392,17 +432,28 @@ const HonorBoard = () => {
                           </div>
                         </div>
 
-                        {/* Success Rate */}
+                        {/* Country Flag and Experience */}
                         <div className="bg-muted/50 rounded-lg p-3 mt-4">
-                          <div className="text-center">
-                            <div className="text-sm font-semibold text-foreground mb-1">
-                              {t('teachers.experience', 'Experience')}
-                            </div>
-                            <div className="text-2xl font-bold text-green-600">
-                              {teacher.courses_count}+
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {t('teachers.totalCourses', 'Total Courses')}
+                          <div className="flex items-center justify-between">
+                            {teacher.country && (
+                              <div className="flex items-center gap-2">
+                                <img 
+                                  src={teacher.country.image} 
+                                  alt={teacher.country.name}
+                                  className="w-6 h-4 rounded-sm object-cover"
+                                />
+                                <span className="text-sm font-medium">
+                                  {teacher.country.name}
+                                </span>
+                              </div>
+                            )}
+                            <div className="text-right">
+                              <div className="text-sm font-semibold text-foreground">
+                                {t('teachers.experience', 'Experience')}
+                              </div>
+                              <div className="text-lg font-bold text-green-600">
+                                {teacher.courses_count}+
+                              </div>
                             </div>
                           </div>
                         </div>
