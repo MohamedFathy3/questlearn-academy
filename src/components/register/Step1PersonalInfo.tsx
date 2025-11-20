@@ -150,9 +150,8 @@ const Step1PersonalInfo: React.FC<Step1PersonalInfoProps> = ({
                 console.log('📞 Phone code selected:', selectedCode);
                 updateFormData({ phone_country_code: selectedCode });
               }}
-              className="w-full p-4 rounded-xl border-2 border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+              className="w-full text-black p-4 rounded-xl border-2 border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
             >
-              <option value="">اختر رمز الدولة</option>
               {countries.map(country => (
                 <option key={country.id} value={country.phone_code}>
                   +{country.phone_code} - {country.name}
@@ -398,7 +397,7 @@ const Step1PersonalInfo: React.FC<Step1PersonalInfoProps> = ({
         )}
         {errors.password_confirmation && <p className="text-red-500 text-sm mt-1 animate-pulse">{errors.password_confirmation}</p>}
       </div>
-
+        
       {/* صورة الملف الشخصي */}
       <div className="md:col-span-2">
         <label className="block text-sm font-semibold mb-2 text-blue-600">

@@ -395,7 +395,7 @@ const resources: Record<string, any> = {
         teacherPlatform: 'Specialized Teachers Platform',
         teacherRedirect: 'An integrated platform for managing classes and educational courses, tracking students, and creating educational content',
         goToTeacherPlatform: 'Go to Teachers Platform',
-        teacherSupport: 'Technical Support: support@academy.com - 0123456789',
+        teacherSupport: 'Technical Support: support@academy.com ',
         
         // QR Code
         qrCode: 'QR Code',
@@ -1359,7 +1359,7 @@ group: "جماعي",
         teacherPlatform: 'منصة المعلمين المتخصصة',
         teacherRedirect: 'منصة متكاملة لإدارة الفصول والدورات التعليمية، متابعة الطلاب، وإنشاء المحتوى التعليمي',
         goToTeacherPlatform: 'الذهاب إلى منصة المعلمين',
-        teacherSupport: 'للدعم الفني: support@academy.com - 0123456789',
+        teacherSupport: 'للدعم الفني: support@academy.com - ',
         
         // QR Code
         qrCode: 'كود QR',
