@@ -315,20 +315,20 @@ const Step1PersonalInfo: React.FC<Step1PersonalInfoProps> = ({
       {activeTab === 'parent' && (
         <div className="md:col-span-2">
           <label className="block text-sm font-semibold mb-2 text-blue-600">
-            {t('register.form.qrCode')}
+            {t('register.form.phone')}
           </label>
           <div className="relative">
             <FiFlag className="absolute right-3 top-3 text-blue-500" />
             <input 
               type="text" 
-              name="qr_code" 
+              name="phone" 
               value={formData.qr_code} 
               onChange={handleInputChange}
               required
               className={`w-full p-4 pr-12 rounded-xl border-2 focus:outline-none focus:ring-2 transition-all duration-300 ${
                 errors.qr_code ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-blue-400 focus:ring-blue-400'
               }`} 
-              placeholder={t('register.form.qrCodePlaceholder')} 
+              placeholder= {t('register.form.phone')} 
             />
           </div>
           <p className="text-sm text-gray-500 mt-1">{t('register.form.qrCodeHelp')}</p>

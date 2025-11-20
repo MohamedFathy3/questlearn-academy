@@ -400,7 +400,7 @@ const resources: Record<string, any> = {
         // QR Code
         qrCode: 'QR Code',
         qrCodePlaceholder: 'Enter your QR code',
-        qrCodeHelp: 'Use the dedicated QR code to track your children',
+        qrCodeHelp: 'Use the dedicated phone code to track your children',
         
         // Parent Features
         parentFeatures: 'Parent Features',
@@ -449,7 +449,7 @@ professionalInfo:"professionalInfo",
           phoneRequer:"Please select the code",
           chooscontry:"Choose the country",
           qrCodePlaceholder: 'Enter QR code',
-          qrCodeHelp: 'Use the dedicated QR code to track your children',
+          qrCodeHelp: 'Use the dedicated phone code to track your children',
           teacherType: 'Teacher Type',
           maleTeacher: 'Male Teacher',
           femaleTeacher: 'Female Teacher',
@@ -1364,7 +1364,7 @@ group: "جماعي",
         // QR Code
         qrCode: 'كود QR',
         qrCodePlaceholder: 'أدخل كود QR الخاص بك',
-        qrCodeHelp: 'استخدم كود QR المخصص لمتابعة أبنائك',
+        qrCodeHelp: 'استخدم كود الهاتف المخصص لمتابعة أبنائك',
         
         // Parent Features
         parentFeatures: 'مميزات ولي الأمر',
@@ -1404,7 +1404,7 @@ group: "جماعي",
           phonePlaceholder: '1234567890',
           qrCode: 'رمز الاستجابة السريعة',
           qrCodePlaceholder: 'أدخل رمز الاستجابة السريعة',
-          qrCodeHelp: 'استخدم كود QR المخصص لمتابعة أبنائك',
+          qrCodeHelp: 'استخدم كود الهاتف المخصص لمتابعة أبنائك',
           teacherType: 'نوع المعلم',
           maleTeacher: 'معلم',
           chooscontry:'اختار الدوله',
