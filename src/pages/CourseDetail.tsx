@@ -1138,17 +1138,17 @@ const CourseDetail = () => {
                   <div className="mb-8">
                     <h2 className="text-2xl font-bold mb-6">{t('course.whatYouWillLearn')}</h2>
                    <div className="grid md:grid-cols-2 gap-4">
-  {course.what_you_will_learn
-    .split('\n') // تقسيم بالسطور الجديدة
-    .map((point: string) => point.trim())
-    .filter((point: string) => point.length > 0)
-    .map((point: string, index: number) => (
-      <div key={index} className="flex items-start gap-3">
-        <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-        <span className="text-gray-700">{point}</span>
-      </div>
-    ))
-  }
+ {course.what_you_will_learn?.split('\n')
+  .map((point: string) => point.trim())
+  .filter((point: string) => point.length > 0)
+  .map((point: string, index: number) => (
+    <div key={index} className="flex items-start gap-3">
+      <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+      <span className="text-gray-700">{point}</span>
+    </div>
+  ))
+}
+
 </div>
                   </div>
 
