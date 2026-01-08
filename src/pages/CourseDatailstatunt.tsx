@@ -96,6 +96,7 @@ interface CourseDetail {
     session_time: string | null;
     file_path: string | null;
     created_at: string;
+    video_path?: string | null;
     watching_data?: {
       started_at: string;
       watched_duration: number;
@@ -156,7 +157,8 @@ const CourseDetail = () => {
   const [debugMode, setDebugMode] = useState(false);
   const [lessonProgress, setLessonProgress] = useState<{[key: number]: {duration: number, views: number}}>({});
   
-  const videoRef = useRef<HTMLIFrameElement>(null);
+  const videoRef = useRef<HTMLIFrameElement | HTMLVideoElement | null>(null);
+  const htmlVideoRef = useRef<HTMLVideoElement | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -283,32 +285,93 @@ const CourseDetail = () => {
     setShowVideoModal(true);
   };
 
-  // دالة محسنة لتتبع الفيديو
+  // دالة محسنة لتتبع الفيديو (لا تعيد التعيين إذا كان هناك تقدم سابق)
   const startVideoTracking = (lesson: any) => {
     setCurrentLesson(lesson);
-    setWatchedDuration(0);
+    // load any previously saved watched duration
+    const previous = getLessonProgress(lesson.id).duration || 0;
+    setWatchedDuration(previous);
     setIsTracking(true);
-    
-    console.log("🔍 Starting video tracking for lesson:", lesson.id);
-    
-    progressIntervalRef.current = setInterval(() => {
+
+    console.log("🔍 Starting video tracking for lesson:", lesson.id, "starting from", previous);
+
+    // ensure any previous interval is cleared
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+
+    // helper to increment only when actual video is playing (if available)
+    const tick = () => {
       setWatchedDuration(prev => {
+        const el: any = videoRef.current;
+        // If this is an HTMLVideoElement, only increment when playing
+        if (el && el.tagName && el.tagName.toLowerCase() === 'video') {
+          if (el.paused || el.ended) {
+            return prev;
+          }
+        }
         const newDuration = prev + 1;
-        
         const estimatedDuration = 300;
-        
+
         if (newDuration % 30 === 0 || newDuration >= estimatedDuration) {
           sendVideoProgress(lesson, newDuration);
         }
-        
+
         if (newDuration >= estimatedDuration) {
           if (progressIntervalRef.current) {
             clearInterval(progressIntervalRef.current);
+            progressIntervalRef.current = null;
           }
           setIsTracking(false);
           console.log("✅ Video tracking completed");
         }
-        
+
+        return newDuration;
+      });
+    };
+
+    progressIntervalRef.current = setInterval(tick, 1000);
+  };
+
+  // Pause tracking (keeps currentLesson and watchedDuration intact)
+  const pauseVideoTracking = () => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+    setIsTracking(false);
+    console.log("⏸️ Video tracking paused");
+  };
+
+  // Resume tracking without resetting durations
+  const resumeVideoTracking = () => {
+    if (progressIntervalRef.current) return; // already running
+    setIsTracking(true);
+    console.log("▶️ Resuming video tracking for lesson:", currentLesson?.id);
+
+    progressIntervalRef.current = setInterval(() => {
+      setWatchedDuration(prev => {
+        const el: any = videoRef.current;
+        if (el && el.tagName && el.tagName.toLowerCase() === 'video') {
+          if (el.paused || el.ended) return prev;
+        }
+        const newDuration = prev + 1;
+        const estimatedDuration = 300;
+
+        if (newDuration % 30 === 0 || newDuration >= estimatedDuration) {
+          if (currentLesson) sendVideoProgress(currentLesson, newDuration);
+        }
+
+        if (newDuration >= estimatedDuration) {
+          if (progressIntervalRef.current) {
+            clearInterval(progressIntervalRef.current);
+            progressIntervalRef.current = null;
+          }
+          setIsTracking(false);
+          console.log("✅ Video tracking completed");
+        }
+
         return newDuration;
       });
     }, 1000);
@@ -915,7 +978,7 @@ const CourseDetail = () => {
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      onClick={() => playVideo(lesson.content_link, lesson)}
+                                      onClick={() => playVideo(lesson.content_link || lesson.video_path, lesson)}
                                       className={`p-0 h-8 w-8 hover:bg-primary hover:text-primary-foreground ${
                                         isCompleted ? 'bg-green-500 text-white hover:bg-green-600' : ''
                                       }`}
@@ -1269,7 +1332,34 @@ const CourseDetail = () => {
             {/* Video Player */}
             <div className="aspect-video bg-black">
               {selectedVideo ? (
-                <YouTubePlayer videoUrl={selectedVideo} />
+                (() => {
+                  const directVideo = /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(selectedVideo);
+                  if (directVideo) {
+                    return (
+                      <video
+                        ref={(el) => { htmlVideoRef.current = el; videoRef.current = el; }}
+                        controls
+                        autoPlay
+                        className="w-full h-full object-contain bg-black"
+                        onPlay={() => resumeVideoTracking()}
+                        onPause={() => pauseVideoTracking()}
+                        onEnded={() => {
+                          // mark as completed and send final progress
+                          if (currentLesson) {
+                            const final = Math.max(watchedDuration, Math.floor((htmlVideoRef.current?.duration || 300)));
+                            sendVideoProgress(currentLesson, final);
+                          }
+                          pauseVideoTracking();
+                        }}
+                      >
+                        <source src={selectedVideo} />
+                        Your browser does not support the video tag.
+                      </video>
+                    );
+                  }
+
+                  return <YouTubePlayer videoUrl={selectedVideo} />;
+                })()
               ) : (
                 <div className="text-white text-center p-4">No video selected</div>
               )}
