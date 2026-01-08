@@ -65,9 +65,8 @@ const CourseCard = ({
   const isGroupCourse = courseType === "group";
   
   // ✅ الحد الأقصى
-  const MAX_SEATS = count_student > 0 ? count_student : (maxStudents || 0);
+  const MAX_SEATS = count_student && count_student > 0 ? count_student : 0;
 
-  // ✅ استخدم subscribers_count أولاً، لو 0 استخدم studentsCount
   const CURRENT_STUDENTS = subscribers_count > 0
     ? subscribers_count
     : (studentsCount > 0 ? studentsCount : 0);
@@ -79,9 +78,9 @@ const CourseCard = ({
 
   // نسبة التقدم الخام (قد تتجاوز 100 إذا كان هناك تجاوز)، لكن للشريط نحدها لـ 100
   const rawProgressPercentage = shouldShowProgress && MAX_SEATS > 0
-    ? (CURRENT_STUDENTS / MAX_SEATS) * 100
+    ? (CURRENT_STUDENTS / MAX_SEATS) 
     : 0;
-  const progressPercentage = Math.min(rawProgressPercentage, 100);
+  const progressPercentage = Math.min(rawProgressPercentage);
 
   const getProgressStatus = () => {
     if (!shouldShowProgress) return "no-progress";
