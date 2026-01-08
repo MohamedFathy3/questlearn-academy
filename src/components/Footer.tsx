@@ -90,7 +90,7 @@ const Footer = () => {
               <Link to="/contact" className="block text-muted-foreground hover:text-tan transition-colors">
                 {t('footer.contact', 'Contact Us')}
               </Link>
-              <Link to="/community" className="block text-muted-foreground hover:text-tan transition-colors">
+              {/* <Link to="/community" className="block text-muted-foreground hover:text-tan transition-colors">
                 {t('footer.community', 'Community')}
               </Link>
               <Link to="/blog" className="block text-muted-foreground hover:text-tan transition-colors">
@@ -98,7 +98,7 @@ const Footer = () => {
               </Link>
               <Link to="/careers" className="block text-muted-foreground hover:text-tan transition-colors">
                 {t('footer.careers', 'Careers')}
-              </Link>
+              </Link> */}
             </div>
           </div>
 
@@ -119,7 +119,7 @@ const Footer = () => {
                 {t('footer.subscribe', 'Subscribe')}
               </Button>
             </div>
-            <div className="space-y-2 text-xs text-muted-foreground">
+            {/* <div className="space-y-2 text-xs text-muted-foreground">
               <Link to="/privacy" className="block hover:text-tan transition-colors">
                 {t('footer.privacy', 'Privacy Policy')}
               </Link>
@@ -129,7 +129,7 @@ const Footer = () => {
               <Link to="/cookies" className="block hover:text-tan transition-colors">
                 {t('footer.cookies', 'Cookie Policy')}
               </Link>
-            </div>
+            </div> */}
           </div>
         </div>
 

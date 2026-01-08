@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 7000, 
+    allowedHosts: ["professionalacademyedu.com"],
     proxy: {
       "/api": {
         target: "https://back.professionalacademyedu.com",
