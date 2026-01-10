@@ -129,19 +129,7 @@ const CoursesView: React.FC = () => {
               {t('courses.discover', 'Discover thousands of courses across various categories')}
             </p>
           </div>
-          
-          <Link to="/courses/create" className="animate-fade-in-right">
-            <Button 
-              variant="ghost" 
-              className="hidden sm:flex group relative overflow-hidden border border-border hover:border-primary/30 transition-all duration-500 hover:scale-105"
-            >
-              <span className="relative z-10 flex items-center gap-2">
-                {t('courses.createCourse')}
-                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            </Button>
-          </Link>
+     
         </div>
 
         {/* Filters Component */}

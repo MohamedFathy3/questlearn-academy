@@ -850,6 +850,7 @@ professionalInfo:"professionalInfo",
       },
     courses: {
         newlyAdded:'  newlyAdded',
+        allContent: 'All Content',
           newlyAddedDesc:'  newlyAddedDesc',
           viewAllCourses:'  viewAllCourses',
           readyToStart:' readyToStart',
@@ -1198,7 +1199,8 @@ group: "جماعي",
         general: "عام",
         flexible: "مرن",
         hours: "ساعات",
-        loadMore: "تحميل المزيد من الكورسات"},
+        loadMore: "تحميل المزيد من الكورسات",
+      allContent: 'جميع المحتويات',},
         
    
       enrollment: {
