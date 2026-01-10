@@ -269,56 +269,55 @@ const CourseDetail = () => {
     }
   };
 
- const applyDiscount = async () => {
-  if (!discountCode.trim()) {
-    toast({
-      title: t('common.error'),
-      description: t('discount.enterCode'),
-      variant: "destructive",
-    });
-    return;
-  }
-
-  try {
-    setApplyingDiscount(true);
-    
-    const response = await apiFetch<any>('/apply-coupon', {
-      method: 'POST',
-      body: {
-        code: discountCode,
-        amount: parseFloat(course?.original_price || course?.price || "0")
-      }
-    });
-
-    if (response.message === "Coupon applied successfully") {
-      // استخدم البيانات من الresponse مباشرة
-      const discountedPrice = response.total_after_discount;
-      const discountAmount = response.discount;
-      
-      setFinalPrice(discountedPrice);
-      setDiscountApplied(true);
-      
+  const applyDiscount = async () => {
+    if (!discountCode.trim()) {
       toast({
-        title: t('discount.applied'),
-        description: t('discount.savedAmount', { 
-          amount: discountAmount,
-          currency: course?.currency || "USD" 
-        }),
-        variant: "default",
+        title: t('common.error'),
+        description: t('discount.enterCode'),
+        variant: "destructive",
       });
-    } else {
-      throw new Error(response.message || t('discount.invalid'));
+      return;
     }
-  } catch (error: any) {
-    toast({
-      title: t('discount.invalid'),
-      description: error.message || t('discount.invalidDescription'),
-      variant: "destructive",
-    });
-  } finally {
-    setApplyingDiscount(false);
-  }
-};
+
+    try {
+      setApplyingDiscount(true);
+      
+      const response = await apiFetch<any>('/apply-coupon', {
+        method: 'POST',
+        body: {
+          code: discountCode,
+          amount: parseFloat(course?.original_price || course?.price || "0")
+        }
+      });
+
+      if (response.message === "Coupon applied successfully") {
+        const discountedPrice = response.total_after_discount;
+        const discountAmount = response.discount;
+        
+        setFinalPrice(discountedPrice);
+        setDiscountApplied(true);
+        
+        toast({
+          title: t('discount.applied'),
+          description: t('discount.savedAmount', { 
+            amount: discountAmount,
+            currency: course?.currency || "USD" 
+          }),
+          variant: "default",
+        });
+      } else {
+        throw new Error(response.message || t('discount.invalid'));
+      }
+    } catch (error: any) {
+      toast({
+        title: t('discount.invalid'),
+        description: error.message || t('discount.invalidDescription'),
+        variant: "destructive",
+      });
+    } finally {
+      setApplyingDiscount(false);
+    }
+  };
 
   const handleAddComment = async () => {
     if (!newComment.trim() || rating === 0) {
@@ -460,100 +459,105 @@ const CourseDetail = () => {
     );
   };
 
-  const renderInstructor = () => (
-    <div className="mb-8">
-      <h2 className="text-2xl font-bold mb-6">{t('course.instructor')}</h2>
-      <div className="border border-gray-200 rounded-lg p-6">
-        <div className="flex items-start gap-6">
-          <Avatar className="w-24 h-24 border-2 border-gray-300">
-            <AvatarImage src={course?.teacher?.image || ""} alt={course?.teacher?.name} />
-            <AvatarFallback className="bg-purple-600 text-white text-xl font-bold">
-              {course?.teacher?.name?.split(' ').map(n => n[0]).join('')}
-            </AvatarFallback>
-          </Avatar>
-          
-          <div className="flex-1">
-            <Link to={`/profileTeacher/${course?.teacher?.id}`}>
-              <h3 className="text-xl font-bold mb-2">{course?.teacher?.name}</h3>
-            </Link>
-            <p className="text-gray-600 mb-4">
-              {t('course.teacherDescription', {
-                subject: course?.teacher?.subject?.name,
-                country: course?.teacher?.country?.name
-              })}
-            </p>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <Star className="w-4 h-4 fill-orange-400 text-orange-400" />
-                  <span className="font-bold text-lg">{course?.teacher?.total_rate}</span>
-                </div>
-                <span className="text-sm text-gray-600">{t('teachers.rating')}</span>
-              </div>
-              
-              <div className="text-center">
-                <div className="font-bold text-lg mb-1">{course?.teacher?.courses_count || 1}</div>
-                <span className="text-sm text-gray-600">{t('teachers.courses')}</span>
-              </div>
-              
-              <div className="text-center">
-                <div className="font-bold text-lg mb-1">{(course?.teacher?.students_count || 0).toLocaleString()}</div>
-                <span className="text-sm text-gray-600">{t('teachers.students')}</span>
-              </div>
-              
-              <div className="text-center">
-                <div className="font-bold text-lg mb-1">{course?.subscribers_count?.toLocaleString()}</div>
-                <span className="text-sm text-gray-600">{t('course.courseStudents')}</span>
-              </div>
-            </div>
+  const renderInstructor = () => {
+    // هنا تم التعديل - استخدام students_count بدلاً من courses_count
+    const teacherCoursesCount = course?.teacher?.students_count || 1;
 
-            <div className="grid md:grid-cols-2 gap-6 mt-6">
-              <div>
-                <h4 className="font-semibold mb-3">{t('course.aboutInstructor')}</h4>
-                <div className="space-y-2 text-sm text-gray-600">
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4" />
-                    <span>{course?.teacher?.name}</span>
+    return (
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold mb-6">{t('course.instructor')}</h2>
+        <div className="border border-gray-200 rounded-lg p-6">
+          <div className="flex items-start gap-6">
+            <Avatar className="w-24 h-24 border-2 border-gray-300">
+              <AvatarImage src={course?.teacher?.image || ""} alt={course?.teacher?.name} />
+              <AvatarFallback className="bg-purple-600 text-white text-xl font-bold">
+                {course?.teacher?.name?.split(' ').map(n => n[0]).join('')}
+              </AvatarFallback>
+            </Avatar>
+            
+            <div className="flex-1">
+              <Link to={`/profileTeacher/${course?.teacher?.id}`}>
+                <h3 className="text-xl font-bold mb-2">{course?.teacher?.name}</h3>
+              </Link>
+              <p className="text-gray-600 mb-4">
+                {t('course.teacherDescription', {
+                  subject: course?.teacher?.subject?.name,
+                  country: course?.teacher?.country?.name
+                })}
+              </p>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <Star className="w-4 h-4 fill-orange-400 text-orange-400" />
+                    <span className="font-bold text-lg">{course?.teacher?.total_rate || 4.5}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Mail className="w-4 h-4" />
-                    <span>{course?.teacher?.email}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <BookOpen className="w-4 h-4" />
-                    <span>{t('course.teacherOf', { subject: course?.teacher?.subject?.name })}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Target className="w-4 h-4" />
-                    <span>{course?.teacher?.stage?.name}</span>
-                  </div>
+                  <span className="text-sm text-gray-600">{t('teachers.rating')}</span>
+                </div>
+                
+                <div className="text-center">
+                  <div className="font-bold text-lg mb-1">{teacherCoursesCount}</div>
+                  <span className="text-sm text-gray-600">{t('teachers.students')}</span>
+                </div>
+                
+                <div className="text-center">
+                  <div className="font-bold text-lg mb-1">{(course?.teacher?.students_count || 0).toLocaleString()}</div>
+                  <span className="text-sm text-gray-600">{t('teachers.students')}</span>
+                </div>
+                
+                <div className="text-center">
+                  <div className="font-bold text-lg mb-1">{course?.subscribers_count?.toLocaleString()}</div>
+                  <span className="text-sm text-gray-600">{t('course.courseStudents')}</span>
                 </div>
               </div>
-              
-              <div>
-                <h4 className="font-semibold mb-3">{t('course.certificates')}</h4>
-                <div className="space-y-2">
-                  {course?.teacher?.certificate_image && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Award className="w-4 h-4 text-green-500" />
-                      <span>{t('course.certifiedIn', { subject: course?.teacher?.subject?.name })}</span>
+
+              <div className="grid md:grid-cols-2 gap-6 mt-6">
+                <div>
+                  <h4 className="font-semibold mb-3">{t('course.aboutInstructor')}</h4>
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      <span>{course?.teacher?.name}</span>
                     </div>
-                  )}
-                  {course?.teacher?.experience_image && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Trophy className="w-4 h-4 text-yellow-500" />
-                      <span>{t('course.experienceVerified')}</span>
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4" />
+                      <span>{course?.teacher?.email}</span>
                     </div>
-                  )}
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="w-4 h-4" />
+                      <span>{t('course.teacherOf', { subject: course?.teacher?.subject?.name })}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Target className="w-4 h-4" />
+                      <span>{course?.teacher?.stage?.name}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold mb-3">{t('course.certificates')}</h4>
+                  <div className="space-y-2">
+                    {course?.teacher?.certificate_image && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Award className="w-4 h-4 text-green-500" />
+                        <span>{t('course.certifiedIn', { subject: course?.teacher?.subject?.name })}</span>
+                      </div>
+                    )}
+                    {course?.teacher?.experience_image && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Trophy className="w-4 h-4 text-yellow-500" />
+                        <span>{t('course.experienceVerified')}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderExams = () => (
     <div className="mb-8">
@@ -884,8 +888,6 @@ const CourseDetail = () => {
                 <span>{t('course.subtitles')}</span>
               </div>
             </div>
-
-          
           </div>
         </div>
       </div>
@@ -1137,19 +1139,17 @@ const CourseDetail = () => {
                 <>
                   <div className="mb-8">
                     <h2 className="text-2xl font-bold mb-6">{t('course.whatYouWillLearn')}</h2>
-                   <div className="grid md:grid-cols-2 gap-4">
- {course.what_you_will_learn?.split('\n')
-  .map((point: string) => point.trim())
-  .filter((point: string) => point.length > 0)
-  .map((point: string, index: number) => (
-    <div key={index} className="flex items-start gap-3">
-      <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-      <span className="text-gray-700">{point}</span>
-    </div>
-  ))
-}
-
-</div>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {course.what_you_will_learn?.split('\n')
+                        .map((point: string) => point.trim())
+                        .filter((point: string) => point.length > 0)
+                        .map((point: string, index: number) => (
+                          <div key={index} className="flex items-start gap-3">
+                            <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                            <span className="text-gray-700">{point}</span>
+                          </div>
+                        ))}
+                    </div>
                   </div>
 
                   <div className="mb-8">

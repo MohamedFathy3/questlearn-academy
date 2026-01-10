@@ -13,6 +13,7 @@ import Hero from '@/components/home/hero';
 import Course from '@/components/home/course';
 import HonorBoard from '@/components/home/honerBoard';
 import HonorBoardStatent from '@/components/home/honerBoardStaudent';
+import { D } from 'node_modules/@tanstack/react-query-devtools/build/modern/ReactQueryDevtools-ChNsB-ya';
 
 const API_BASE_URL = "/api";
 
@@ -67,6 +68,7 @@ const Home = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
+
         const response = await fetch(`${API_BASE_URL}/report-homepage`);
         const result = await response.json();
 

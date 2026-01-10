@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, Search } from "lucide-react";
@@ -24,6 +24,22 @@ const CoursesGrid: React.FC<CoursesGridProps> = ({
   onLoadMore
 }) => {
   const { t } = useTranslation();
+
+  // ✅ ديباج للبيانات الواصلة
+  useEffect(() => {
+    if (courses.length > 0) {
+      console.log('📦 CoursesGrid - Received Courses:', {
+        count: courses.length,
+        groupCourses: courses.filter(c => c.courseType === 'group').length,
+        firstCourse: courses[0] && {
+          title: courses[0].title,
+          courseType: courses[0].courseType,
+          countStudent: courses[0].countStudent,
+          studentsCount: courses[0].studentsCount
+        }
+      });
+    }
+  }, [courses]);
 
   if (loading) {
     return (

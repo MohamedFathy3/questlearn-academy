@@ -1,6 +1,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const resources: Record<string, any> = {
   en: {
     translation: {
@@ -187,9 +188,15 @@ const resources: Record<string, any> = {
         lessons: 'lesson',
         video: 'video',
         file: 'file',
+        hurryEnroll: 'Hurry, enroll now!',
         liveStream: 'live stream',
         atTime: 'at',
         averageWatch: 'average watch',
+          enrollmentStatus: "Enrollment Status",
+        maxCapacity: "Max Capacity",
+        seatsLeft: "seats left",
+        courseFull: "Course Full",
+        currentStudents: "Registered Students",
         preview: 'Preview',
         instructor: 'Instructor',
         teacherDescription: 'Experienced {{subject}} teacher with years of teaching experience in {{country}}',
@@ -1125,6 +1132,12 @@ private:'private',
           joinStudents:'الطلاب',
           exploreAllCourses:'استكشف جميع الدورات',
                   freshContent:'محتوي جديد',
+                          enrollmentStatus: "حالة التسجيل",
+        maxCapacity: "الحد الأقصى",
+        seatsLeft: "مقاعد متبقية",
+        courseFull: "امتلأ الكورس",
+        currentStudents: "المشتركين",
+        hurryEnroll: "سجل الآن!",
 group: "جماعي",
     private: "خاص",
     enrollmentProgress: "تقدم التسجيل",
@@ -1137,8 +1150,7 @@ group: "جماعي",
     fillingFast: "يمتلئ بسرعة",
     available: "متاح",
     hurryUp: "أسرع! فقط",
-    seatsLeft: "مقاعد متبقية",
-    hurryEnroll: "سجل الآن!",
+   
         title: "جميع",
         courses: "الكورسات",
         discover: "اكتشف الآلاف من الكورسات عبر مختلف التصنيفات",
@@ -1766,9 +1778,15 @@ professionalInfo:"professionalInfo",
         rights: 'جميع الحقوق محفوظة.',
         followUs: 'تابعنا',
       },
-    
+course: {
+                          enrollmentStatus: "حالة التسجيل",
+        maxCapacity: "الحد الأقصى",
+        seatsLeft: "مقاعد متبقية",
+        courseFull: "امتلأ الكورس",
+        currentStudents: "المشتركين",
+        hurryEnroll: "سجل الآن!",
       
-    }
+    }}
   }
 };
 

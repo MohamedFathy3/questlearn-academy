@@ -207,14 +207,17 @@ const Navigation = () => {
                 )}
               </div>
             ) : (
-              <div className="hidden md:flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <Link to="/login">
-                  <Button variant="ghost" className="hover:scale-105">
+                  <Button variant="ghost" size="sm" className="hover:scale-105">
                     {t("nav.signIn")}
                   </Button>
                 </Link>
                 <Link to="/register">
-                  <Button className="bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md hover:scale-105">
+                  <Button 
+                    size="sm" 
+                    className="bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md hover:scale-105"
+                  >
                     {t("nav.signUp")}
                   </Button>
                 </Link>
@@ -240,6 +243,7 @@ const Navigation = () => {
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-border/50 animate-slide-in-down">
+            {/* Search Form */}
             <form onSubmit={handleSearch} className="relative mb-4 px-4">
               <Search
                 className={`absolute ${
@@ -256,6 +260,23 @@ const Navigation = () => {
               />
             </form>
 
+            {/* إذا مش مسجل دخول - أظهر أزرار التسجيل في الموبايل */}
+            {!isAuthenticated && (
+              <div className="flex items-center gap-2 mb-4 px-4">
+                <Link to="/login" className="flex-1" onClick={() => setIsMenuOpen(false)}>
+                  <Button variant="outline" className="w-full">
+                    {t("nav.signIn")}
+                  </Button>
+                </Link>
+                <Link to="/register" className="flex-1" onClick={() => setIsMenuOpen(false)}>
+                  <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+                    {t("nav.signUp")}
+                  </Button>
+                </Link>
+              </div>
+            )}
+
+            {/* Navigation Links */}
             <div className="space-y-2 px-4">
               {navItems.map((item, index) => (
                 <Link
@@ -272,6 +293,34 @@ const Navigation = () => {
                 </Link>
               ))}
             </div>
+
+            {/* إذا مسجل دخول - أظهر خيارات البروفايل في الموبايل */}
+            {isAuthenticated && (
+              <div className="mt-4 pt-4 border-t border-border/50 px-4 space-y-2">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-2 px-3 py-2 rounded-lg"
+                  onClick={() => {
+                    handleProfile();
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  <User className="w-4 h-4" />
+                  {t("nav.profile")}
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-2 px-3 py-2 text-red-600 rounded-lg hover:bg-red-50"
+                  onClick={() => {
+                    handleLogout();
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  <LogOut className="w-4 h-4" />
+                  {t("nav.logout")}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

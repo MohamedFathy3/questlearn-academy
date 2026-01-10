@@ -52,6 +52,46 @@ export interface Course {
   average_rating?: number;
 }
 
+
+
+export interface TransformedCourse {
+  id: string;
+  title: string;
+  teacher: {
+    name: string;
+    image?: string;
+  };
+  thumbnail: string;
+  price: number;
+  originalPrice?: number;
+  rating: number;
+  studentsCount: number; // ✅ مهم: عدد المشتركين الحاليين
+  countStudent: number; // ✅ مهم: الحد الأقصى للكورس
+  duration: string;
+  level: "Beginner" | "Intermediate" | "Advanced" | "All Levels";
+  category: string;
+  isNew?: boolean;
+  isBestseller?: boolean;
+  type?: string;
+  currency?: string;
+  courseType?: "group" | "private";
+  startDate?: string;
+  endDate?: string;
+  progress?: number;
+  totalLessons?: number;
+  completedLessons?: number;
+  averageRating?: number;
+  userProgress?: number;
+  userNextLesson?: string;
+  userStreak?: number;
+  isEnrolled?: boolean;
+  
+  // ✅ الحقول الجديدة المضافة
+  enrollmentProgressPercentage: number;
+  remainingSeats: number;
+  courseStatus: "no-progress" | "full" | "almost-full" | "filling-fast" | "available" | "half-full";
+}
+
 export interface ApiResponse {
   data: Course[];
   links: {
@@ -87,46 +127,3 @@ export interface Filters {
   sort: string;
 }
 
-export interface TransformedCourse {
-  id: string;
-  title: string;
-  description: string;
-  instructor: string;
-  instructorImage: string | null;
-  thumbnail: string;
-  price: number;
-  originalPrice?: number;
-  discount?: number;
-  currency: string;
-  isFree: boolean;
-  rating: number;
-  reviewsCount: number;
-  studentsCount: number;
-  duration: string;
-  level: string;
-  category: string;
-  subject: string;
-  stage: string;
-  lessonsCount: number;
-  videoLessonsCount: number;
-  resourcesCount: number;
-  liveSessionsCount: number;
-  maxStudents?: number;
-  enrollmentProgress: number;
-  isBestseller: boolean;
-  isNew: boolean;
-  isTrending: boolean;
-  teacherRating: number;
-  teacherExperience: number;
-  teacherCoursesCount: number;
-  courseType: string;
-  country: string;
-  hasVideoContent: boolean;
-  hasResources: boolean;
-  hasLiveSessions: boolean;
-  hasIntroVideo: boolean;
-  learningPoints: string[];
-  createdAt: string;
-  viewsCount: number;
-  active: boolean;
-}

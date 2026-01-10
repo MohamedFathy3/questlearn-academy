@@ -1,4 +1,4 @@
-import { Clock, Users, BookOpen, UserCheck } from "lucide-react";
+import { Clock, Users, BookOpen, Award, Calendar, Star, Target, TrendingUp, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -8,15 +8,18 @@ import { useCallback } from "react";
 import { useTranslation } from 'react-i18next';
 
 interface CourseCardProps {
-  id: string;
+  id: string | number;
   title: string;
-  instructor: string;
+  teacher: {
+    name: string;
+    image?: string;
+  };
   thumbnail: string;
   price: number;
   originalPrice?: number;
   rating: number;
-  studentsCount: number; // ✅ ده اللي جاي من students_count في الـ API
-  maxStudents?: number;
+  studentsCount: number;
+  countStudent: number;
   duration: string;
   level: "Beginner" | "Intermediate" | "Advanced" | "All Levels";
   category: string;
@@ -24,39 +27,62 @@ interface CourseCardProps {
   isBestseller?: boolean;
   type?: string;
   currency?: string;
-  enrollmentProgress?: number;
   courseType?: "group" | "private";
-  subscribers_count?: number; // ✅ ممكن يبقى 0
-  count_student?: number; // ✅ الحد الأقصى
+  startDate?: string;
+  endDate?: string;
+  progress?: number; // ✅ تقدم الطالب (للتوافق القديم)
+  totalLessons?: number;
+  completedLessons?: number;
+  averageRating?: number;
+  userProgress?: number; // ✅ نسبة تقدم الطالب (0-100)
+  userNextLesson?: string; // ✅ الدرس التالي
+  userStreak?: number; // ✅ عدد الأيام المتتالية
+  isEnrolled?: boolean; // ✅ الطالب مسجل أم لا
 }
 
 const DEFAULT_COURSE_IMAGE = "https://foundr.com/wp-content/uploads/2021/09/Best-online-course-platforms.png";
+const DEFAULT_AVATAR = "https://via.placeholder.com/40/CCCCCC/808080?text=MS";
 
 const CourseCard = ({
   id,
   title,
-  instructor,
+  teacher,
   thumbnail,
   price,
   originalPrice,
-  studentsCount, // ✅ students_count من الـ API
-  maxStudents,
+  rating,
+  studentsCount,
+  countStudent,
   duration,
   level,
   category,
-  isNew,
-  isBestseller,
+  isNew = false,
+  isBestseller = false,
   type = "recorded",
   currency = "USD",
-  enrollmentProgress,
   courseType = "private",
-  subscribers_count = 0,
-  count_student = 0
+  startDate,
+  endDate,
+  progress = 0,
+  totalLessons = 0,
+  completedLessons = 0,
+  averageRating = 0,
+  userProgress = 0,
+  userNextLesson = "",
+  userStreak = 0,
+  isEnrolled = false
 }: CourseCardProps) => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-
   const courseImage = thumbnail || DEFAULT_COURSE_IMAGE;
+  const isArabic = i18n.language === "ar";
+  
+  // ✅ تحديد إذا كان الطالب مسجل في الكورس
+  const isUserEnrolled = isEnrolled || userProgress > 0;
+  
+  // ✅ حل مشكلة teacher إذا كانت undefined
+  const teacherName = teacher?.name || t('courses.unknownTeacher', 'مدرس غير معروف');
+  const teacherImage = teacher?.image || DEFAULT_AVATAR;
 
   const discount = originalPrice && originalPrice > price 
     ? Math.round(((originalPrice - price) / originalPrice) * 100) 
@@ -64,45 +90,174 @@ const CourseCard = ({
 
   const isGroupCourse = courseType === "group";
   
-  // ✅ الحد الأقصى
-  const MAX_SEATS = count_student && count_student > 0 ? count_student : 0;
-
-  const CURRENT_STUDENTS = subscribers_count > 0
-    ? subscribers_count
-    : (studentsCount > 0 ? studentsCount : 0);
-
+  // ✅ تحويل القيم لـ numbers للتأكد
+  const MAX_SEATS = Number(countStudent) || 0;
+  const CURRENT_STUDENTS = Number(studentsCount) || 0;
+  
+  // ✅ Progress التسجيل للكورسات الجماعية
   const shouldShowProgress = isGroupCourse && MAX_SEATS > 0;
-
-  // عدد المقاعد المتبقية (لا يُظهر قيمة سالبية)
-  const remainingStudents = shouldShowProgress ? Math.max(0, MAX_SEATS - CURRENT_STUDENTS) : 0;
-
-  // نسبة التقدم الخام (قد تتجاوز 100 إذا كان هناك تجاوز)، لكن للشريط نحدها لـ 100
-  const rawProgressPercentage = shouldShowProgress && MAX_SEATS > 0
-    ? (CURRENT_STUDENTS / MAX_SEATS) 
+  const remainingStudents = shouldShowProgress 
+    ? Math.max(0, MAX_SEATS - CURRENT_STUDENTS) 
     : 0;
-  const progressPercentage = Math.min(rawProgressPercentage);
 
-  const getProgressStatus = () => {
+  // ✅ نسبة تقدم التسجيل
+  const enrollmentProgressPercentage = shouldShowProgress && MAX_SEATS > 0
+    ? (CURRENT_STUDENTS / MAX_SEATS) * 100
+    : 0;
+
+  // ✅ نسبة تقدم الطالب (استخدام progress القديم أو userProgress الجديد)
+  const studentProgressPercentage = Math.min(isUserEnrolled ? (userProgress || progress) : 0, 100);
+  
+  // ✅ تحديد حالة تقدم الطالب
+  const getStudentProgressStatus = () => {
+    if (studentProgressPercentage === 0) return "not-started";
+    if (studentProgressPercentage < 25) return "beginner";
+    if (studentProgressPercentage < 50) return "early";
+    if (studentProgressPercentage < 75) return "midway";
+    if (studentProgressPercentage < 100) return "almost-done";
+    return "completed";
+  };
+
+  const progressStatus = getStudentProgressStatus();
+  
+  // ✅ لون شريط التقدم بناءً على النسبة
+  const getProgressColor = () => {
+    switch (progressStatus) {
+      case "completed": return "bg-gradient-to-r from-green-500 to-emerald-500";
+      case "almost-done": return "bg-gradient-to-r from-blue-500 to-indigo-500";
+      case "midway": return "bg-gradient-to-r from-purple-500 to-pink-500";
+      case "early": return "bg-gradient-to-r from-yellow-500 to-orange-500";
+      case "beginner": return "bg-gradient-to-r from-orange-500 to-red-500";
+      default: return "bg-gradient-to-r from-gray-400 to-gray-300";
+    }
+  };
+
+  const progressColor = getProgressColor();
+  
+  // ✅ نص حالة التقدم
+  const getProgressText = () => {
+    switch (progressStatus) {
+      case "completed":
+        return { 
+          text: t('courses.completed', 'مكتمل'), 
+          subText: t('courses.congratulations', 'مبروك! لقد أكملت الكورس'),
+          icon: "🎓"
+        };
+      case "almost-done":
+        return { 
+          text: t('courses.almostDone', 'يكاد ينتهي'), 
+          subText: t('courses.keepGoing', 'استمر! أنت على وشك الإنتهاء'),
+          icon: "⚡"
+        };
+      case "midway":
+        return { 
+          text: t('courses.halfway', 'في المنتصف'), 
+          subText: t('courses.greatProgress', 'تقدم رائع! استمر بنفس الوتيرة'),
+          icon: "🔥"
+        };
+      case "early":
+        return { 
+          text: t('courses.earlyStage', 'المرحلة المبكرة'), 
+          subText: t('courses.goodStart', 'بداية جيدة! واصل التعلم'),
+          icon: "🌱"
+        };
+      case "beginner":
+        return { 
+          text: t('courses.justStarted', 'بدأ للتو'), 
+          subText: t('courses.welcome', 'مرحباً بك! ابدأ رحلتك التعليمية'),
+          icon: "👋"
+        };
+      default:
+        return { 
+          text: t('courses.notStarted', 'لم يبدأ بعد'), 
+          subText: t('courses.startNow', 'ابدأ التعلم الآن'),
+          icon: "📚"
+        };
+    }
+  };
+
+  const progressInfo = getProgressText();
+
+  // ✅ عدد الدروس المتبقية
+  const remainingLessons = Math.max(0, totalLessons - completedLessons);
+
+  // ✅ تحديد حالة الكورس مع تحسين تأثير المؤشر الأحمر
+  const getCourseStatus = () => {
     if (!shouldShowProgress) return "no-progress";
-    // الكورس يعتبر ممتلئ لو العدد الحالي >= الحد الأقصى
+    
     if (CURRENT_STUDENTS >= MAX_SEATS) return "full";
-    // يكاد يمتلئ لو المقاعد المتبقية قليلة (مثلاً <= 5)
-    if (remainingStudents > 0 && remainingStudents <= 5) return "almost-full";
-    // سريع الامتلاء لو نسبة التقدم عالية
-    if (rawProgressPercentage >= 70) return "filling-fast";
+    if (remainingStudents > 0 && remainingStudents <= 3) return "almost-full";
+    if (enrollmentProgressPercentage >= 75) return "filling-fast";
+    if (enrollmentProgressPercentage >= 50) return "half-full";
     return "available";
   };
 
-  const progressStatus = getProgressStatus();
+  const courseStatus = getCourseStatus();
+  const shouldHideEnrollButton = courseStatus === "full";
 
-  // ✅ للعرض العام: إذا فيه سقف للطلاب نعرض الحد الأدنى بين الحالي والحد الأقصى
-  const displayStudentsCount = shouldShowProgress ? Math.min(CURRENT_STUDENTS, MAX_SEATS) : CURRENT_STUDENTS;
+  // ✅ تحديد لون المؤشر الأحمر بناءً على النسبة
+  const getEnrollmentProgressColor = () => {
+    if (courseStatus === "full") return "from-red-700 to-red-900"; // أحمر داكن
+    if (courseStatus === "almost-full") return "from-red-500 to-red-700 animate-pulse"; // أحمر مع نبض
+    if (courseStatus === "filling-fast") return "from-orange-500 to-red-500"; // برتقالي لأحمر
+    if (courseStatus === "half-full") return "from-yellow-500 to-orange-500"; // أصفر لبرتقالي
+    return "from-green-500 to-emerald-500"; // أخضر
+  };
+
+  // ✅ تأثيرات إضافية للمؤشر الأحمر
+  const getProgressEffects = () => {
+    if (courseStatus === "full") {
+      return {
+        glow: "shadow-lg shadow-red-900/50",
+        animation: "animate-none",
+        indicator: "💯"
+      };
+    }
+    if (courseStatus === "almost-full") {
+      return {
+        glow: "shadow-lg shadow-red-600/50 animate-pulse",
+        animation: "animate-ping absolute opacity-75",
+        indicator: "🔥"
+      };
+    }
+    if (courseStatus === "filling-fast") {
+      return {
+        glow: "shadow-lg shadow-orange-500/50",
+        animation: "animate-pulse",
+        indicator: "⚡"
+      };
+    }
+    return {
+      glow: "",
+      animation: "",
+      indicator: "✅"
+    };
+  };
+
+  const progressColorClass = getEnrollmentProgressColor();
+  const progressEffects = getProgressEffects();
 
   const handleEnrollClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     navigate(`/course/${id}`);
   }, [id, navigate]);
+
+  const handleContinueClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/course/${id}/learn`);
+  }, [id, navigate]);
+
+  const handleProgressClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isUserEnrolled) {
+      navigate(`/course/${id}/learn`);
+    } else {
+      navigate(`/course/${id}`);
+    }
+  }, [id, navigate, isUserEnrolled]);
 
   // ✅ الترجمة
   const getTranslatedLevel = (level: string) => {
@@ -115,212 +270,460 @@ const CourseCard = ({
     return levels[level] || level;
   };
 
-  const getTranslatedType = (type: string) => {
-    const types: { [key: string]: string } = {
-      'recorded': t('courses.recorded', 'مسجل'),
-      'online': t('courses.online', 'أونلاين')
-    };
-    return types[type] || type;
-  };
-
-  const getTranslatedCourseType = (courseType: string) => {
-    const types: { [key: string]: string } = {
-      'group': t('courses.group', 'جماعي'),
-      'private': t('courses.private', 'خاص')
-    };
-    return types[courseType] || courseType;
+  // ✅ تنسيق التاريخ
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return dateString;
+      
+      return date.toLocaleDateString(isArabic ? 'ar-SA' : 'en-US', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      });
+    } catch {
+      return dateString;
+    }
   };
 
   return (
-    <Link to={`/course/${id}`} className="block">
-      <Card className="group course-card-hover bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden h-full flex flex-col">
-        <div className="relative overflow-hidden flex-shrink-0">
+    <Link to={`/course/${id}`} className="block no-underline">
+      <Card className="group course-card-hover bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden h-full flex flex-col relative">
+        {/* 🔥 شريط التقدم في الأعلى مباشرة (إذا كان مسجل) */}
+        {isUserEnrolled && studentProgressPercentage > 0 && (
+          <div 
+            className="absolute top-0 left-0 right-0 z-20 h-2 bg-gray-200 dark:bg-gray-700 overflow-hidden rounded-t-lg"
+            onClick={handleProgressClick}
+          >
+            <div 
+              className={`h-full ${progressColor} transition-all duration-1000 ease-out`}
+              style={{ width: `${studentProgressPercentage}%` }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+            </div>
+            
+            {/* نقاط التقدم */}
+            <div className="absolute left-1/4 top-0 w-1 h-2 bg-white/50"></div>
+            <div className="absolute left-1/2 top-0 w-1 h-2 bg-white/50"></div>
+            <div className="absolute left-3/4 top-0 w-1 h-2 bg-white/50"></div>
+          </div>
+        )}
+        
+        {/* 🔥 الجزء العلوي - الصورة والبادجات */}
+        <div className={`relative overflow-hidden flex-shrink-0 ${isUserEnrolled ? 'h-44 mt-2' : 'h-48'}`}>
           <img
             src={courseImage}
             alt={title}
-            className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             onError={(e) => {
               e.currentTarget.src = DEFAULT_COURSE_IMAGE;
             }}
           />
+          
+          {/* ✅ Badges العلوية */}
           <div className="absolute top-3 left-3 flex flex-wrap gap-2">
             {isNew && (
-              <Badge className="bg-green-500 hover:bg-green-600 text-white border-0 text-xs">
+              <Badge className="bg-green-500 hover:bg-green-600 text-white border-0 text-xs px-2 py-1">
                 {t('courses.new', 'جديد')}
               </Badge>
             )}
             {isBestseller && (
-              <Badge className="bg-orange-500 hover:bg-orange-600 text-white border-0 text-xs">
+              <Badge className="bg-orange-500 hover:bg-orange-600 text-white border-0 text-xs px-2 py-1">
                 {t('courses.bestseller', 'الأكثر مبيعاً')}
               </Badge>
             )}
             {discount > 0 && (
-              <Badge variant="destructive" className="text-xs">
+              <Badge variant="destructive" className="text-xs px-2 py-1">
                 {discount}% {t('courses.off', 'خصم')}
               </Badge>
             )}
           </div>
+          
+          {/* ✅ Badges اليمين */}
           <div className="absolute top-3 right-3 flex flex-col gap-1">
-            <Badge variant="secondary" className="bg-white/90 text-blue-500 dark:bg-gray-800/90 backdrop-blur text-xs">
-              {getTranslatedType(type)}
+            <Badge variant="secondary" className="bg-white/90 dark:bg-gray-800/90 backdrop-blur text-xs px-2 py-1">
+              {getTranslatedLevel(level)}
             </Badge>
-            <Badge variant="secondary" className="bg-white/90 text-purple-500 dark:bg-gray-800/90 backdrop-blur text-xs">
-              {getTranslatedCourseType(courseType)}
+            <Badge variant="secondary" className="bg-white/90 dark:bg-gray-800/90 backdrop-blur text-xs px-2 py-1">
+              {type === 'recorded' ? t('courses.recorded') : t('courses.live')}
             </Badge>
           </div>
 
-          {shouldShowProgress && progressStatus === "almost-full" && (
-            <div className="absolute bottom-3 left-3">
-              <Badge className="bg-red-500 hover:bg-red-600 text-white border-0 text-xs animate-pulse">
-                ⚠️ {t('courses.almostFull', 'يكاد يمتلئ')}
+          {/* ✅ Badge حالة التسجيل */}
+          {shouldShowProgress && courseStatus === "almost-full" && !isUserEnrolled && (
+            <div className="absolute top-12 left-3">
+              <Badge className="bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 text-white border-0 text-xs animate-pulse px-2 py-1 shadow-lg shadow-red-600/50">
+                🔥 {t('courses.almostFull', 'يكاد يمتلئ')}
               </Badge>
             </div>
           )}
           
-          {shouldShowProgress && progressStatus === "full" && (
-            <div className="absolute bottom-3 left-3">
-              <Badge className="bg-gray-700 hover:bg-gray-800 text-white border-0 text-xs">
-                ⛔ {t('courses.full', 'امتلأ')}
+          {shouldShowProgress && courseStatus === "full" && !isUserEnrolled && (
+            <div className="absolute top-12 left-3">
+              <Badge className="bg-gradient-to-r from-red-800 to-red-900 hover:from-red-900 hover:to-black text-white border-0 text-xs px-2 py-1 shadow-lg shadow-red-900/50">
+                ⛔ {t('courses.full', 'امتلأ بالكامل')}
               </Badge>
             </div>
           )}
         </div>
 
+        {/* 🔥 المحتوى - المعلومات */}
         <CardContent className="p-4 space-y-3 flex-grow">
+          {/* ✅ العنوان والمدرس */}
           <div className="space-y-2">
-            <h3 className="font-semibold text-lg leading-tight line-clamp-2 group-hover:text-blue-500 transition-colors duration-200">
+            <h3 className="font-semibold text-lg leading-tight line-clamp-2 group-hover:text-blue-500 transition-colors duration-200 text-gray-900 dark:text-white">
               {title}
             </h3>
-            <p className="text-sm text-muted-foreground">{instructor}</p>
+            <div className="flex items-center gap-2">
+              <img 
+                src={teacherImage} 
+                alt={teacherName}
+                className="w-6 h-6 rounded-full object-cover border border-gray-300"
+              />
+              <p className="text-sm text-gray-600 dark:text-gray-300 truncate">{teacherName}</p>
+            </div>
           </div>
 
           {/* ✅ معلومات أساسية */}
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Users className="w-4 h-4" />
-              <span>{displayStudentsCount.toLocaleString()} {t('courses.enrolled', 'مشترك')}</span>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+              <Users className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">
+                {CURRENT_STUDENTS.toLocaleString()} {t('courses.students', 'طالب')}
+              </span>
             </div>
-            <div className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
-              <span>{duration}</span>
+            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+              <Clock className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">{duration || t('courses.noDuration', 'غير محدد')}</span>
             </div>
+            {averageRating > 0 && (
+              <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                <Star className="w-4 h-4 flex-shrink-0 text-yellow-500 fill-yellow-500" />
+                <span className="truncate">{averageRating.toFixed(1)}</span>
+              </div>
+            )}
+            {startDate && (
+              <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                <Calendar className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate text-xs" title={formatDate(startDate)}>
+                  {formatDate(startDate)}
+                </span>
+              </div>
+            )}
           </div>
 
-          {/* ✅ شريط تقدم الاشتراك */}
-          {shouldShowProgress && (
-            <div className="space-y-3 bg-muted/30 p-3 rounded-lg border">
-              <div className="flex justify-between items-center text-sm">
-                <div className="flex items-center gap-1 text-green-600 font-medium">
-                  <UserCheck className="w-4 h-4" />
-                  <span>{displayStudentsCount} {t('courses.joined', 'منضم')}</span>
+          {/* ✅ قسم تقدم الطالب (إذا كان مسجل) */}
+          {isUserEnrolled && (
+            <div 
+              className="space-y-2 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/10 dark:to-indigo-900/10 p-3 rounded-lg border border-blue-200 dark:border-blue-800 cursor-pointer hover:bg-gradient-to-r hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-900/20 dark:hover:to-indigo-900/20 transition-all duration-300"
+              onClick={handleProgressClick}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center">
+                    <TrendingUp className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-blue-700 dark:text-blue-300">
+                      {progressInfo.text}
+                    </div>
+                    <div className="text-xs text-blue-600 dark:text-blue-400 opacity-75">
+                      {progressInfo.subText}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-orange-600 font-medium">
-                  <span>{remainingStudents} {t('courses.remaining', 'متبقي')}</span>
+                
+                <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  {studentProgressPercentage.toFixed(0)}%
                 </div>
               </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>{t('courses.enrollmentProgress', 'تقدم التسجيل')}</span>
-                  <span>{displayStudentsCount}/{MAX_SEATS} {t('courses.students', 'طالب')}</span>
-                </div>
-                <Progress 
-                  value={progressPercentage} 
-                  className={`h-3 ${
-                    progressStatus === "full" ? "bg-gray-200" :
-                    progressStatus === "almost-full" ? "bg-red-100" :
-                    progressStatus === "filling-fast" ? "bg-orange-100" : "bg-green-100"
-                  }`}
-                />
+              
+              {/* شريط التقدم التفصيلي */}
+              <div className="space-y-1">
                 <div className="flex justify-between text-xs">
-                  <span className={`font-medium ${
-                    progressStatus === "full" ? "text-gray-600" :
-                    progressStatus === "almost-full" ? "text-red-600" :
-                    progressStatus === "filling-fast" ? "text-orange-600" : "text-green-600"
-                  }`}>
-                    {progressStatus === "full" && `⛔ ${t('courses.full', 'امتلأ')}`}
-                    {progressStatus === "almost-full" && `🚀 ${t('courses.almostFull', 'يكاد يمتلئ')}`}
-                    {progressStatus === "filling-fast" && `⚡ ${t('courses.fillingFast', 'يمتلئ بسرعة')}`}
-                    {progressStatus === "available" && `✅ ${t('courses.available', 'متاح')}`}
+                  <span className="text-gray-600 dark:text-gray-400">
+                    {t('courses.yourProgress', 'تقدمك في الكورس')}
                   </span>
-                  <span className="text-muted-foreground">
-                    {progressPercentage.toFixed(0)}% {t('courses.completed', 'مكتمل')}
+                  <span className="font-semibold text-blue-700 dark:text-blue-300">
+                    {completedLessons}/{totalLessons} {t('courses.lessons', 'دروس')}
                   </span>
+                </div>
+                
+                <div className="relative w-full bg-blue-100 dark:bg-blue-800 rounded-full h-2.5 overflow-hidden">
+                  <div 
+                    className={`h-2.5 rounded-full ${progressColor} transition-all duration-700`}
+                    style={{ width: `${studentProgressPercentage}%` }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer"></div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-between text-xs">
+                  <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+                    <BookOpen className="w-3 h-3" />
+                    {remainingLessons} {t('courses.lessonsLeft', 'دروس متبقية')}
+                  </div>
+                  {userStreak > 0 && (
+                    <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                      <Target className="w-3 h-3" />
+                      {userStreak} {t('courses.daysStreak', 'يوم متتالي')}
+                    </div>
+                  )}
                 </div>
               </div>
-
-              {remainingStudents > 0 && remainingStudents <= 5 && progressStatus !== "full" && (
-                <div className="text-xs text-center bg-yellow-50 text-yellow-700 p-2 rounded border border-yellow-200">
-                  {t('courses.hurryUp', 'أسرع! فقط')} {remainingStudents} {t('courses.seatsLeft', 'مقاعد متبقية')} 🎯
-                </div>
-              )}
-
-              {progressStatus === "full" && (
-                <div className="text-xs text-center bg-gray-100 text-gray-700 p-2 rounded border border-gray-300 font-medium">
-                  📚 {t('courses.courseFull', 'تم اكتمال العدد')}
+              
+              {userNextLesson && studentProgressPercentage < 100 && (
+                <div className="mt-2 text-xs bg-white dark:bg-gray-800 text-blue-700 dark:text-blue-300 p-2 rounded border border-blue-200 dark:border-blue-700">
+                  <div className="flex items-center gap-1 font-semibold">
+                    <Zap className="w-3 h-3" />
+                    {t('courses.nextLesson', 'الدرس التالي')}:
+                  </div>
+                  <div className="truncate mt-1">{userNextLesson}</div>
                 </div>
               )}
             </div>
           )}
 
-          <div className="flex items-center justify-between">
-            <Badge variant="outline" className="text-xs">
-              {category}
+          {/* ✅ قسم تقدم التسجيل (للكورسات الجماعية فقط) */}
+          {shouldShowProgress && !isUserEnrolled && (
+            <div className="space-y-3 bg-gradient-to-r from-gray-50 to-white dark:from-gray-900/50 dark:to-gray-800/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+              {/* ✅ مؤشر حالة التسجيل مع تأثيرات */}
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                  {t('courses.enrollmentProgress', 'تقدم التسجيل')}
+                </div>
+                <div className={`text-xs font-bold px-2 py-1 rounded-full ${
+                  courseStatus === "full" 
+                    ? "bg-gradient-to-r from-red-700 to-red-900 text-white" 
+                    : courseStatus === "almost-full" 
+                      ? "bg-gradient-to-r from-red-500 to-red-700 text-white animate-pulse"
+                      : courseStatus === "filling-fast"
+                        ? "bg-gradient-to-r from-orange-500 to-red-500 text-white"
+                        : courseStatus === "half-full"
+                          ? "bg-gradient-to-r from-yellow-500 to-orange-500 text-gray-800"
+                          : "bg-gradient-to-r from-green-500 to-emerald-500 text-white"
+                }`}>
+                  {progressEffects.indicator} {courseStatus === "full" 
+                    ? t('courses.filled', 'امتلأ بالكامل')
+                    : courseStatus === "almost-full" 
+                      ? t('courses.almostFull', 'يكاد يمتلئ')
+                      : courseStatus === "filling-fast" 
+                        ? t('courses.fillingFast', 'يمتلئ بسرعة')
+                        : courseStatus === "half-full"
+                          ? t('courses.halfFull', 'نصف ممتلئ')
+                          : t('courses.available', 'متاح')
+                  }
+                </div>
+              </div>
+              
+              {/* ✅ الأرقام مع تأثيرات */}
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div className="text-center bg-white dark:bg-gray-800 p-2 rounded-lg border border-blue-100 dark:border-blue-800/30 relative overflow-hidden">
+                  {/* تأثير خلفية */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-transparent"></div>
+                  <div className="relative z-10">
+                    <div className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                      {CURRENT_STUDENTS}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {t('courses.joined', 'منضم')}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-center bg-white dark:bg-gray-800 p-2 rounded-lg border border-red-100 dark:border-red-800/30 relative overflow-hidden">
+                  {/* تأثير خلفية أحمر للمقاعد المتبقية */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-transparent"></div>
+                  <div className="relative z-10">
+                    <div className={`text-xl font-bold ${
+                      remainingStudents <= 3 
+                        ? "text-red-600 dark:text-red-400" 
+                        : "text-green-600 dark:text-green-400"
+                    }`}>
+                      {remainingStudents}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {t('course.seatsLeft')}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* ✅ شريط التقدم مع تأثير أحمر متدرج */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-600 dark:text-gray-400 font-medium">
+                    {t('course.enrollmentStatus', 'حالة التسجيل')}:
+                  </span>
+                  <span className={`font-bold ${
+                    courseStatus === "full" ? "text-red-600 dark:text-red-400" :
+                    courseStatus === "almost-full" ? "text-red-500 dark:text-red-300" :
+                    courseStatus === "filling-fast" ? "text-orange-600 dark:text-orange-400" :
+                    courseStatus === "half-full" ? "text-yellow-600 dark:text-yellow-400" : 
+                    "text-green-600 dark:text-green-400"
+                  }`}>
+                    {enrollmentProgressPercentage.toFixed(1)}%
+                  </span>
+                </div>
+                
+                {/* ✅ شريط التقدم الرئيسي مع تأثيرات */}
+                <div className={`relative w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden ${progressEffects.glow}`}>
+                  {/* تأثير التوهج */}
+                  <div className={`absolute inset-0 ${progressEffects.animation} bg-gradient-to-r from-transparent via-white/50 to-transparent`}></div>
+                  
+                  {/* شريط التقدم */}
+                  <div 
+                    className={`h-3 rounded-full bg-gradient-to-r ${progressColorClass} transition-all duration-700 ease-out relative z-10`}
+                    style={{ 
+                      width: `${Math.min(enrollmentProgressPercentage, 100)}%` 
+                    }}
+                  >
+                    {/* خطوط توهج داخلية */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+                  </div>
+                  
+                  {/* نقاط مؤشر على الشريط */}
+                  {enrollmentProgressPercentage > 0 && enrollmentProgressPercentage < 100 && (
+                    <>
+                      <div className="absolute left-1/4 top-0 w-1 h-3 bg-white/60 z-20"></div>
+                      <div className="absolute left-1/2 top-0 w-1 h-3 bg-white/60 z-20"></div>
+                      <div className="absolute left-3/4 top-0 w-1 h-3 bg-white/60 z-20"></div>
+                    </>
+                  )}
+                </div>
+                
+                {/* ✅ مؤشر المقاعد المتبقية مع تحذير أحمر */}
+                <div className="flex justify-between text-xs">
+                  <div className="text-gray-500 dark:text-gray-400">
+                    {CURRENT_STUDENTS}/{MAX_SEATS} {t('courses.students', 'طالب')}
+                  </div>
+                  <div className={`font-bold flex items-center gap-1 ${
+                    remainingStudents <= 3 
+                      ? "text-red-600 dark:text-red-400 animate-pulse" 
+                      : "text-green-600 dark:text-green-400"
+                  }`}>
+                    {remainingStudents <= 3 && (
+                      <span className="text-xs">⚠️</span>
+                    )}
+                    {remainingStudents} {t('course.seatsLeft', 'مقاعد متبقية')}
+                  </div>
+                </div>
+              </div>
+              
+              {/* ✅ رسالة تحذير إذا كان الكورس يكاد يمتلئ */}
+              {remainingStudents <= 3 && remainingStudents > 0 && (
+                <div className="mt-2 p-2 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 rounded border border-red-200 dark:border-red-800">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center">
+                      <span className="text-white text-xs">!</span>
+                    </div>
+                    <div className="text-xs text-red-700 dark:text-red-300 font-medium">
+                      {t('courses.hurryMessage', '!سارع بالتسجيل - لم يتبقى سوى')} <span className="font-bold">{remainingStudents}</span> {t('courses.seatsLeft', 'مقاعد')}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ✅ الفئة والمستوى */}
+          <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
+            <Badge variant="outline" className="text-xs bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+              {category || t('courses.uncategorized', 'غير مصنف')}
             </Badge>
-            <Badge 
-              variant="outline" 
-              className={`text-xs ${
-                level === "Beginner" 
-                  ? "border-green-500 text-green-600" 
-                  : level === "Intermediate" 
-                  ? "border-yellow-500 text-yellow-600" 
-                  : level === "Advanced"
-                  ? "border-red-500 text-red-600"
-                  : "border-blue-500 text-blue-600"
-              }`}
-            >
-              {getTranslatedLevel(level)}
-            </Badge>
+            <div className="flex items-center gap-2">
+              {isUserEnrolled && studentProgressPercentage === 100 && (
+                <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 text-xs animate-pulse">
+                  🎓 {t('courses.completed', 'مكتمل')}
+                </Badge>
+              )}
+            </div>
           </div>
         </CardContent>
 
-        <CardFooter className="p-4 pt-0 flex items-center justify-between mt-auto">
-          <div className="flex items-center gap-2">
+        {/* 🔥 الفوتر - السعر والزر */}
+        <CardFooter className="p-4 pt-0 flex items-center justify-between mt-auto border-t border-gray-100 dark:border-gray-700 pt-4">
+          <div className="flex flex-col gap-1">
             {price === 0 ? (
-              <span className="text-xl font-bold text-green-600">{t('courses.free', 'مجاني')}</span>
+              <>
+                <span className="text-xl font-bold text-green-600">
+                  {t('courses.free', 'مجاني')}
+                </span>
+                {startDate && (
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {t('courses.starts', 'يبدأ')}: {formatDate(startDate)}
+                  </span>
+                )}
+              </>
             ) : (
               <>
-                <span className="text-xl font-bold text-tan">
-                  {price.toLocaleString()} {currency}
-                </span>
-                {originalPrice && originalPrice > price && (
-                  <span className="text-sm text-muted-foreground line-through">
-                    {originalPrice.toLocaleString()} {currency}
+                <div className="flex items-center gap-2">
+                  <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                    {typeof price === 'number' ? price.toLocaleString() : price} {currency}
+                  </span>
+                  {originalPrice && originalPrice > price && (
+                    <span className="text-sm text-gray-500 dark:text-gray-400 line-through">
+                      {typeof originalPrice === 'number' ? originalPrice.toLocaleString() : originalPrice} {currency}
+                    </span>
+                  )}
+                </div>
+                {startDate && (
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {t('courses.starts', 'يبدأ')}: {formatDate(startDate)}
                   </span>
                 )}
               </>
             )}
           </div>
-          <Button 
-            size="sm" 
-            className={`transition-colors ${
-              shouldShowProgress && progressStatus === "full" 
-                ? "bg-gray-400 hover:bg-gray-500 cursor-not-allowed" 
-                : shouldShowProgress && progressStatus === "almost-full" 
-                  ? "animate-pulse bg-red-600 hover:bg-red-700" 
-                  : "bg-tan hover:bg-tan/90"
-            }`}
-            onClick={handleEnrollClick}
-            disabled={shouldShowProgress && progressStatus === "full"}
-          >
-            <BookOpen className="w-4 h-4 mr-1" />
-            {shouldShowProgress && progressStatus === "full" 
-              ? t('courses.full', 'امتلأ') 
-              : shouldShowProgress && progressStatus === "almost-full" 
-                ? t('courses.hurryEnroll', 'سجل الآن!') 
-                : t('courses.enrollNow', 'احجز الآن')
-            }
-          </Button>
+          
+          {/* ✅ الأزرار مع تأثيرات */}
+          <div>
+            {isUserEnrolled ? (
+              <Button 
+                size="sm" 
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+                onClick={handleContinueClick}
+              >
+                {studentProgressPercentage === 100 ? (
+                  <>
+                    <Award className="w-4 h-4 mr-2" />
+                    {t('coursess.reviewCourse', 'مراجعة')}
+                  </>
+                ) : (
+                  <>
+                    <TrendingUp className="w-4 h-4 mr-2" />
+                    {t('coursess.continueLearning', 'واصل التعلم')}
+                  </>
+                )}
+              </Button>
+            ) : !shouldHideEnrollButton ? (
+              <Button 
+                size="sm" 
+                className={`px-4 py-2 transition-all duration-300 hover:scale-105 text-white shadow-md hover:shadow-lg ${
+                  courseStatus === "almost-full" 
+                    ? `bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 animate-pulse` 
+                    : courseStatus === "filling-fast"
+                      ? "bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
+                      : courseStatus === "half-full"
+                        ? "bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-gray-800"
+                        : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                }`}
+                onClick={handleEnrollClick}
+              >
+                <BookOpen className="w-4 h-4 mr-2" />
+                {courseStatus === "almost-full" 
+                  ? `🔥 ${t('course.hurryEnroll', 'سجل الآن!')}` 
+                  : courseStatus === "filling-fast"
+                    ? `⚡ ${t('courses.enrollNow', 'احجز الآن')}`
+                    : t('courses.enrollNow', 'احجز الآن')
+                }
+              </Button>
+            ) : (
+              <Badge variant="outline" className="text-gray-500 border-gray-300 bg-gray-50 dark:bg-gray-800 px-3 py-2">
+                ⛔ {t('course.courseFull', 'امتلأ')}
+              </Badge>
+            )}
+          </div>
         </CardFooter>
       </Card>
     </Link>

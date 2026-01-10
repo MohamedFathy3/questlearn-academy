@@ -41,6 +41,7 @@ export const useLatestCourses = () => {
       } else {
         setError(data.message || 'Failed to fetch courses');
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error('Error fetching latest courses:', err);
       setError(err.message || 'An error occurred while loading courses');

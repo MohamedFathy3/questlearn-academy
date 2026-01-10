@@ -6,8 +6,15 @@ import { ArrowRight, BookOpen, Sparkles, Clock, TrendingUp, Star, RefreshCw } fr
 import { Link } from "react-router-dom";
 import CourseCard from "@/components/CourseCard";
 import { useLatestCourses } from '@/hooks/useLatestCourses';
-import { useLatestCoursesLogic, shouldShowPopularBadge, shouldShowNewBadge } from '@/hooks/LatestCourses.logic';
+import { useLatestCoursesLogic } from '@/hooks/LatestCourses.logic';
 import { Course } from '@/type/LatestCourses.types';
+
+// Helper functions
+const shouldShowPopularBadge = (subscribersCount: number): boolean => subscribersCount > 100;
+const shouldShowNewBadge = (createdAt: string): boolean => {
+  const daysSinceCreation = (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24);
+  return daysSinceCreation < 7;
+};
 
 export default function LatestCourses() {
   const { t, i18n } = useTranslation();

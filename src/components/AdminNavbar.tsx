@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, User, Settings, LogOut, ChevronDown } from "lucide-react";
-import { useAdminAuth } from "@/context/admin";
+import { useAdminAuth } from "@/context/AuthContext";
 
 const AdminNavbar = ({ onToggleSidebar }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);

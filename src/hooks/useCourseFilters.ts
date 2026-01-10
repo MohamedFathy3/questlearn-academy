@@ -1,9 +1,18 @@
 import { useState, useMemo, useCallback } from "react";
 import { useTranslation } from 'react-i18next';
-import { Course, Filters, TransformedCourse } from '@/type/courecses';
-import { transformCourseData } from '@/utils/courseTransformers';
+import { Course } from '@/type/courecses';
+import { TransformedCourse } from '@/type/LatestCourses.types';
 
-export const useCourseFilters = (courses: Course[]) => {
+// ✅ تصحيح الـ interface للـ Filters
+export interface Filters {
+  category: string;
+  level: string;
+  price: string;
+  teacher: string;
+  sort: string;
+}
+
+export const useCourseFilters = (courses: TransformedCourse[]) => {
   const { t } = useTranslation();
   
   const [searchTerm, setSearchTerm] = useState("");
@@ -15,68 +24,61 @@ export const useCourseFilters = (courses: Course[]) => {
     sort: "popular"
   });
 
-  // Transform courses data
-  const transformedCourses = useMemo(() => {
-    return courses.map(transformCourseData);
-  }, [courses]);
+  // ✅ تأكد أن الـ courses هي TransformedCourse[]
+  const transformedCourses = courses;
 
-  // Apply filters and search
+  // ✅ تطبيق الفلاتر والبحث
   const filteredCourses = useMemo(() => {
     let filtered = [...transformedCourses];
 
-    // Search filter
+    // البحث
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(course =>
         course.title?.toLowerCase().includes(searchLower) ||
-        course.description?.toLowerCase().includes(searchLower) ||
-        course.instructor?.toLowerCase().includes(searchLower) ||
-        course.category?.toLowerCase().includes(searchLower) ||
-        course.subject?.toLowerCase().includes(searchLower) ||
-        course.stage?.toLowerCase().includes(searchLower)
+        course.teacher?.name?.toLowerCase().includes(searchLower) ||
+        course.category?.toLowerCase().includes(searchLower)
       );
     }
 
-    // Category filter
+    // فلترة الفئة
     if (filters.category) {
       filtered = filtered.filter(course =>
-        course.category?.toLowerCase() === filters.category.toLowerCase() ||
-        course.subject?.toLowerCase() === filters.category.toLowerCase() ||
-        course.stage?.toLowerCase() === filters.category.toLowerCase()
+        course.category?.toLowerCase() === filters.category.toLowerCase()
       );
     }
 
-    // Level filter
+    // فلترة المستوى
     if (filters.level) {
       filtered = filtered.filter(course =>
         course.level?.toLowerCase() === filters.level.toLowerCase()
       );
     }
 
-    // Price filter
+    // فلترة السعر
     if (filters.price) {
       filtered = filtered.filter(course => {
-        if (filters.price === 'free') return course.isFree;
-        if (filters.price === '$0-$50') return !course.isFree && course.price > 0 && course.price <= 50;
-        if (filters.price === '$50-$100') return !course.isFree && course.price > 50 && course.price <= 100;
-        if (filters.price === '$100+') return !course.isFree && course.price > 100;
+        if (filters.price === 'free') return course.price === 0;
+        if (filters.price === '$0-$50') return course.price > 0 && course.price <= 50;
+        if (filters.price === '$50-$100') return course.price > 50 && course.price <= 100;
+        if (filters.price === '$100+') return course.price > 100;
         return true;
       });
     }
 
-    // Teacher filter
+    // فلترة المعلم
     if (filters.teacher) {
       filtered = filtered.filter(course =>
-        course.instructor?.toLowerCase().includes(filters.teacher.toLowerCase())
+        course.teacher?.name?.toLowerCase().includes(filters.teacher.toLowerCase())
       );
     }
 
-    // Sort filter
+    // الترتيب
     if (filters.sort) {
       filtered.sort((a, b) => {
         switch (filters.sort) {
           case 'newest':
-            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
           case 'rating':
             return b.rating - a.rating;
           case 'price-low':
@@ -90,13 +92,15 @@ export const useCourseFilters = (courses: Course[]) => {
       });
     }
 
+    console.log('🔍 Filtered courses count:', filtered.length);
+    
     return filtered;
   }, [transformedCourses, searchTerm, filters]);
 
-  // Filter options
+  // ✅ خيارات الفلاتر
   const filterOptions = useMemo(() => {
     const categories = courses
-      .map(course => course.subject?.name || course.stage?.name)
+      .map(course => course.category)
       .filter(Boolean)
       .filter((name): name is string => typeof name === 'string');
     
@@ -124,7 +128,7 @@ export const useCourseFilters = (courses: Course[]) => {
     };
   }, [courses, t]);
 
-  // Event handlers
+  // ✅ معالجات الأحداث
   const handleFilterChange = useCallback((key: keyof Filters, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   }, []);

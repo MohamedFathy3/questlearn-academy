@@ -6,7 +6,9 @@ export const useLatestCoursesLogic = () => {
   const { t } = useTranslation();
 
   // دالة تحويل البيانات
-  const transformCourseData = (course: Course): TransformedCourse => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const transformCourseData = (course: Course): any => {
+   
     // حساب إذا الكورس جديد (تم إنشاؤه في آخر 7 أيام)
     const isNewCourse = () => {
       const courseDate = new Date(course.created_at);
@@ -45,39 +47,111 @@ export const useLatestCoursesLogic = () => {
       return course.teacher?.total_rate || 4.5;
     };
 
+    // ✅ **البيانات اللي هتظهر الـ Progress:**
+    // - count_student: الحد الأقصى للكورس (من الـ API)
+    // - subscribers_count: عدد المشتركين الحاليين (من الـ API)
+    
+    const MAX_SEATS = course.count_student || 0; // الحد الأقصى للكورس
+    const CURRENT_STUDENTS = course.subscribers_count || 0; // المشتركين الحاليين
+    const IS_GROUP_COURSE = course.course_type === "group";
+    
+    
+    // ✅ حساب نسبة التقدم للكورسات الجماعية فقط
+    const enrollmentProgressPercentage = IS_GROUP_COURSE && MAX_SEATS > 0 
+      ? (CURRENT_STUDENTS / MAX_SEATS) * 100 
+      : 0;
+    
+    // ✅ عدد المقاعد المتبقية
+    const remainingSeats = Math.max(0, MAX_SEATS - CURRENT_STUDENTS);
+    
+    // ✅ تحديد حالة الكورس
+    const getCourseStatus = () => {
+      if (!IS_GROUP_COURSE) return "no-progress";
+      if (CURRENT_STUDENTS >= MAX_SEATS) return "full";
+      if (remainingSeats > 0 && remainingSeats <= 3) return "almost-full";
+      if (enrollmentProgressPercentage >= 75) return "filling-fast";
+      return "available";
+    };
+    
+    const courseStatus = getCourseStatus();
+
+    // ✅ بيانات تقدم الطالب
+    const getUserProgressData = () => {
+      const enrolledCourses = JSON.parse(localStorage.getItem('enrolled_courses') || '[]');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const userCourse = enrolledCourses.find((c: any) => c.id === course.id);
+      
+      if (userCourse) {
+        return {
+          isEnrolled: true,
+          userProgress: userCourse.progress || 0,
+          completedLessons: userCourse.completed_lessons || 0,
+          totalLessons: course.details?.length || 0,
+          userNextLesson: userCourse.next_lesson || course.details?.[0]?.title || '',
+          userStreak: userCourse.streak || 0
+        };
+      }
+      
+      return {
+        isEnrolled: false,
+        userProgress: 0,
+        completedLessons: 0,
+        totalLessons: course.details?.length || 0,
+        userNextLesson: '',
+        userStreak: 0
+      };
+    };
+
+    const userProgressData = getUserProgressData();
+
     return {
+      // ✅ البيانات الأساسية
       id: course.id.toString(),
       title: course.title,
-      instructor: course.teacher.name,
-      thumbnail: course?.image, 
+      teacher: {
+        name: course.teacher?.name || 'Unknown Instructor',
+        image: course.teacher?.image || ''
+      },
+      thumbnail: course?.image || '',
       price: parseFloat(course.price) || 0,
       originalPrice: parseFloat(course.original_price) || 0,
-      studentsCount: course.count_student || course.subscribers_count || 0,
+      rating: getRating(),
+      
+      // ✅ **البيانات المهمة للـ Progress:**
+      studentsCount: CURRENT_STUDENTS, // عدد المشتركين الحاليين
+      countStudent: MAX_SEATS, // الحد الأقصى للكورس
+      courseStatus: courseStatus, // حالة الكورس (full, almost-full, etc)
+      enrollmentProgressPercentage: enrollmentProgressPercentage, // نسبة التقدم
+      remainingSeats: remainingSeats, // المقاعد المتبقية
+      
       duration: getCourseDuration(),
       level: getCourseLevel(),
-      category: course.subject.name,
+      category: course.subject?.name || 'Uncategorized',
+      
+      // ✅ البيانات الإضافية
       isNew: isNewCourse(),
       isBestseller: isBestsellerCourse,
-      type: course.type,
-      rating: getRating(),
+      type: course.type || 'recorded',
       currency: course.currency || "EGP",
-      maxStudents: undefined,
-      enrollmentProgress: 0,
-      courseType: course.course_type,
-      subscribersCount: course.subscribers_count
+      courseType: course.course_type || 'private',
+      startDate: course.start_date,
+      endDate: course.end_date,
+      averageRating: course.teacher?.total_rate || 4.5,
+      
+      // ✅ بيانات التقدم القديمة
+      progress: userProgressData.userProgress,
+      totalLessons: userProgressData.totalLessons,
+      completedLessons: userProgressData.completedLessons,
+      
+      // ✅ بيانات التقدم الجديدة
+      userProgress: userProgressData.userProgress,
+      userNextLesson: userProgressData.userNextLesson,
+      userStreak: userProgressData.userStreak,
+      isEnrolled: userProgressData.isEnrolled
     };
   };
 
   return {
     transformCourseData
   };
-};
-
-// Helper functions
-export const shouldShowPopularBadge = (subscribersCount: number) => {
-  return subscribersCount > 10;
-};
-
-export const shouldShowNewBadge = (createdAt: string) => {
-  return new Date(createdAt).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000;
 };

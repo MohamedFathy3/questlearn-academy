@@ -3,6 +3,7 @@ import Cookies from "js-cookie";
 const API_BASE_URL = "/api";
 
 export interface ApiFetchOptions extends RequestInit {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body?: any;
 }
 
