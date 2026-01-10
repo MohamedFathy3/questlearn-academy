@@ -345,16 +345,14 @@ const CourseCard = ({
             <Badge variant="secondary" className="bg-white/90 dark:bg-gray-800/90 backdrop-blur text-xs px-2 py-1">
               {getTranslatedLevel(level)}
             </Badge>
-            <Badge variant="secondary" className="bg-white/90 dark:bg-gray-800/90 backdrop-blur text-xs px-2 py-1">
-              {type === 'recorded' ? t('courses.recorded') : t('courses.live')}
-            </Badge>
+      
           </div>
 
           {/* ✅ Badge حالة التسجيل */}
           {shouldShowProgress && courseStatus === "almost-full" && !isUserEnrolled && (
             <div className="absolute top-12 left-3">
               <Badge className="bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 text-white border-0 text-xs animate-pulse px-2 py-1 shadow-lg shadow-red-600/50">
-                🔥 {t('courses.almostFull', 'يكاد يمتلئ')}
+                🔥 {t('course.almostFull', 'يكاد يمتلئ')}
               </Badge>
             </div>
           )}
@@ -362,7 +360,7 @@ const CourseCard = ({
           {shouldShowProgress && courseStatus === "full" && !isUserEnrolled && (
             <div className="absolute top-12 left-3">
               <Badge className="bg-gradient-to-r from-red-800 to-red-900 hover:from-red-900 hover:to-black text-white border-0 text-xs px-2 py-1 shadow-lg shadow-red-900/50">
-                ⛔ {t('courses.full', 'امتلأ بالكامل')}
+                ⛔ {t('course.full', 'امتلأ بالكامل')}
               </Badge>
             </div>
           )}

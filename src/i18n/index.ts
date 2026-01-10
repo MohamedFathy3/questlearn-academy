@@ -188,6 +188,8 @@ const resources: Record<string, any> = {
         lessons: 'lesson',
         video: 'video',
         file: 'file',
+        almostFull: 'Almost Full',
+        full: 'Full Price',
         hurryEnroll: 'Hurry, enroll now!',
         liveStream: 'live stream',
         atTime: 'at',
@@ -1785,7 +1787,17 @@ course: {
         courseFull: "امتلأ الكورس",
         currentStudents: "المشتركين",
         hurryEnroll: "سجل الآن!",
-      
+        almostFull: "يكاد يمتلئ",
+    fillingFast: "يمتلئ بسرعة",
+    available: "متاح",
+    hurryUp: "أسرع! فقط",
+    remaining: "متبقي",
+    completed: "مكتمل",
+    group: "جماعي",
+    private: "خاص",
+    enrollmentProgress: "تقدم التسجيل",
+    title: "جميع",
+      full: "الكورس الكامل",
     }}
   }
 };
